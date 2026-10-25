@@ -1,0 +1,101 @@
+{
+  "format": "onnx",
+  "generation": 16,
+  "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
+  "hidden_widths": [
+    512,
+    256
+  ],
+  "parameters": 296274,
+  "input": {
+    "name": "state",
+    "shape": [
+      "batch",
+      280
+    ],
+    "dtype": "float32"
+  },
+  "outputs": [
+    {
+      "name": "policy",
+      "shape": [
+        "batch",
+        81
+      ],
+      "meaning": "raw move logits"
+    },
+    {
+      "name": "value",
+      "shape": [
+        "batch",
+        1
+      ],
+      "meaning": "tanh estimate for the player to move"
+    }
+  ],
+  "encoding": {
+    "own_marks": [
+      0,
+      81
+    ],
+    "opponent_marks": [
+      81,
+      162
+    ],
+    "legal_moves": [
+      162,
+      243
+    ],
+    "own_local_wins": [
+      243,
+      252
+    ],
+    "opponent_local_wins": [
+      252,
+      261
+    ],
+    "drawn_local_boards": [
+      261,
+      270
+    ],
+    "forced_board_onehot": [
+      270,
+      280
+    ],
+    "no_forced_board_index": 9
+  },
+  "training": {
+    "status": "bundled",
+    "method": "MCTS-guided self-play policy/value training",
+    "parentGeneration": 15,
+    "selfPlayGamesAdded": 4500,
+    "cumulativeMctsSelfPlayGames": 135919,
+    "additionalRawPolicyGames": 1000,
+    "positionsPerFitLimit": 700000
+  },
+  "evaluation": {
+    "againstR10": {
+      "games": 4096,
+      "wins": 1655,
+      "draws": 1198,
+      "losses": 1243,
+      "scorePercent": 55.03,
+      "confidenceInterval97_5Percent": [
+        53.57,
+        56.49
+      ]
+    },
+    "againstHeuristic": {
+      "scorePercent": 98.63,
+      "r10ScorePercent": 97.85,
+      "estimatedDifferencePercentagePoints": 0.78,
+      "confidenceInterval97_5Points": [
+        -0.3,
+        1.86
+      ],
+      "interpretation": "Non-inferiority passed; clear improvement not established"
+    }
+  },
+  "artifact_bytes": 1186321,
+  "sha256": "d3b655d11dc6385ac4810658e640bcf0f074c1655993765bb54d8363d538a3d7"
+}
