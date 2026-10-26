@@ -302,7 +302,7 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .review-move-choice.is-best { border-color: var(--accent); background: var(--accent-soft); }
 .review-move-choice.is-best strong { color: var(--accent); }
 .review-move-choice.is-best-match { grid-column: 1 / -1; }
-.review-swing { font-variant-numeric: tabular-nums; }
+.review-score { font-variant-numeric: tabular-nums; }
 .review-disclaimer { font-size: 10px !important; }
 .review-grade { display: inline-flex; justify-self: start; align-items: center; min-height: 17px; padding: 1px 5px; border-radius: 9px; color: var(--muted); background: var(--surface); font-size: 9px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
 .review-grade.is-best, .review-grade.is-good { color: var(--accent); background: var(--accent-soft); }

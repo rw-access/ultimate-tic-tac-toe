@@ -326,6 +326,12 @@ function reviewPositionValue(index: number): number | null {
   return evaluation?.xValue ?? null;
 }
 
+function reviewPositionScore(evaluation: ReviewEvaluation | null | undefined): string {
+  if (!evaluation || !Number.isFinite(evaluation.xValue)) return '—';
+  const score = Math.round(evaluation.xValue * 100);
+  return score > 0 ? `+${score}` : String(score);
+}
+
 function reviewPositionButtonLabel(index: number): string {
   const label = reviewPositionLabel(index);
   const value = reviewPositionValue(index);
@@ -417,7 +423,7 @@ function reviewCriticalMoves(): CriticalMove[] {
 function reviewCriticalMarkup(): string {
   const critical = reviewCriticalMoves();
   const heading = '<div class="review-section-heading"><strong>Critical moves</strong></div>';
-  const disclaimer = '<p class="review-disclaimer">Brilliant/tactical are exact; other grades are estimates.</p>';
+  const disclaimer = '<p class="review-disclaimer">Eval after played move · + favors X · - favors O</p>';
   if (!critical.length) {
     const incomplete = reviewEvaluations.some((evaluation) => evaluation === null);
     const status = !reviewHistoryAvailable ? 'Saved move history is unavailable.'
@@ -433,19 +439,14 @@ function reviewCriticalMarkup(): string {
       : reviewEvaluations[item.moveIndex]?.lines[0]?.[0];
     const playedName = boardMoveName(item.move.move);
     const bestName = best === undefined ? '—' : boardMoveName(best);
-    const tacticalNote = reviewItems.find((entry) => entry.move.number === item.move.number && entry.kind === 'tactical')?.note;
-    const swing = item.brilliant
-      ? reviewBrilliantMotif(item.move) === 'granting free board choice' ? 'Free-choice gift' : 'Local-board gift'
-      : item.tactical
-        ? tacticalNote?.startsWith('Missed') ? 'Missed win' : 'Allowed a win'
-        : `−${Math.round(item.loss * 100)} for ${item.move.player}`;
+    const positionScore = reviewPositionScore(reviewEvaluations[item.moveIndex + 1]);
     const comparison = best === item.move.move
       ? `<span class="review-move-choice is-played is-best is-best-match"><span>Played · Best</span><strong>${playedName}</strong></span>`
       : `<span class="review-move-choice is-played"><span>Played</span><strong>${playedName}</strong></span><span class="review-move-choice is-best"><span>Best</span><strong>${bestName}</strong></span>`;
-    return `<button class="review-critical-move" type="button" data-review-position="${item.moveIndex}" aria-label="Review ${item.label.toLowerCase()}, move ${item.move.number}, ${item.move.player} played ${playedName}, best ${bestName}, ${swing}">
+    return `<button class="review-critical-move" type="button" data-review-position="${item.moveIndex}" aria-label="Review ${item.label.toLowerCase()}, move ${item.move.number}, ${item.move.player} played ${playedName}, best ${bestName}, eval after played move ${positionScore}">
       <span class="review-critical-heading"><span class="review-grade is-${item.kind}">${item.label}</span><strong>Move ${item.move.number} · ${item.move.player}</strong></span>
       <span class="review-move-comparison">${comparison}</span>
-      <span class="review-swing">${swing}</span>
+      <span class="review-score">${positionScore}</span>
     </button>`;
   }).join('');
   return `<section class="review-critical" aria-label="Critical moves">${heading}${disclaimer}<div class="review-critical-list">${rows}</div></section>`;
@@ -783,13 +784,7 @@ function render(): void {
         <div class="route-map" aria-label="${state.winner ? 'Game complete' : state.forced === null ? 'Any open board' : 'Play board ' + (state.forced + 1)}">
           ${Array.from({ length: 9 }, (_, i) => '<i class="' + (legal.has(i) ? 'lit' : '') + '"></i>').join('')}
         </div>
-        <div class="board-tools">
-          <span class="hint-status" role="status" aria-live="polite">${hintPending ? 'Finding a move…' : hintMove !== null ? `Try ${boardMoveName(hintMove)}` : hintFailed ? 'Hint unavailable' : ''}</span>
-          <div class="analysis-actions">
-            <button class="analysis-button" type="button" data-action="hint"${reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending || (opponentMode === 'online' && !canPlayTurn()) ? ' disabled' : ''}>${hintPending ? 'Finding…' : hintMove !== null ? 'Hint shown' : 'Hint'}</button>
-            ${reviewActive || state.winner ? `<button class="analysis-button" type="button" data-action="review-toggle" aria-pressed="${reviewActive}">${reviewActive ? 'Exit review' : 'Review game'}</button>` : `<button class="analysis-button" type="button" data-action="analysis" aria-pressed="${analysisView === 'position'}">Analysis</button>`}
-          </div>
-        </div>
+        ${reviewActive || state.winner ? `<div class="board-tools"><div class="analysis-actions"><button class="analysis-button" type="button" data-action="review-toggle" aria-pressed="${reviewActive}">${reviewActive ? 'Exit review' : 'Review game'}</button></div></div>` : ''}
       </div>
       </div>
       ${reviewPanelMarkup()}

@@ -42,6 +42,124 @@ export function movesSafeFromImmediateLoss(state: GameState): number[] {
   });
 }
 
+type ForcedWinProof = 'win' | 'refuted' | 'unknown';
+
+export type ForcedWinWithinPliesResult = {
+  move: number;
+  nodes: number;
+};
+
+/**
+ * Return a move only when the player to move can prove a win within the ply
+ * horizon. Budget exhaustion and horizon leaves remain unknown, never wins.
+ */
+export function findForcedWinWithinPlies(
+  state: GameState,
+  options: {
+    /** Individual moves; seven plies includes four moves by the attacker. */
+    maxPlies?: number;
+    maxNodes?: number;
+    timeMs?: number;
+    rootMoveScores?: Float32Array;
+  } = {},
+): ForcedWinWithinPliesResult | null {
+  const attacker = state.turn;
+  const maxPlies = Math.max(1, Math.min(9, Math.floor(options.maxPlies ?? 7)));
+  const maxNodes = Math.max(1, Math.floor(options.maxNodes ?? 12_000));
+  const deadline = performance.now() + Math.max(1, options.timeMs ?? 24);
+  const table = new Map<string, ForcedWinProof>();
+  let nodes = 0;
+  let exhausted = false;
+
+  let rootMoves = legalMoves(state);
+  if (!rootMoves.length) return null;
+  const rootScores = options.rootMoveScores;
+  if (rootScores) {
+    const score = (move: number) => {
+      const value = rootScores[move];
+      return Number.isFinite(value) ? value : -Infinity;
+    };
+    rootMoves = rootMoves.sort((left, right) => {
+      const leftScore = score(left);
+      const rightScore = score(right);
+      return rightScore > leftScore ? 1 : rightScore < leftScore ? -1 : left - right;
+    });
+  }
+
+  function withinBudget(): boolean {
+    if (nodes >= maxNodes || performance.now() >= deadline) {
+      exhausted = true;
+      return false;
+    }
+    return true;
+  }
+
+  function orderedMoves(position: GameState): number[] {
+    return legalMoves(position).map(move => {
+      const board = Math.floor(move / 9);
+      const child = play(position, board, move % 9);
+      const score = (child.winner === position.turn ? 10_000 : 0)
+        + (child.results[board] === position.turn ? 100 : 0)
+        + (move % 9 === 4 ? 2 : 0);
+      return { move, score };
+    }).sort((left, right) => right.score - left.score || left.move - right.move)
+      .map(item => item.move);
+  }
+
+  function prove(position: GameState, remainingPlies: number): ForcedWinProof {
+    if (position.winner !== null) return position.winner === attacker ? 'win' : 'refuted';
+    if (remainingPlies <= 0 || !withinBudget()) return 'unknown';
+
+    nodes++;
+    const key = `${positionKey(position)}|${remainingPlies}|${attacker}`;
+    const cached = table.get(key);
+    if (cached) return cached;
+
+    const moves = orderedMoves(position);
+    if (!moves.length) return 'refuted';
+
+    let sawUnknown = false;
+    if (position.turn === attacker) {
+      for (const move of moves) {
+        const child = play(position, Math.floor(move / 9), move % 9);
+        const result = prove(child, remainingPlies - 1);
+        if (result === 'win') {
+          table.set(key, 'win');
+          return 'win';
+        }
+        if (result === 'unknown') sawUnknown = true;
+        if (exhausted) break;
+      }
+      const result = sawUnknown || exhausted ? 'unknown' : 'refuted';
+      if (result !== 'unknown') table.set(key, result);
+      return result;
+    }
+
+    for (const move of moves) {
+      const child = play(position, Math.floor(move / 9), move % 9);
+      const result = prove(child, remainingPlies - 1);
+      if (result === 'refuted') {
+        table.set(key, 'refuted');
+        return 'refuted';
+      }
+      if (result === 'unknown') sawUnknown = true;
+      if (exhausted) break;
+    }
+    const result = sawUnknown || exhausted ? 'unknown' : 'win';
+    if (result !== 'unknown') table.set(key, result);
+    return result;
+  }
+
+  for (const move of rootMoves) {
+    if (!withinBudget()) break;
+    const child = play(state, Math.floor(move / 9), move % 9);
+    if (child.winner === attacker) return { move, nodes };
+    if (prove(child, maxPlies - 1) === 'win') return { move, nodes };
+    if (exhausted) break;
+  }
+  return null;
+}
+
 /**
  * Solve late positions exactly when their remaining game tree fits a strict
  * node/time budget. An incomplete search is never presented as an exact score.

@@ -1,7 +1,7 @@
 import { baselineEvaluation, legalMoves, search, type Evaluator } from './ai';
 import { play, type GameState } from './game';
 import { createEvaluator, type ModelEvaluator } from './onnx';
-import { immediateWinningMoves, movesSafeFromImmediateLoss, solveEndgame } from './endgame';
+import { findForcedWinWithinPlies, immediateWinningMoves, movesSafeFromImmediateLoss, solveEndgame } from './endgame';
 import type { AnalysisMode, Difficulty } from './ai-client';
 
 type Request = {
@@ -16,8 +16,8 @@ type Request = {
 let evaluator: Promise<ModelEvaluator> | null = null;
 let failed = false;
 
-function sampleMove(state: GameState, logits: Float32Array): number | null {
-  const moves = legalMoves(state);
+function sampleMove(state: GameState, logits: Float32Array, candidates?: number[]): number | null {
+  const moves = candidates?.length ? candidates : legalMoves(state);
   if (!moves.length) return null;
   const winning = moves.find(move => play(state, Math.floor(move / 9), move % 9).winner === state.turn);
   if (winning !== undefined) return winning;
@@ -125,7 +125,23 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     let simulations = 0;
     try {
       if (difficulty === 'easy' && evaluate) {
-        move = sampleMove(state, (await evaluate(state)).policy);
+        const endgame = solveEndgame(state, { maxEmptySquares: 18, maxNodes: 8_000, timeMs: 12 });
+        if (endgame?.solved && endgame.move !== null) {
+          move = endgame.move;
+        } else {
+          const evaluation = await evaluate(state);
+          const forcedWin = findForcedWinWithinPlies(state, {
+            maxPlies: 7,
+            maxNodes: 12_000,
+            timeMs: 24,
+            rootMoveScores: evaluation.policy,
+          });
+          if (forcedWin) move = forcedWin.move;
+          else {
+            const safeMoves = movesSafeFromImmediateLoss(state);
+            move = sampleMove(state, evaluation.policy, safeMoves);
+          }
+        }
       } else {
         const result = await search(state, { ...settings, evaluate });
         move = result.move;
