@@ -7,11 +7,12 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*"],
+    "run_worker_first": ["/", "/ultimate-tic-tac-toe/api/*"],
     "not_found_handling": "single-page-application"
   },
   "routes": [
-    { "pattern": "play.rw-access.dev", "custom_domain": true }
+    { "pattern": "play.rw-access.dev/ultimate-tic-tac-toe", "zone_name": "rw-access.dev" },
+    { "pattern": "play.rw-access.dev/ultimate-tic-tac-toe/*", "zone_name": "rw-access.dev" }
   ],
   "durable_objects": {
     "bindings": [{ "name": "ROOMS", "class_name": "GameRoom" }]

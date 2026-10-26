@@ -8,6 +8,7 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/;
+const APP_PATH = '/ultimate-tic-tac-toe';
 
 async function availablePort() {
   const server = createServer();
@@ -75,7 +76,7 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   const deadline = Date.now() + 25_000;
   while (Date.now() < deadline && child.exitCode === null) {
     try {
-      const response = await fetch(`${base}/api/health`);
+      const response = await fetch(`${base}${APP_PATH}/api/health`);
       if (response.ok && (await response.json()).ok === true) {
         ready = true;
         break;
@@ -85,11 +86,22 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   }
   assert.equal(ready, true, `Worker did not start. ${logs}`);
 
-  const page = await fetch(`${base}/`);
-  assert.equal(page.status, 200);
-  assert.match(await page.text(), /<div id="app"><\/div>/);
+  const rootResponse = await fetch(`${base}/`, { redirect: 'manual' });
+  assert.equal(rootResponse.status, 302);
+  assert.equal(new URL(rootResponse.headers.get('location')).pathname, `${APP_PATH}/`);
 
-  const createResponse = await fetch(`${base}/api/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const page = await fetch(`${base}${APP_PATH}/`);
+  assert.equal(page.status, 200);
+  const html = await page.text();
+  assert.match(html, /<div id="app"><\/div>/);
+  const scriptPath = html.match(/<script[^>]+src="([^"]+\.js)"/)?.[1];
+  assert.ok(scriptPath, 'built page references its application bundle');
+  const scriptResponse = await fetch(new URL(scriptPath, `${base}${APP_PATH}/`));
+  assert.equal(scriptResponse.status, 200);
+  const modelResponse = await fetch(`${base}${APP_PATH}/models/policy-value.onnx`);
+  assert.equal(modelResponse.status, 200);
+
+  const createResponse = await fetch(`${base}${APP_PATH}/api/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(createResponse.status, 201);
   const host = await createResponse.json();
   assert.match(host.code, CODE_PATTERN);
@@ -97,15 +109,15 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   assert.equal(host.room.players, 1);
   assert.equal(JSON.stringify(host.room).includes(host.token), false);
 
-  const joinResponse = await fetch(`${base}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const joinResponse = await fetch(`${base}${APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(joinResponse.status, 200);
   const guest = await joinResponse.json();
   assert.equal(guest.seat, 'O');
   assert.equal(guest.room.players, 2);
-  const thirdSeat = await fetch(`${base}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const thirdSeat = await fetch(`${base}${APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(thirdSeat.status, 409);
 
-  const wsUrl = `ws://127.0.0.1:${port}/api/rooms/${host.code}/socket`;
+  const wsUrl = `ws://127.0.0.1:${port}${APP_PATH}/api/rooms/${host.code}/socket`;
   const hostClient = await connectSeat(wsUrl, host.token);
   assert.equal(hostClient.snapshot.room.version, 0);
   const guestClient = await connectSeat(wsUrl, guest.token);

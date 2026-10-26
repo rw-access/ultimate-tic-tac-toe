@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.worker.json && vite build --base=./",
+    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.worker.json && vite build --base=./ --outDir dist/ultimate-tic-tac-toe",
     "dev:worker": "npm run build && wrangler dev",
     "deploy:worker": "node scripts/deploy-worker.mjs",
     "preview": "vite preview",

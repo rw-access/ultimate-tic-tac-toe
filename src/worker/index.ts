@@ -1,4 +1,5 @@
 import { isRoomCode, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '../multiplayer/core.ts';
+import { stripAppBasePath } from '../app-path.ts';
 
 interface Env {
   ASSETS: Fetcher;
@@ -44,11 +45,16 @@ async function createRoom(env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
-    if (url.pathname === '/api/health' && request.method === 'GET') return json({ ok: true });
-    if (url.pathname === '/api/rooms' && request.method === 'POST') return createRoom(env);
+    if (url.pathname === '/') {
+      url.pathname = '/ultimate-tic-tac-toe/';
+      return Response.redirect(url, 302);
+    }
+    const pathname = stripAppBasePath(url.pathname);
+    if (!pathname?.startsWith('/api/')) return env.ASSETS.fetch(request);
+    if (pathname === '/api/health' && request.method === 'GET') return json({ ok: true });
+    if (pathname === '/api/rooms' && request.method === 'POST') return createRoom(env);
 
-    const roomMatch = url.pathname.match(/^\/api\/rooms\/([^/]+)\/(join|socket)$/);
+    const roomMatch = pathname.match(/^\/api\/rooms\/([^/]+)\/(join|socket)$/);
     if (roomMatch && (request.method === 'POST' && roomMatch[2] === 'join'
       || request.method === 'GET' && roomMatch[2] === 'socket')) {
       const code = decodeURIComponent(roomMatch[1]).toUpperCase();

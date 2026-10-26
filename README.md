@@ -34,10 +34,10 @@ npm ci
 npm run dev
 ```
 
-`npm run dev` serves the static game. Use `npm run dev:worker` to build it and
-run the Worker, room API, and Durable Objects locally. The Worker serves Vite's
-`dist/` assets itself; `/api/*` requests go to the room API, so local and
-deployed online play use one origin.
+`npm run dev` serves the static game at the Vite root. Use `npm run dev:worker`
+to build it and run the Worker, room API, and Durable Objects locally at
+`/ultimate-tic-tac-toe/`. The Worker serves the static assets and API from that
+path on one origin.
 
 ## Checks
 
@@ -50,7 +50,9 @@ npm run test:browser
 npm run test:production
 ```
 
-`npm run build` produces portable static files in `dist/`, with relative asset URLs so the game works at a site root or under a URL prefix. Serve the directory with any static web server. `npm run preview` previews a build locally.
+`npm run build` produces static files under `dist/ultimate-tic-tac-toe/`, with
+relative asset URLs. `npm run preview` previews the build at
+`/ultimate-tic-tac-toe/`.
 
 `wrangler.jsonc` configures Cloudflare Workers Static Assets and one SQLite-backed
 Durable Object per room. Rooms are authoritative, accept only legal moves from
@@ -65,15 +67,13 @@ calling Wrangler. It never runs as part of tests or the ordinary build.
 
 ```sh
 npm run deploy:worker -- --dry-run
-npm run deploy:worker -- --name ultimate-tic-tac-toe --domain play.example.com
+npm run deploy:worker
 ```
 
-The worker name can also come from `UTTT_WORKER_NAME`. The production custom
-domain, `play.rw-access.dev`, is set in `wrangler.jsonc`; additional custom
-domains can be passed with `--domain` or `UTTT_CUSTOM_DOMAIN`. Authenticate
-Wrangler with `wrangler login`, or provide `CLOUDFLARE_API_TOKEN` and
-`CLOUDFLARE_ACCOUNT_ID` in the environment. A real deploy creates any requested
-custom-domain routes.
+The Worker name can also come from `UTTT_WORKER_NAME`. The production route is
+`play.rw-access.dev/ultimate-tic-tac-toe/`, configured in `wrangler.jsonc`.
+Authenticate Wrangler with `wrangler login`, or provide `CLOUDFLARE_API_TOKEN`
+and `CLOUDFLARE_ACCOUNT_ID` in the environment.
 
 ## Offline training
 

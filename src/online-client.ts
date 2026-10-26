@@ -1,5 +1,6 @@
 import { isRoomCode, normalizeRoomCode, type PublicRoom } from './multiplayer/core';
 import type { Player } from './game';
+import { appPath } from './app-path';
 
 const ROOM_TOKEN_PREFIX = 'ultimate-tic-tac-toe:room-token:';
 
@@ -46,7 +47,7 @@ async function requestJson<T>(url: string, init: RequestInit): Promise<T> {
 }
 
 export async function createOnlineRoom(): Promise<OnlineSeat> {
-  const result = await requestJson<OnlineSeat>('/api/rooms', { method: 'POST', body: '{}' });
+  const result = await requestJson<OnlineSeat>(appPath(window.location.pathname, '/api/rooms'), { method: 'POST', body: '{}' });
   if (!isRoomCode(result.code) || result.seat !== 'X' || typeof result.token !== 'string') {
     throw new Error('The room server returned invalid room details.');
   }
@@ -58,7 +59,7 @@ export async function joinOnlineRoom(input: string): Promise<OnlineSeat> {
   const code = normalizeRoomCode(input);
   if (!isRoomCode(code)) throw new Error('Enter the 8-character room code.');
   const token = readToken(code);
-  const result = await requestJson<OnlineSeat>(`/api/rooms/${code}/join`, {
+  const result = await requestJson<OnlineSeat>(appPath(window.location.pathname, `/api/rooms/${code}/join`), {
     method: 'POST',
     body: JSON.stringify(token ? { token } : {}),
   });
@@ -107,7 +108,7 @@ export class OnlineRoomConnection {
     if (this.closedByUser) return;
     this.callbacks.onStatus(reconnecting ? 'reconnecting' : 'connecting');
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const socket = new WebSocket(`${protocol}//${window.location.host}/api/rooms/${this.seat.code}/socket`);
+    const socket = new WebSocket(`${protocol}//${window.location.host}${appPath(window.location.pathname, `/api/rooms/${this.seat.code}/socket`)}`);
     this.socket = socket;
     socket.addEventListener('open', () => {
       socket.send(JSON.stringify({ type: 'hello', token: this.seat.token }));
