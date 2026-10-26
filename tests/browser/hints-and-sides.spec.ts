@@ -33,6 +33,59 @@ test('live Hint and Analysis stay unavailable in two-player mode', async ({ page
   await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 });
 
+test('game review layout adapts across desktop and phone widths', async ({ page }) => {
+  let state = createGame();
+  const history: GameState[] = [];
+  let seed = 8917;
+  while (!state.winner && state.moves < 81) {
+    const moves = legalBoards(state).flatMap(board => state.boards[board].flatMap((mark, cell) =>
+      mark === null ? [board * 9 + cell] : [],
+    ));
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    history.push(state);
+    const move = moves[seed % moves.length];
+    state = play(state, Math.floor(move / 9), move % 9);
+  }
+
+  await page.goto('/');
+  await page.evaluate(saved => localStorage.setItem('ultimate-tic-tac-toe:v1', JSON.stringify({ version: 1, state: saved.state, undo: saved.history })), { state, history });
+  await page.reload();
+  await page.getByRole('button', { name: 'Review game' }).click();
+  const review = page.getByRole('region', { name: 'Game review' });
+  await expect(review).toBeVisible();
+
+  for (const viewport of [
+    { width: 1280, height: 720, sideBySide: true, minBoard: 560, minPanel: 650 },
+    { width: 1440, height: 900, sideBySide: true, minBoard: 600, minPanel: 700 },
+    { width: 1920, height: 1080, sideBySide: true, minBoard: 700, minPanel: 850 },
+    { width: 1024, height: 768, sideBySide: false, minBoard: 440, minPanel: 440 },
+    { width: 375, height: 844, sideBySide: false, minBoard: 347, minPanel: 347 },
+    { width: 390, height: 844, sideBySide: false, minBoard: 362, minPanel: 362 },
+  ]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    const layout = await page.evaluate(() => {
+      const board = document.querySelector('.board-frame')!.getBoundingClientRect();
+      const panel = document.querySelector('.review-panel')!.getBoundingClientRect();
+      return {
+        width: innerWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        board: { left: board.left, right: board.right, top: board.top, bottom: board.bottom, width: board.width, height: board.height },
+        panel: { left: panel.left, right: panel.right, top: panel.top, width: panel.width },
+      };
+    });
+    expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width + 1);
+    expect(layout.board.left).toBeGreaterThanOrEqual(-1);
+    expect(layout.board.right).toBeLessThanOrEqual(layout.width + 1);
+    expect(layout.panel.left).toBeGreaterThanOrEqual(-1);
+    expect(layout.panel.right).toBeLessThanOrEqual(layout.width + 1);
+    expect(layout.board.width).toBeGreaterThanOrEqual(viewport.minBoard);
+    expect(layout.panel.width).toBeGreaterThanOrEqual(viewport.minPanel);
+    expect(Math.abs(layout.board.width - layout.board.height)).toBeLessThanOrEqual(1);
+    if (viewport.sideBySide) expect(layout.panel.left).toBeGreaterThanOrEqual(layout.board.right - 1);
+    else expect(layout.panel.top).toBeGreaterThan(layout.board.bottom);
+  }
+});
+
 test('a completed game can be reviewed move by move', async ({ page }) => {
   test.setTimeout(60000);
   let state = createGame();
@@ -63,10 +116,12 @@ test('a completed game can be reviewed move by move', async ({ page }) => {
   const initialLayout = await page.evaluate(() => {
     const board = document.querySelector('.board-frame')!.getBoundingClientRect();
     const panel = document.querySelector('.review-panel')!.getBoundingClientRect();
-    return { width: innerWidth, height: innerHeight, boardRight: board.right, boardBottom: board.bottom, panelLeft: panel.left, panelTop: panel.top };
+    return { width: innerWidth, height: innerHeight, boardRight: board.right, boardBottom: board.bottom, boardWidth: board.width, panelLeft: panel.left, panelTop: panel.top, panelWidth: panel.width };
   });
-  if (initialLayout.width >= 900 && initialLayout.height >= 620) {
+  if (initialLayout.width >= 1280 && initialLayout.height >= 620) {
     expect(initialLayout.panelLeft).toBeGreaterThanOrEqual(initialLayout.boardRight - 1);
+    expect(initialLayout.boardWidth).toBeGreaterThanOrEqual(560);
+    expect(initialLayout.panelWidth).toBeGreaterThanOrEqual(650);
   } else {
     expect(initialLayout.panelTop).toBeGreaterThan(initialLayout.boardBottom);
   }
@@ -162,14 +217,26 @@ test('a completed game can be reviewed move by move', async ({ page }) => {
     await criticalMove.click();
     await expect(slider).toHaveValue(target!);
   }
-  if (initialLayout.width >= 900) {
+  if (initialLayout.width >= 1280 && initialLayout.height >= 620) {
     await page.setViewportSize({ width: 1024, height: 768 });
-    const landscapeLayout = await page.evaluate(() => {
+    const stackedLayout = await page.evaluate(() => {
       const board = document.querySelector('.board-frame')!.getBoundingClientRect();
       const panel = document.querySelector('.review-panel')!.getBoundingClientRect();
-      return { boardRight: board.right, panelLeft: panel.left };
+      return { boardBottom: board.bottom, panelTop: panel.top, boardWidth: board.width, panelWidth: panel.width };
     });
-    expect(landscapeLayout.panelLeft).toBeGreaterThanOrEqual(landscapeLayout.boardRight - 1);
+    expect(stackedLayout.panelTop).toBeGreaterThan(stackedLayout.boardBottom);
+    expect(stackedLayout.boardWidth).toBeGreaterThan(440);
+    expect(stackedLayout.panelWidth).toBeGreaterThan(440);
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const wideLayout = await page.evaluate(() => {
+      const board = document.querySelector('.board-frame')!.getBoundingClientRect();
+      const panel = document.querySelector('.review-panel')!.getBoundingClientRect();
+      return { boardRight: board.right, boardWidth: board.width, panelLeft: panel.left, panelWidth: panel.width };
+    });
+    expect(wideLayout.panelLeft).toBeGreaterThanOrEqual(wideLayout.boardRight - 1);
+    expect(wideLayout.boardWidth).toBeGreaterThan(600);
+    expect(wideLayout.panelWidth).toBeGreaterThan(700);
   }
   await page.setViewportSize({ width: 320, height: 812 });
   const narrowExport = await review.locator('.review-export').evaluate(button => {

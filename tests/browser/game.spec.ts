@@ -83,7 +83,10 @@ test('layout stays usable and malformed storage remains playable', async ({ page
   }));
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width);
   if (layout.width <= 600) expect(layout.board).toBeGreaterThanOrEqual(layout.width - 32);
-  else expect(layout.scrollHeight).toBeLessThanOrEqual(layout.height);
+  else {
+    expect(layout.scrollHeight).toBeLessThanOrEqual(layout.height);
+    if (layout.width >= 900) expect(layout.board).toBeGreaterThanOrEqual(440);
+  }
   await page.getByRole('button', { name: 'How to play', exact: true }).first().click();
   await expect(page.locator('#how-to-dialog')).toBeVisible();
   await page.getByRole('button', { name: 'Got it' }).click();

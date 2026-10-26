@@ -412,8 +412,11 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
   .review-step-buttons button[data-action="review-playback"], .review-step-buttons button[data-action="review-previous"], .review-step-buttons button[data-action="review-next"] { min-width: 40px; height: 40px; }
   .review-step-buttons span { min-width: 40px; padding: 0 1px; }
 }
-@media (min-width: 900px) and (min-height: 620px) {
-  .page-shell.review-open { display: grid; grid-template-columns: minmax(0, min(560px, 48%)) minmax(0, 1fr); grid-template-areas: "heading heading" "game review"; align-items: start; gap: 14px 20px; width: min(1320px, calc(100% - 40px)); margin: 28px auto 16px; }
+@media (min-width: 900px) {
+  .page-shell { width: min(760px, calc(100% - 48px), max(320px, calc(100svh - 270px))); margin: 32px auto 16px; }
+}
+@media (min-width: 1280px) and (min-height: 620px) {
+  .page-shell.review-open { display: grid; grid-template-columns: minmax(560px, 0.9fr) minmax(650px, 1.1fr); grid-template-areas: "heading heading" "game review"; align-items: start; gap: 14px 16px; width: min(1600px, calc(100% - 40px)); margin: 28px auto 16px; }
   .review-open > .heading { grid-area: heading; }
   .review-open > .game-column { grid-area: game; min-width: 0; }
   .review-open > .review-panel { grid-area: review; min-width: 0; max-height: calc(100svh - 220px); overflow-x: hidden; overflow-y: auto; margin: 92px 0 0; overscroll-behavior: contain; }
