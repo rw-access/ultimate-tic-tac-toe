@@ -66,11 +66,17 @@ test('game review layout adapts across desktop and phone widths', async ({ page 
     const layout = await page.evaluate(() => {
       const board = document.querySelector('.board-frame')!.getBoundingClientRect();
       const panel = document.querySelector('.review-panel')!.getBoundingClientRect();
+      const firstTurn = document.querySelector('.review-move-pair');
+      const xMove = firstTurn?.querySelector<HTMLElement>('[data-player="X"]');
+      const oMove = firstTurn?.querySelector<HTMLElement>('[data-player="O"]');
+      const xRect = xMove?.getBoundingClientRect();
+      const oRect = oMove?.getBoundingClientRect();
       return {
         width: innerWidth,
         scrollWidth: document.documentElement.scrollWidth,
         board: { left: board.left, right: board.right, top: board.top, bottom: board.bottom, width: board.width, height: board.height },
         panel: { left: panel.left, right: panel.right, top: panel.top, width: panel.width },
+        firstTurnMovesOrdered: Boolean(firstTurn?.isConnected && xMove?.isConnected && oMove?.isConnected && xRect && oRect && xRect.width > 0 && oRect.width > 0 && xRect.left < oRect.left),
       };
     });
     expect(layout.scrollWidth).toBeLessThanOrEqual(layout.width + 1);
@@ -81,6 +87,7 @@ test('game review layout adapts across desktop and phone widths', async ({ page 
     expect(layout.board.width).toBeGreaterThanOrEqual(viewport.minBoard);
     expect(layout.panel.width).toBeGreaterThanOrEqual(viewport.minPanel);
     expect(Math.abs(layout.board.width - layout.board.height)).toBeLessThanOrEqual(1);
+    expect(layout.firstTurnMovesOrdered).toBe(true);
     if (viewport.sideBySide) expect(layout.panel.left).toBeGreaterThanOrEqual(layout.board.right - 1);
     else expect(layout.panel.top).toBeGreaterThan(layout.board.bottom);
   }
@@ -129,12 +136,15 @@ test('a completed game can be reviewed move by move', async ({ page }) => {
   await expect(turns).toHaveCount(Math.ceil(history.length / 2));
   await expect(turns.first().locator('[data-player="X"]')).toHaveCount(1);
   await expect(turns.first().locator('[data-player="O"]')).toHaveCount(1);
-  const pairedMoveOrder = await turns.first().evaluate(turn => {
-    const x = turn.querySelector('[data-player="X"]')!.getBoundingClientRect();
-    const o = turn.querySelector('[data-player="O"]')!.getBoundingClientRect();
-    return x.left < o.left;
+  const pairedMoveOrder = async () => page.evaluate(() => {
+    const turn = document.querySelector('.review-move-pair');
+    const x = turn?.querySelector<HTMLElement>('[data-player="X"]');
+    const o = turn?.querySelector<HTMLElement>('[data-player="O"]');
+    const xBox = x?.getBoundingClientRect();
+    const oBox = o?.getBoundingClientRect();
+    return Boolean(turn?.isConnected && x?.isConnected && o?.isConnected && xBox && oBox && xBox.width > 0 && oBox.width > 0 && xBox.left < oBox.left);
   });
-  expect(pairedMoveOrder).toBe(true);
+  await expect.poll(pairedMoveOrder).toBe(true);
   await expect(review.getByRole('group', { name: 'Replay and move navigation' })).toBeVisible();
   await expect(review.locator('.review-move-start')).toHaveCount(0);
   await expect(review.getByRole('button', { name: 'Play replay' })).toBeVisible();
