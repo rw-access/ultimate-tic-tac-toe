@@ -1,6 +1,7 @@
 {
   "name": "ultimate-tic-tac-toe",
   "version": "1.0.0",
+  "packageManager": "npm@11.16.0",
   "private": true,
   "type": "module",
   "scripts": {
