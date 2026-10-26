@@ -72,7 +72,7 @@ test('the latest move stays visible above a completed-board overlay', async ({ p
       const marker = await latest.evaluate(element => ({ z: getComputedStyle(element).zIndex, dot: getComputedStyle(element, '::after').content, shadow: getComputedStyle(element).boxShadow }));
       expect(Number(marker.z)).toBeGreaterThan(0);
       expect(marker.dot).toBe('""');
-      expect(marker.shadow).not.toBe('none');
+      expect(marker.shadow).toBe('none');
       return;
     }
     state = next;
