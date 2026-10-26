@@ -60,10 +60,14 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       }
 
       const endgame = solveEndgame(state, mode === 'analysis'
-        ? { maxEmptySquares: 18, maxNodes: 32_000, timeMs: 36 }
-        : { maxEmptySquares: 18, maxNodes: 8_000, timeMs: 12 });
-      if (endgame?.solved && endgame.move !== null) {
-        self.postMessage({ id, value: endgame.value, lines: [[endgame.move]], source: 'search', solved: true });
+        ? { maxEmptySquares: 18, maxNodes: 32_000, timeMs: 500 }
+        : mode === 'hint'
+          ? { maxEmptySquares: 18, maxNodes: 32_000, timeMs: 250 }
+          : { maxEmptySquares: 18, maxNodes: 8_000, timeMs: 12 });
+      // A retained draw is only a safe suggested move; unexplored root moves
+      // could still win, so keep solved=false and display value 0 as an estimate.
+      if (endgame && endgame.move !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
+        self.postMessage({ id, value: endgame.value, lines: [[endgame.move]], source: 'search', solved: endgame.solved });
         return;
       }
 
@@ -116,31 +120,36 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       return;
     }
 
-    let evaluate = await loadEvaluator(modelUrl);
     const difficulty = event.data.difficulty ?? 'medium';
     const settings = difficulty === 'hard' ? { simulations: 4096, timeMs: 140, tacticalProof: true }
       : difficulty === 'medium' ? { simulations: 96, timeMs: 200, tacticalProof: true }
         : { simulations: 24, timeMs: 80, tacticalProof: false };
+    const endgame = solveEndgame(state, {
+      maxEmptySquares: 18,
+      maxNodes: 32_000,
+      timeMs: difficulty === 'hard' ? 2_000 : difficulty === 'medium' ? 1_000 : 500,
+    });
+    if (endgame && endgame.move !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
+      self.postMessage({ id, move: endgame.move, source: 'search', simulations: 0, settings });
+      return;
+    }
+
+    let evaluate = await loadEvaluator(modelUrl);
     let move: number | null;
     let simulations = 0;
     try {
       if (difficulty === 'easy' && evaluate) {
-        const endgame = solveEndgame(state, { maxEmptySquares: 18, maxNodes: 8_000, timeMs: 12 });
-        if (endgame?.solved && endgame.move !== null) {
-          move = endgame.move;
-        } else {
-          const evaluation = await evaluate(state);
-          const forcedWin = findForcedWinWithinPlies(state, {
-            maxPlies: 7,
-            maxNodes: 12_000,
-            timeMs: 24,
-            rootMoveScores: evaluation.policy,
-          });
-          if (forcedWin) move = forcedWin.move;
-          else {
-            const safeMoves = movesSafeFromImmediateLoss(state);
-            move = sampleMove(state, evaluation.policy, safeMoves);
-          }
+        const evaluation = await evaluate(state);
+        const forcedWin = findForcedWinWithinPlies(state, {
+          maxPlies: 7,
+          maxNodes: 12_000,
+          timeMs: 24,
+          rootMoveScores: evaluation.policy,
+        });
+        if (forcedWin) move = forcedWin.move;
+        else {
+          const safeMoves = movesSafeFromImmediateLoss(state);
+          move = sampleMove(state, evaluation.policy, safeMoves);
         }
       } else {
         const result = await search(state, { ...settings, evaluate });

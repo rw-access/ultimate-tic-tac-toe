@@ -2,11 +2,19 @@ import { legalMoves } from './ai.ts';
 import { play, type GameState } from './game.ts';
 
 export type EndgameResult = {
+  /** True when the root WDL result is proved; a win needs one winning move, a draw needs all moves checked. */
   solved: boolean;
   move: number | null;
-  /** Result from the perspective of the player to move: win=1, draw=0, loss=-1. */
+  /** Result from the perspective of the player to move. For unsolved draw fallbacks,
+   * zero is only the guaranteed floor; unexplored moves may still win. */
   value: number;
   nodes: number;
+  /** A proved win or draw that remains safe to play even if the search aborts. */
+  guaranteedValue: 0 | 1 | null;
+  /** Plies in the best proved forced mate, including the selected move. */
+  matePlies: number | null;
+  shortestWinProven: boolean;
+  budgetExhausted: boolean;
 };
 
 type Bound = 'exact' | 'lower' | 'upper';
@@ -166,7 +174,7 @@ export function findForcedWinWithinPlies(
  */
 export function solveEndgame(
   state: GameState,
-  options: { maxEmptySquares?: number; maxNodes?: number; timeMs?: number } = {},
+  options: { maxEmptySquares?: number; maxNodes?: number; timeMs?: number; optimizeMateDistance?: boolean } = {},
 ): EndgameResult | null {
   const emptyLimit = Math.max(0, options.maxEmptySquares ?? 18);
   if (emptySquares(state) > emptyLimit) return null;
@@ -179,6 +187,8 @@ export function solveEndgame(
   let nodes = 0;
   let aborted = false;
   let bestRootMove: number | null = null;
+  let bestRootScore = -Infinity;
+  const optimizeMateDistance = options.optimizeMateDistance !== false;
 
   function orderedMoves(position: GameState, moves: number[], preferred: number | null): number[] {
     const ranked = moves.map(move => {
@@ -191,10 +201,16 @@ export function solveEndgame(
     return ranked.map(item => item.move);
   }
 
-  function visit(position: GameState, alphaInput: number, betaInput: number, isRoot = false): number | null {
-    if (position.winner !== null) return terminalValue(position);
+  function visit(position: GameState, alphaInput: number, betaInput: number, ply = 0, isRoot = false): number | null {
+    if (position.winner !== null) {
+      return terminalValue(position) * (optimizeMateDistance ? 128 - ply : 1);
+    }
+    if (nodes >= maxNodes) {
+      aborted = true;
+      return null;
+    }
     nodes++;
-    if (nodes > maxNodes || ((nodes & 63) === 0 && performance.now() >= deadline)) {
+    if ((nodes & 63) === 0 && performance.now() >= deadline) {
       aborted = true;
       return null;
     }
@@ -212,25 +228,35 @@ export function solveEndgame(
       if (alpha >= beta) return entry.value;
     }
 
+    if (optimizeMateDistance) {
+      // A win on the next ply is the best this side can achieve from here.
+      const maximum = 128 - ply - 1;
+      if (alpha >= maximum) return maximum;
+      beta = Math.min(beta, maximum);
+    }
+
     const moves = legalMoves(position);
     if (!moves.length) return 0;
     const ordered = orderedMoves(position, moves, entry?.move ?? null);
-    let best = -2;
+    let best = -Infinity;
     let bestMove: number | null = null;
     for (const move of ordered) {
       const child = play(position, Math.floor(move / 9), move % 9);
-      const reply = visit(child, -beta, -alpha);
+      const reply = visit(child, -beta, -alpha, ply + 1);
       if (reply === null) return null;
       const value = -reply;
       if (value > best) {
         best = value;
         bestMove = move;
+        if (isRoot) {
+          bestRootMove = move;
+          bestRootScore = value;
+        }
       }
       if (value > alpha) alpha = value;
       if (alpha >= beta) break;
     }
 
-    if (isRoot) bestRootMove = bestMove;
     const bound: Bound = best <= alphaOriginal ? 'upper' : best >= betaOriginal ? 'lower' : 'exact';
     const previous = table.get(key);
     if (!previous || bound === 'exact' || previous.bound !== 'exact') {
@@ -239,9 +265,34 @@ export function solveEndgame(
     return best;
   }
 
-  const value = visit(state, -2, 2, true);
+  const maximum = optimizeMateDistance ? 128 : 1;
+  const value = visit(state, -maximum - 1, maximum + 1, 0, true);
   if (aborted || value === null || bestRootMove === null) {
-    return { solved: false, move: null, value: 0, nodes };
+    // At the root, an improving draw or win is exact: a fail-high move is
+    // searched inside the window, while an upper bound cannot improve alpha.
+    const guaranteedValue = bestRootScore > 0 ? 1 : bestRootScore === 0 ? 0 : null;
+    return {
+      // Any proved win settles the root's WDL outcome, even if a faster win
+      // may remain undiscovered. A proved draw alone does not settle it.
+      solved: guaranteedValue === 1,
+      move: guaranteedValue === null ? null : bestRootMove,
+      value: guaranteedValue ?? 0,
+      nodes,
+      guaranteedValue,
+      matePlies: guaranteedValue === 1 && optimizeMateDistance ? 128 - bestRootScore : null,
+      shortestWinProven: false,
+      budgetExhausted: aborted,
+    };
   }
-  return { solved: true, move: bestRootMove, value, nodes };
+  const outcome = value > 0 ? 1 : value < 0 ? -1 : 0;
+  return {
+    solved: true,
+    move: bestRootMove,
+    value: outcome,
+    nodes,
+    guaranteedValue: outcome === 1 ? 1 : outcome === 0 ? 0 : null,
+    matePlies: optimizeMateDistance && outcome !== 0 ? 128 - Math.abs(value) : null,
+    shortestWinProven: optimizeMateDistance && outcome > 0,
+    budgetExhausted: false,
+  };
 }
