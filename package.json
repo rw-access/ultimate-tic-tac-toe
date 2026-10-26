@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.worker.json && vite build --base=./ --outDir dist/play/ultimate-tic-tac-toe && node scripts/stage-legacy-assets.mjs",
+    "build": "node scripts/clean-build.mjs && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.worker.json && vite build --base=./ --outDir dist/play/ultimate-tic-tac-toe",
     "dev:worker": "npm run build && wrangler dev",
     "deploy:worker": "node scripts/deploy-worker.mjs",
     "preview": "vite preview",

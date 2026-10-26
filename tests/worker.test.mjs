@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -102,14 +102,19 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   const modelResponse = await fetch(`${base}${APP_PATH}/models/policy-value.onnx`);
   assert.equal(modelResponse.status, 200);
 
-  const legacyPage = await fetch(`${base}${LEGACY_APP_PATH}/?room=ABCD2345`);
-  assert.equal(legacyPage.status, 200);
-  assert.equal(await legacyPage.text(), html);
-  const legacyScript = await fetch(new URL(scriptPath, `${base}${LEGACY_APP_PATH}/`));
-  assert.equal(legacyScript.status, 200);
-  assert.match(legacyScript.headers.get('content-type'), /javascript/);
-  const legacyModel = await fetch(`${base}${LEGACY_APP_PATH}/models/policy-value.onnx`);
-  assert.equal(legacyModel.status, 200);
+  assert.equal(existsSync(join(root, 'dist', 'ultimate-tic-tac-toe')), false);
+  for (const suffix of ['', '/', '/models/policy-value.onnx', '/api/health']) {
+    const legacyResponse = await fetch(`${base}${LEGACY_APP_PATH}${suffix}?room=ABCD2345`, { redirect: 'manual' });
+    assert.equal(legacyResponse.status, 308);
+    const target = new URL(legacyResponse.headers.get('location'));
+    assert.equal(target.pathname, `${APP_PATH}${suffix || '/'}`);
+    assert.equal(target.search, '?room=ABCD2345');
+    // Wrangler dev rewrites redirects to a configured host back to localhost.
+    assert.ok(target.origin === 'https://rw-access.dev' || target.origin === base);
+  }
+  const retiredPost = await fetch(`${base}${LEGACY_APP_PATH}/api/rooms`, { method: 'POST', redirect: 'manual' });
+  assert.equal(retiredPost.status, 308);
+  assert.equal(new URL(retiredPost.headers.get('location')).pathname, `${APP_PATH}/api/rooms`);
 
   const createResponse = await fetch(`${base}${APP_PATH}/api/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(createResponse.status, 201);
@@ -119,8 +124,7 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   assert.equal(host.room.players, 1);
   assert.equal(JSON.stringify(host.room).includes(host.token), false);
 
-  // Legacy invites and the new /play/ URL must reach the same room namespace.
-  const joinResponse = await fetch(`${base}${LEGACY_APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  const joinResponse = await fetch(`${base}${APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(joinResponse.status, 200);
   const guest = await joinResponse.json();
   assert.equal(guest.seat, 'O');
@@ -131,7 +135,7 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   const wsUrl = `ws://127.0.0.1:${port}${APP_PATH}/api/rooms/${host.code}/socket`;
   const hostClient = await connectSeat(wsUrl, host.token);
   assert.equal(hostClient.snapshot.room.version, 0);
-  const guestClient = await connectSeat(wsUrl.replace(APP_PATH, LEGACY_APP_PATH), guest.token);
+  const guestClient = await connectSeat(wsUrl, guest.token);
   assert.equal(guestClient.snapshot.room.players, 2);
 
   const afterHostMove = nextMessage(guestClient.socket, message => message.type === 'snapshot' && message.room.version === 1);

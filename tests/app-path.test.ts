@@ -10,14 +10,10 @@ test('online URLs stay under the game prefix in production and at root in local 
   assert.equal(stripAppBasePath('/elsewhere/api/rooms'), null);
 });
 
-test('existing invites keep their legacy API prefix and path matching respects boundaries', () => {
-  const legacy = '/ultimate-tic-tac-toe';
-  assert.equal(appPath(`${legacy}/`, '/api/rooms'), `${legacy}/api/rooms`);
-  assert.equal(stripAppBasePath(`${legacy}/api/rooms`), '/api/rooms');
-  for (const base of [APP_BASE_PATH, legacy]) {
-    assert.equal(stripAppBasePath(base), '/');
-    assert.equal(stripAppBasePath(`${base}/`), '/');
-    assert.equal(stripAppBasePath(`${base}-other/api/rooms`), null);
-    assert.equal(appPath(`${base}/`, 'api/rooms'), `${base}/api/rooms`);
-  }
+test('only canonical app URLs are recognized and matching respects path boundaries', () => {
+  assert.equal(stripAppBasePath('/ultimate-tic-tac-toe/api/rooms'), null);
+  assert.equal(stripAppBasePath(APP_BASE_PATH), '/');
+  assert.equal(stripAppBasePath(`${APP_BASE_PATH}/`), '/');
+  assert.equal(stripAppBasePath(`${APP_BASE_PATH}-other/api/rooms`), null);
+  assert.equal(appPath(`${APP_BASE_PATH}/`, 'api/rooms'), `${APP_BASE_PATH}/api/rooms`);
 });
