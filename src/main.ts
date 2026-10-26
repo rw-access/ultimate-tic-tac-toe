@@ -12,6 +12,8 @@ import {
 import { ComputerPlayer, PositionAnalyzer, type Difficulty, type PositionAnalysis } from './ai-client';
 import { hasImmediateWin, missedImmediateWin, sacrificeMotif } from './review';
 import { LEGACY_STORAGE_KEYS, migrateLegacyStorage, readMigratedStorage, STORAGE_KEYS } from './storage';
+import { OnlineRoomConnection, createOnlineRoom as requestOnlineRoom, joinOnlineRoom as requestJoinOnlineRoom, roomInviteUrl, type OnlineConnectionStatus, type OnlineSeat } from './online-client';
+import { isRoomCode, normalizeRoomCode, type PublicRoom } from './multiplayer/core';
 
 const STORAGE_KEY = STORAGE_KEYS.game;
 const OPPONENT_KEY = STORAGE_KEYS.opponent;
@@ -23,7 +25,7 @@ if (!app) throw new Error('The game root element is missing.');
 migrateLegacyStorage();
 
 type ThemePreference = 'auto' | 'light' | 'dark';
-type OpponentMode = 'two-players' | 'computer';
+type OpponentMode = 'two-players' | 'computer' | 'online';
 type SideChoice = Player | 'random';
 type AnalysisView = 'position' | null;
 type ReviewMove = { before: GameState; after: GameState; move: number; number: number; player: Player };
@@ -86,6 +88,16 @@ let computerStatus = '';
 let computerSource: 'model' | 'search' | '' = '';
 let computerFailed = false;
 let computerRequestToken = 0;
+let draftRoomCode = '';
+let onlineSeat: OnlineSeat | null = null;
+let onlineConnection: OnlineRoomConnection | null = null;
+let onlineConnectionStatus: OnlineConnectionStatus = 'closed';
+let onlineSetupError = '';
+let onlineError = '';
+let onlineNotice = '';
+let onlineBusy = false;
+let onlineMovePending = false;
+let onlineVersion = 0;
 
 const systemTheme = window.matchMedia('(prefers-color-scheme: dark)');
 let themePreference: ThemePreference = 'auto';
@@ -151,7 +163,7 @@ function readOpponentPreference(): void {
 
 function persistOpponentPreference(): void {
   try {
-    localStorage.setItem(OPPONENT_KEY, JSON.stringify({ mode: opponentMode, difficulty, sideChoice }));
+    localStorage.setItem(OPPONENT_KEY, JSON.stringify({ mode: opponentMode === 'online' ? 'two-players' : opponentMode, difficulty, sideChoice }));
   } catch {
     // The selected opponent still works for this session when storage is unavailable.
   }
@@ -631,7 +643,7 @@ function boardMarkup(board: number, legal: Set<number>, reviewedMove: number | n
   const result = state.results[board];
   const cells = state.boards[board]
     .map((mark, cell) => {
-      const playable = !reviewActive && !result && isLegal(state, board, cell) && !isComputerTurn();
+      const playable = !reviewActive && !result && isLegal(state, board, cell) && canPlayTurn();
       const suggested = hintMove === board * 9 + cell;
       const isReviewedMove = reviewedMove === board * 9 + cell;
       const classes = [
@@ -666,6 +678,47 @@ function boardMarkup(board: number, legal: Set<number>, reviewedMove: number | n
   </section>`;
 }
 
+function formatRoomCode(code: string): string {
+  return `${code.slice(0, 4)} ${code.slice(4)}`;
+}
+
+function onlineTurnTitle(): string {
+  if (!onlineSeat) return onlineBusy ? 'Setting up room…' : 'Online game';
+  if (state.winner === 'draw') return 'Draw';
+  if (state.winner) return state.winner === onlineSeat.seat ? 'You win' : `${state.winner} wins`;
+  if (onlineConnectionStatus === 'reconnecting') return 'Reconnecting…';
+  if (onlineConnectionStatus !== 'connected') return 'Connecting…';
+  if (onlineSeat.room.players < 2) return 'Waiting for player';
+  if (onlineMovePending) return 'Sending move…';
+  return state.turn === onlineSeat.seat ? 'Your turn' : `${state.turn} to play`;
+}
+
+function onlineStatusText(): string {
+  if (!onlineSeat) return onlineSetupError;
+  if (onlineError) return onlineError;
+  if (onlineConnectionStatus === 'error') return 'Reconnect by reopening the invite link.';
+  if (onlineConnectionStatus === 'reconnecting') return 'Connection interrupted · reconnecting…';
+  if (onlineConnectionStatus !== 'connected') return 'Connecting to the room…';
+  if (onlineSeat.room.players < 2) return 'Waiting for the other player to join.';
+  if (state.winner === 'draw') return 'Game drawn.';
+  if (state.winner) return state.winner === onlineSeat.seat ? 'You won the game.' : 'The other player won.';
+  if (onlineMovePending) return 'Move sent · waiting for the board update.';
+  return state.turn === onlineSeat.seat ? `You play ${onlineSeat.seat}.` : `Waiting for ${state.turn}.`;
+}
+
+function onlineRoomMarkup(): string {
+  if (!onlineSeat) return '';
+  const formattedCode = formatRoomCode(onlineSeat.code);
+  return `<section class="online-room" aria-label="Online game room">
+    <div class="online-room-info"><span>Room code</span><strong>${formattedCode}</strong><small>${onlineNotice || onlineStatusText()}</small></div>
+    <div class="online-room-actions">
+      <button class="analysis-button" type="button" data-action="copy-room-code">Copy code</button>
+      <button class="analysis-button" type="button" data-action="copy-room-link">Copy link</button>
+      <button class="analysis-button" type="button" data-action="leave-online">Leave</button>
+    </div>
+  </section>`;
+}
+
 function render(): void {
   const openDialogId = document.querySelector<HTMLDialogElement>('dialog[open]')?.id;
   const reviewPanelScrollTop = app!.querySelector<HTMLElement>('.review-panel')?.scrollTop ?? null;
@@ -685,18 +738,22 @@ function render(): void {
     : null;
   const legal = new Set(legalBoards(state));
   const title = reviewActive ? 'Game review'
-    : state.winner === 'draw' ? 'Draw'
+    : opponentMode === 'online' && onlineSeat && state.winner
+      ? state.winner === 'draw' ? 'Draw' : state.winner === onlineSeat.seat ? 'You win' : `${state.winner} wins`
+      : state.winner === 'draw' ? 'Draw'
       : state.winner ? state.winner + ' wins'
         : computerThinking ? 'Computer thinking…'
           : isComputerTurn() ? 'Computer to play'
-            : state.turn + ' to play';
+            : opponentMode === 'online' ? onlineTurnTitle()
+              : state.turn + ' to play';
   const kind = (state.winner === 'draw' ? 'draw' : state.winner ?? state.turn).toLowerCase();
   const status = reviewActive ? `Reviewing ${reviewPositionLabel()}`
     : computerStatus || (state.winner === 'draw' ? 'Game drawn.'
       : opponentMode === 'computer' && state.winner && state.winner !== humanSide ? 'Computer wins.'
         : opponentMode === 'computer' && state.winner === humanSide ? 'You win.'
-          : state.winner ? '' : computerSource === 'model' ? `Your turn · you play ${humanSide}.`
-            : computerSource === 'search' ? `You play ${humanSide} · computer uses basic search.` : '');
+          : opponentMode === 'online' ? onlineStatusText()
+            : state.winner ? '' : computerSource === 'model' ? `Your turn · you play ${humanSide}.`
+              : computerSource === 'search' ? `You play ${humanSide} · computer uses basic search.` : '');
 
   app!.innerHTML = `
     <main class="page-shell${reviewActive ? ' review-open' : ''}">
@@ -711,12 +768,13 @@ function render(): void {
       <div class="toolbar">
         <h2 class="turn-title turn-${kind}" aria-live="polite">${title}</h2>
         <div class="actions">
-          <button type="button" data-action="undo" aria-label="Undo" title="Undo"${undoStack.length && !reviewActive ? '' : ' disabled'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 5 8l4 4M5 8h8a6 6 0 1 1 0 12h-2" /></svg></button>
+          <button type="button" data-action="undo" aria-label="Undo" title="Undo"${undoStack.length && !reviewActive && opponentMode !== 'online' ? '' : ' disabled'}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 5 8l4 4M5 8h8a6 6 0 1 1 0 12h-2" /></svg></button>
           <button type="button" data-action="new-game" aria-label="New game" title="New game">+</button>
           <button type="button" data-action="howto" aria-label="How to play" title="How to play">?</button>
         </div>
       </div>
       <div class="computer-status" role="status" aria-live="polite" data-computer-source="${reviewActive ? '' : computerSource}">${status}${computerFailed && !reviewActive ? '<button class="retry-computer" type="button" data-action="retry-computer">Retry computer</button>' : ''}</div>
+      ${onlineRoomMarkup()}
       <div class="board-frame turn-${kind}" aria-label="Ultimate Tic-Tac-Toe board">
         <div class="big-board">${Array.from({ length: 9 }, (_, board) => boardMarkup(board, legal, reviewActive && reviewCursor > 0 ? reviewMoves[reviewCursor - 1]?.move ?? null : null)).join('')}</div>
       </div>
@@ -728,7 +786,7 @@ function render(): void {
         <div class="board-tools">
           <span class="hint-status" role="status" aria-live="polite">${hintPending ? 'Finding a move…' : hintMove !== null ? `Try ${boardMoveName(hintMove)}` : hintFailed ? 'Hint unavailable' : ''}</span>
           <div class="analysis-actions">
-            <button class="analysis-button" type="button" data-action="hint"${reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending ? ' disabled' : ''}>${hintPending ? 'Finding…' : hintMove !== null ? 'Hint shown' : 'Hint'}</button>
+            <button class="analysis-button" type="button" data-action="hint"${reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending || (opponentMode === 'online' && !canPlayTurn()) ? ' disabled' : ''}>${hintPending ? 'Finding…' : hintMove !== null ? 'Hint shown' : 'Hint'}</button>
             ${reviewActive || state.winner ? `<button class="analysis-button" type="button" data-action="review-toggle" aria-pressed="${reviewActive}">${reviewActive ? 'Exit review' : 'Review game'}</button>` : `<button class="analysis-button" type="button" data-action="analysis" aria-pressed="${analysisView === 'position'}">Analysis</button>`}
           </div>
         </div>
@@ -742,8 +800,14 @@ function render(): void {
         <div class="new-game-modes" role="group" aria-label="Game mode">
           <button class="mode-button${draftOpponentMode === 'two-players' ? ' is-selected' : ''}" type="button" data-new-game-mode="two-players" aria-label="Two players" aria-pressed="${draftOpponentMode === 'two-players'}">2 players</button>
           <button class="mode-button${draftOpponentMode === 'computer' ? ' is-selected' : ''}" type="button" data-new-game-mode="computer" aria-label="Play vs computer" aria-pressed="${draftOpponentMode === 'computer'}">Computer</button>
+          <button class="mode-button${draftOpponentMode === 'online' ? ' is-selected' : ''}" type="button" data-new-game-mode="online" aria-label="Play online" aria-pressed="${draftOpponentMode === 'online'}">Online</button>
         </div>
-        ${draftOpponentMode === 'computer' ? `<div class="new-game-computer-options">
+        ${draftOpponentMode === 'online' ? `<div class="online-setup">
+          <p>Play someone on another device.</p>
+          <button class="primary-button" type="button" data-action="create-online-room"${onlineBusy ? ' disabled' : ''}>${onlineBusy ? 'Connecting…' : 'Create room'}</button>
+          <div class="online-join-row"><label for="online-room-code">Have a code?</label><div><input id="online-room-code" type="text" inputmode="text" autocomplete="one-time-code" autocapitalize="characters" maxlength="10" placeholder="ABCD EFGH" value="${draftRoomCode}" data-action="online-room-code" aria-label="Room code" /><button class="analysis-button" type="button" data-action="join-online-room"${onlineBusy ? ' disabled' : ''}>Join</button></div></div>
+          ${onlineSetupError ? `<p class="online-setup-error" role="alert">${onlineSetupError}</p>` : ''}
+        </div>` : draftOpponentMode === 'computer' ? `<div class="new-game-computer-options">
           <div class="difficulty-setting">
             <div class="difficulty-heading"><label for="new-game-difficulty">Difficulty</label><small id="computer-difficulty-help">More search before each move.</small><strong>${difficultyLabel(draftDifficulty)}</strong></div>
             <input id="new-game-difficulty" class="difficulty-range" type="range" min="0" max="2" step="1" value="${DIFFICULTIES.indexOf(draftDifficulty)}" data-action="new-game-difficulty" aria-label="Computer difficulty" aria-valuetext="${difficultyLabel(draftDifficulty)}" aria-describedby="computer-difficulty-help" />
@@ -758,7 +822,7 @@ function render(): void {
         </div>` : ''}
         <div class="modal-actions">
           <button type="submit">Cancel</button>
-          <button class="primary-button" type="button" data-action="start-new-game">Start game</button>
+          ${draftOpponentMode === 'online' ? '' : '<button class="primary-button" type="button" data-action="start-new-game">Start game</button>'}
         </div>
       </form>
     </dialog>
@@ -814,10 +878,11 @@ function bindEvents(): void {
     button.addEventListener('click', () => {
       const board = Number(button.dataset.board);
       const cell = Number(button.dataset.cell);
-      if (reviewActive || isComputerTurn()) return;
+      if (!canPlayTurn()) return;
       if (!isLegal(state, board, cell)) return;
 
-      makeMove(board, cell);
+      if (opponentMode === 'online') submitOnlineMove(board, cell);
+      else makeMove(board, cell);
     });
 
     button.addEventListener('keydown', (event) => {
@@ -849,6 +914,21 @@ function bindEvents(): void {
     openNewGameMenu();
   });
   app!.querySelector<HTMLButtonElement>('[data-action="start-new-game"]')?.addEventListener('click', resetGame);
+  app!.querySelector<HTMLButtonElement>('[data-action="create-online-room"]')?.addEventListener('click', () => { void createOnlineGame(); });
+  app!.querySelector<HTMLButtonElement>('[data-action="join-online-room"]')?.addEventListener('click', () => {
+    const code = app!.querySelector<HTMLInputElement>('#online-room-code')?.value ?? draftRoomCode;
+    void joinOnlineGame(code);
+  });
+  app!.querySelector<HTMLInputElement>('#online-room-code')?.addEventListener('input', (event) => {
+    draftRoomCode = normalizeRoomCode((event.currentTarget as HTMLInputElement).value);
+  });
+  app!.querySelector<HTMLButtonElement>('[data-action="copy-room-code"]')?.addEventListener('click', () => {
+    if (onlineSeat) void copyOnlineInvite(formatRoomCode(onlineSeat.code), 'Room code');
+  });
+  app!.querySelector<HTMLButtonElement>('[data-action="copy-room-link"]')?.addEventListener('click', () => {
+    if (onlineSeat) void copyOnlineInvite(roomInviteUrl(onlineSeat.code), 'Invite link');
+  });
+  app!.querySelector<HTMLButtonElement>('[data-action="leave-online"]')?.addEventListener('click', leaveOnlineGame);
   app!.querySelector<HTMLButtonElement>('[data-action="undo"]')?.addEventListener('click', undoMove);
   app!.querySelector<HTMLButtonElement>('[data-action="retry-computer"]')?.addEventListener('click', retryComputerMove);
   app!.querySelector<HTMLButtonElement>('[data-action="hint"]')?.addEventListener('click', showHint);
@@ -909,9 +989,10 @@ function bindEvents(): void {
   app!.querySelectorAll<HTMLButtonElement>('[data-new-game-mode]').forEach((button) => {
     button.addEventListener('click', () => {
       const selectedMode = button.dataset.newGameMode;
-      if (selectedMode !== 'two-players' && selectedMode !== 'computer') return;
+      if (selectedMode !== 'two-players' && selectedMode !== 'computer' && selectedMode !== 'online') return;
       if (selectedMode === draftOpponentMode) return;
       draftOpponentMode = selectedMode;
+      onlineSetupError = '';
       render();
     });
   });
@@ -934,6 +1015,8 @@ function openNewGameMenu(): void {
   draftOpponentMode = opponentMode;
   draftDifficulty = difficulty;
   draftSideChoice = sideChoice;
+  draftRoomCode = onlineSeat?.code ?? '';
+  onlineSetupError = '';
   render();
   openDialog('new-game-dialog');
 }
@@ -976,7 +1059,7 @@ function makeMove(board: number, cell: number, computerMove = false, source?: 'm
 }
 
 function undoMove(): void {
-  if (reviewActive) return;
+  if (reviewActive || opponentMode === 'online') return;
   cancelComputerMove();
   cancelAnalysisWork();
   // In computer mode, undo the complete X/O exchange. While O is still thinking,
@@ -1009,6 +1092,16 @@ function resetGame(): void {
   reviewPending = false;
   reviewUnavailable = 0;
   reviewHistoryAvailable = true;
+  onlineConnection?.close();
+  onlineConnection = null;
+  onlineSeat = null;
+  onlineConnectionStatus = 'closed';
+  onlineSetupError = '';
+  onlineError = '';
+  onlineNotice = '';
+  onlineMovePending = false;
+  onlineBusy = false;
+  setRoomQuery(null);
   cancelComputerMove();
   cancelAnalysisWork();
   opponentMode = draftOpponentMode;
@@ -1037,6 +1130,220 @@ function isComputerTurn(): boolean {
   return opponentMode === 'computer' && state.turn !== humanSide && state.winner === null;
 }
 
+function canPlayTurn(): boolean {
+  if (reviewActive || state.winner) return false;
+  if (opponentMode === 'computer') return !isComputerTurn();
+  if (opponentMode === 'online') {
+    return onlineSeat !== null && onlineSeat.room.players === 2 && onlineConnectionStatus === 'connected'
+      && onlineSeat.seat === state.turn && !onlineMovePending;
+  }
+  return true;
+}
+
+function reconstructOnlineRoom(room: PublicRoom): { state: GameState; undo: GameState[] } | null {
+  if (!Array.isArray(room.moves) || room.version !== room.moves.length) return null;
+  let replay = createGame();
+  const undo: GameState[] = [];
+  for (const move of room.moves) {
+    if (!Number.isInteger(move) || move < 0 || move >= 81) return null;
+    const board = Math.floor(move / 9);
+    const cell = move % 9;
+    if (!isLegal(replay, board, cell)) return null;
+    undo.push(snapshot(replay));
+    replay = play(replay, board, cell);
+  }
+  const reported = restoreGame(room.state);
+  if (!reported || JSON.stringify(reported) !== JSON.stringify(replay)) return null;
+  return { state: reported, undo };
+}
+
+function applyOnlineSnapshot(room: PublicRoom): void {
+  if (!onlineSeat || room.code !== onlineSeat.code || room.version < onlineVersion) return;
+  const restored = reconstructOnlineRoom(room);
+  if (!restored) {
+    onlineError = 'The room sent an invalid game state.';
+    onlineMovePending = false;
+    render();
+    return;
+  }
+  const previousResults = [...state.results];
+  state = restored.state;
+  undoStack = restored.undo;
+  onlineSeat = { ...onlineSeat, room };
+  onlineVersion = room.version;
+  onlineMovePending = false;
+  onlineError = '';
+  animatingBoards = new Set(
+    state.results.flatMap((result, index) => previousResults[index] === null && result !== null ? [index] : []),
+  );
+  cancelAnalysisWork();
+  render();
+}
+
+function setRoomQuery(code: string | null): void {
+  const url = new URL(window.location.href);
+  if (code) url.searchParams.set('room', code);
+  else url.searchParams.delete('room');
+  window.history.replaceState(null, '', url);
+}
+
+function activateOnlineSeat(seat: OnlineSeat): void {
+  const restored = reconstructOnlineRoom(seat.room);
+  if (!restored) {
+    onlineSetupError = 'The room sent an invalid game state.';
+    render();
+    return;
+  }
+  onlineConnection?.close();
+  cancelComputerMove();
+  cancelAnalysisWork();
+  reviewActive = false;
+  reviewFinalState = null;
+  reviewSnapshots = [];
+  reviewMoves = [];
+  reviewItems = [];
+  reviewEvaluations = [];
+  reviewCursor = 0;
+  opponentMode = 'online';
+  onlineSeat = seat;
+  onlineVersion = seat.room.version;
+  onlineConnectionStatus = 'connecting';
+  onlineSetupError = '';
+  onlineError = '';
+  onlineNotice = '';
+  onlineMovePending = false;
+  onlineBusy = false;
+  state = restored.state;
+  undoStack = restored.undo;
+  computerMoves.clear();
+  computerStatus = '';
+  computerSource = '';
+  computerFailed = false;
+  setRoomQuery(seat.code);
+  persistOpponentPreference();
+  const dialog = document.getElementById('new-game-dialog');
+  if (dialog instanceof HTMLDialogElement && dialog.open) dialog.close();
+  render();
+
+  const connection = new OnlineRoomConnection(seat, {
+    onStatus(status) {
+      if (onlineSeat?.code !== seat.code) return;
+      onlineConnectionStatus = status;
+      render();
+    },
+    onMessage(message) {
+      if (onlineSeat?.code !== seat.code) return;
+      if (message.type === 'snapshot') {
+        if (message.seat && message.seat !== seat.seat) {
+          onlineError = 'This room connection belongs to a different seat.';
+          render();
+          return;
+        }
+        applyOnlineSnapshot(message.room);
+      } else {
+        if (message.room) applyOnlineSnapshot(message.room);
+        onlineError = message.message;
+        onlineMovePending = false;
+        render();
+      }
+    },
+    onError(message) {
+      if (onlineSeat?.code !== seat.code) return;
+      onlineError = message;
+      onlineMovePending = false;
+      render();
+    },
+  });
+  onlineConnection = connection;
+  connection.connect();
+}
+
+async function createOnlineGame(): Promise<void> {
+  if (onlineBusy) return;
+  onlineBusy = true;
+  onlineSetupError = '';
+  render();
+  try {
+    const seat = await requestOnlineRoom();
+    onlineBusy = false;
+    activateOnlineSeat(seat);
+  } catch (error: unknown) {
+    onlineBusy = false;
+    onlineSetupError = error instanceof Error ? error.message : 'Could not create a room.';
+    render();
+  }
+}
+
+async function joinOnlineGame(input: string, fromInvite = false): Promise<void> {
+  if (onlineBusy) return;
+  draftRoomCode = normalizeRoomCode(input);
+  if (fromInvite) {
+    opponentMode = 'online';
+    state = createGame();
+    undoStack = [];
+    computerMoves.clear();
+  }
+  onlineBusy = true;
+  onlineSetupError = '';
+  render();
+  try {
+    const seat = await requestJoinOnlineRoom(draftRoomCode);
+    onlineBusy = false;
+    activateOnlineSeat(seat);
+  } catch (error: unknown) {
+    onlineBusy = false;
+    onlineSetupError = error instanceof Error ? error.message : 'Could not join the room.';
+    draftOpponentMode = 'online';
+    render();
+    if (fromInvite) openDialog('new-game-dialog');
+  }
+}
+
+async function copyOnlineInvite(value: string, label: string): Promise<void> {
+  try {
+    if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable.');
+    await navigator.clipboard.writeText(value);
+    onlineNotice = `${label} copied.`;
+  } catch {
+    onlineNotice = `Copy this ${label.toLowerCase()}: ${value}`;
+  }
+  render();
+}
+
+function leaveOnlineGame(): void {
+  onlineConnection?.close();
+  onlineConnection = null;
+  onlineSeat = null;
+  onlineConnectionStatus = 'closed';
+  onlineError = '';
+  onlineNotice = '';
+  onlineMovePending = false;
+  onlineSetupError = '';
+  onlineBusy = false;
+  opponentMode = 'two-players';
+  humanSide = 'X';
+  state = createGame();
+  undoStack = [];
+  computerMoves.clear();
+  setRoomQuery(null);
+  persistOpponentPreference();
+  persist();
+  render();
+}
+
+function submitOnlineMove(board: number, cell: number): void {
+  if (!onlineConnection || !onlineSeat || !canPlayTurn()) return;
+  onlineMovePending = true;
+  onlineError = '';
+  onlineNotice = '';
+  const sent = onlineConnection.sendMove(board, cell, onlineVersion);
+  if (!sent) {
+    onlineMovePending = false;
+    onlineError = 'Reconnecting to the room…';
+  }
+  render();
+}
+
 function cancelComputerMove(): void {
   computerRequestToken += 1;
   if (computerThinking) computer.cancel();
@@ -1063,7 +1370,8 @@ function cancelAnalysisWork(): void {
 }
 
 function showHint(): void {
-  if (reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending) return;
+  if (reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending
+    || opponentMode === 'online' && !canPlayTurn()) return;
   analysisToken += 1;
   analyzer.cancel();
   const token = ++hintToken;
@@ -1377,4 +1685,6 @@ function retryComputerMove(): void {
 readOpponentPreference();
 loadSavedGame();
 render();
+const inviteRoomCode = normalizeRoomCode(new URLSearchParams(window.location.search).get('room') ?? '');
+if (isRoomCode(inviteRoomCode)) void joinOnlineGame(inviteRoomCode, true);
 scheduleComputerMove();

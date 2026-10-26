@@ -4,6 +4,9 @@ test-results/
 playwright-report/
 *.local
 .env*
+.dev.vars
+.wrangler/
+.wrangler.deploy.jsonc
 
 .venv/
 __pycache__/

@@ -1,11 +1,13 @@
 # Ultimate Tic-Tac-Toe
 
-A browser game for two people sharing a screen, or one person against a computer.
-Built with TypeScript and Vite; no backend or accounts needed.
+A browser game for local two-player play, invite-only online rooms, or one person
+against a computer. The game and AI are written in TypeScript and run in the
+browser; online rooms use a small Cloudflare Worker backend. No accounts or
+matchmaking are required.
 
 Win three little boards in a row to win the big board. Your square sends your opponent to the matching little board. If that board has already finished, they may choose any open board. Drawn boards close without belonging to either player.
 
-Tap a square once to play. The **+** button opens the new-game menu for two players or computer play; in computer games, choose difficulty and play as X, O, or a random side. The **?** button opens the rules page. **Hint** highlights one suggested move. **Analysis** opens the estimated X/O advantage and best line, with an alternative line tucked away. The estimate is not calibrated win odds. After a game, **Review game** checks your moves for missed immediate wins and replies that allow an immediate loss. Undo and browser-local saves make it easy to pick up where you left off.
+Tap a square once to play. The **+** button opens the new-game menu for local two-player, online, or computer play. Online games create an eight-character room code and a shareable link; one opponent joins, and turns are checked by the room server. In computer games, choose difficulty and play as X, O, or a random side. The **?** button opens the rules page. **Hint** highlights one suggested move. **Analysis** opens the estimated X/O advantage and best line, with an alternative line tucked away. The estimate is not calibrated win odds. After a game, **Review game** checks your moves for missed immediate wins and replies that allow an immediate loss. Undo and browser-local saves make it easy to pick up where you left off.
 
 Choose **Computer** in the new-game menu to play against the model. Easy samples
 the trained model's move preferences; Medium and Hard add progressively larger
@@ -32,10 +34,16 @@ npm ci
 npm run dev
 ```
 
+`npm run dev` serves the static game. Use `npm run dev:worker` to build it and
+run the Worker, room API, and Durable Objects locally. The Worker serves Vite's
+`dist/` assets itself; `/api/*` requests go to the room API, so local and
+deployed online play use one origin.
+
 ## Checks
 
 ```sh
 npm test
+npm run test:worker
 npm run build
 npx playwright install chromium
 npm run test:browser
@@ -44,7 +52,28 @@ npm run test:production
 
 `npm run build` produces portable static files in `dist/`, with relative asset URLs so the game works at a site root or under a URL prefix. Serve the directory with any static web server. `npm run preview` previews a build locally.
 
-Games and preferences stay in your browser's local storage. Players on separate devices have independent games; this is a pass-and-play game, without network multiplayer.
+`wrangler.jsonc` configures Cloudflare Workers Static Assets and one SQLite-backed
+Durable Object per room. Rooms are authoritative, accept only legal moves from
+the correct seat, reconnect using a browser-stored seat token, and expire after
+24 hours without activity. Only the room code is in the invite URL; seat tokens
+are not shared with the opponent.
+
+## Cloudflare deployment
+
+The deploy script builds and type-checks both the browser app and Worker before
+calling Wrangler. It never runs as part of tests or the ordinary build.
+
+```sh
+npm run deploy:worker -- --dry-run
+npm run deploy:worker -- --name ultimate-tic-tac-toe --domain play.example.com
+```
+
+The worker name can also come from `UTTT_WORKER_NAME`. The production custom
+domain, `play.rw-access.dev`, is set in `wrangler.jsonc`; additional custom
+domains can be passed with `--domain` or `UTTT_CUSTOM_DOMAIN`. Authenticate
+Wrangler with `wrangler login`, or provide `CLOUDFLARE_API_TOKEN` and
+`CLOUDFLARE_ACCOUNT_ID` in the environment. A real deploy creates any requested
+custom-domain routes.
 
 ## Offline training
 
@@ -60,32 +89,18 @@ See [training/README.md](training/README.md) for setup and commands, and
 checkpoint's provenance and measured results. Training data and Python
 environments stay out of Git.
 
-The bundled checkpoint is R10: a policy/value network with 280 inputs and
+The bundled checkpoint is R16: a policy/value network with 280 inputs and
 512/256 hidden units, exported as a 1,186,321-byte ONNX file (about 1.13 MiB).
 Inputs include mini-board wins and draws, legal cells, and the forced
 destination. Hard mode searches in a web worker with a 140 ms search budget;
 model loading and the first inference take longer.
 
-At 64 simulations per move, a fixed independent 4,096-game match against R09
-scored 54.88% (paired 95% interval 53.61%–56.15%; draws count half). R10 also
-scored 97.80% against heuristic search over 1,024 games at equal 64-simulation
-budgets; R09 scored 95.26% on the same paired cases. A separate 64-game browser
-match at the actual Hard setting initially scored 55.47%. A larger fresh
-128-pair browser match (256 games, seed 19106142) scored 57.81% (89 wins, 118
-draws, 49 losses; paired 95% interval 53.54%–62.08%). It used the unchanged
-R10 Hard worker at 140 ms and is reported separately from the earlier small
-sample. Warm responses had a 140.5 ms median and 141 ms p95 on the test
-machine; physical devices can differ. This supports an R10 edge in this browser
-setting, not a general playing-strength rating.
-To check the apparent X advantage, an R10 mirror match started 512 games from
-the empty board at 64 simulations per move; all 512 ended in draws, with no X
-or O wins observed. This gives no evidence of a first-player edge in that
-sample, but does not prove perfect-play symmetry.
-
-The current fit used a rolling replay window of about 18,400 games / 900,000
-positions. The longer session recorded 86,550 unique self-play games, including
-900 named holdout games and experimental branches. See
-[the session plan](plans/training-2026-10-25-12h.md) for results and limitations.
+R16 scored 55.03% against R10 over 4,096 paired games (97.5% interval
+53.57%–56.49%). Against heuristic search it scored 98.63%, compared with
+R10's 97.85%; the estimated 0.78-point gain remains uncertain (97.5% interval
+−0.30 to +1.86). These results support the direct R16-over-R10 choice, not a
+proven heuristic-strength increase. See the [session report](plans/training-2026-10-25-12h.md)
+for details and limits.
 
 Run the Python checks after installing the training dependencies:
 

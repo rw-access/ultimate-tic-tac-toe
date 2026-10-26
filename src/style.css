@@ -125,6 +125,22 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .actions button:hover { background: var(--accent-hover); }
 .actions button:disabled { opacity: .3; }
 .computer-status { display: flex; align-items: center; gap: 8px; min-height: 20px; margin: -4px 0 8px; color: var(--accent); font-size: 12px; }
+.online-room { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 10px; margin: -3px 0 9px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); }
+.online-room-info { display: grid; gap: 2px; min-width: 0; }
+.online-room-info > span { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+.online-room-info > strong { color: var(--accent); font-size: 19px; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
+.online-room-info > small { color: var(--muted); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }
+.online-room-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.online-room-actions .analysis-button { min-height: 32px; padding: 0 9px; }
+.online-setup { display: grid; gap: 14px; margin: 0 0 22px; }
+.online-setup > p { margin: 0; color: var(--muted); }
+.online-setup > .primary-button { justify-self: start; }
+.online-join-row { display: grid; gap: 6px; }
+.online-join-row > label { color: var(--muted); font-size: 13px; font-weight: 700; }
+.online-join-row > div { display: flex; gap: 7px; }
+.online-join-row input { width: 100%; min-width: 0; min-height: 42px; padding: 0 11px; border: 1px solid var(--border); border-radius: 4px; color: var(--text); background: var(--surface-raised); font-size: 16px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.online-join-row .analysis-button { flex: 0 0 auto; }
+.online-setup-error { color: var(--warning) !important; font-weight: 700; }
 .retry-computer { padding: 4px 7px; border: 1px solid var(--border); border-radius: 4px; color: var(--text); background: var(--surface-raised); font-size: 11px; font-weight: 700; }
 .analysis-panel { display: grid; gap: 6px; margin: -2px 0 9px; padding: 8px 10px; border-radius: 6px; background: var(--panel); }
 .analysis-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
@@ -185,6 +201,7 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .modal h2 { margin: 0 0 20px; font-size: 25px; }
 .modal p { font-size: 15px; line-height: 1.5; }
 .new-game-modes { display: inline-flex; gap: 2px; margin-bottom: 20px; padding: 3px; border-radius: 6px; background: var(--surface); }
+.new-game-modes .mode-button { padding-inline: 10px; }
 .new-game-computer-options { display: grid; gap: 18px; margin: 0 0 24px; }
 .new-game-computer-options .difficulty-setting { width: min(300px, 100%); }
 .side-picker { margin: 0; padding: 0; border: 0; }
@@ -344,6 +361,11 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
   .difficulty-heading small { font-size: 11px; white-space: normal; }
   .difficulty-labels { font-size: 13px; }
   .computer-status { font-size: 14px; }
+  .online-room { grid-template-columns: minmax(0, 1fr); }
+  .online-room-actions { justify-content: flex-start; }
+  .online-room-actions .analysis-button { min-height: 36px; font-size: 13px; }
+  .online-setup > p, .online-join-row > label { font-size: 15px; }
+  .online-join-row .analysis-button { min-height: 42px; }
   .retry-computer { font-size: 13px; }
   .analysis-heading strong { font-size: 14px; }
   .analysis-note, .advantage-side { font-size: 12px; }
