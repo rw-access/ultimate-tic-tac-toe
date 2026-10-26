@@ -45,12 +45,6 @@ async function createRoom(env: Env): Promise<Response> {
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const legacyPath = '/ultimate-tic-tac-toe';
-    if (url.pathname === legacyPath || url.pathname.startsWith(`${legacyPath}/`)) {
-      const target = new URL(`https://rw-access.dev/play${url.pathname}${url.pathname === legacyPath ? '/' : ''}`);
-      target.search = url.search;
-      return Response.redirect(target, 308);
-    }
     if (url.pathname === '/') {
       url.pathname = `${APP_BASE_PATH}/`;
       return Response.redirect(url, 302);

@@ -105,16 +105,9 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   assert.equal(existsSync(join(root, 'dist', 'ultimate-tic-tac-toe')), false);
   for (const suffix of ['', '/', '/models/policy-value.onnx', '/api/health']) {
     const legacyResponse = await fetch(`${base}${LEGACY_APP_PATH}${suffix}?room=ABCD2345`, { redirect: 'manual' });
-    assert.equal(legacyResponse.status, 308);
-    const target = new URL(legacyResponse.headers.get('location'));
-    assert.equal(target.pathname, `${APP_PATH}${suffix || '/'}`);
-    assert.equal(target.search, '?room=ABCD2345');
-    // Wrangler dev rewrites redirects to a configured host back to localhost.
-    assert.ok(target.origin === 'https://rw-access.dev' || target.origin === base);
+    assert.equal(legacyResponse.status, 404);
+    assert.equal(legacyResponse.headers.get('location'), null);
   }
-  const retiredPost = await fetch(`${base}${LEGACY_APP_PATH}/api/rooms`, { method: 'POST', redirect: 'manual' });
-  assert.equal(retiredPost.status, 308);
-  assert.equal(new URL(retiredPost.headers.get('location')).pathname, `${APP_PATH}/api/rooms`);
 
   const createResponse = await fetch(`${base}${APP_PATH}/api/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(createResponse.status, 201);

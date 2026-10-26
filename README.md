@@ -72,11 +72,9 @@ npm run deploy:worker
 
 The Worker name can also come from `UTTT_WORKER_NAME`. The production route is
 `rw-access.dev/play/ultimate-tic-tac-toe/`, configured in `wrangler.jsonc`.
-The portfolio at `rw-access.dev/play/` provides the game catalog. The existing
-`play.rw-access.dev/ultimate-tic-tac-toe/` address permanently redirects to the
-canonical `/play/ultimate-tic-tac-toe/` URL, including requests for old assets
-and APIs. The build publishes only the canonical asset tree. Browser-stored
-multiplayer seats from the old origin are not migrated.
+The portfolio at `rw-access.dev/play/` provides the game catalog. The Worker
+serves only the canonical `/play/ultimate-tic-tac-toe/` prefix, and the build
+publishes only that asset tree.
 Authenticate Wrangler with `wrangler login`, or provide `CLOUDFLARE_API_TOKEN`
 and `CLOUDFLARE_ACCOUNT_ID` in the environment.
 
