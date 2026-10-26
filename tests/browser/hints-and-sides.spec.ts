@@ -2,72 +2,35 @@ import { test, expect } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 import { createGame, legalBoards, play, type GameState } from '../../src/game';
 
-function forcedWinState(): GameState {
-  const boards: GameState['boards'] = Array.from({ length: 9 }, () => Array(9).fill(null));
-  const winners = ['O', 'O', 'X', 'X', null, 'O', 'X', 'O', null] as const;
-  for (let board = 0; board < 9; board += 1) {
-    const winner = winners[board];
-    if (!winner) continue;
-    const other = winner === 'X' ? 'O' : 'X';
-    boards[board] = [winner, winner, winner, other, null, null, null, null, null];
-    if ((board === 0 || board === 1) && winner === 'O') boards[board][4] = 'X';
-    if ((board === 2 || board === 3) && winner === 'X') boards[board][4] = 'O';
-  }
-  boards[4] = [null, null, null, 'O', 'X', 'X', 'O', 'X', 'O'];
-  boards[8] = ['X', null, 'O', 'X', null, 'X', 'O', 'X', 'X'];
-  const x = boards.flat().filter(mark => mark === 'X').length;
-  const o = boards.flat().filter(mark => mark === 'O').length;
-  const state = createGame();
-  state.boards = boards;
-  state.turn = x === o + 1 ? 'O' : 'X';
-  state.forced = 4;
-  state.moves = x + o;
-  return state;
-}
-
-test('Hint gives one move; Analysis opens a separate meter and line view', async ({ page }) => {
+test('Hint gives one move when playing the computer', async ({ page }) => {
+  await page.route('**/models/policy-value.onnx', route => route.fulfill({ status: 404, body: 'use search fallback' }));
   await page.goto('/');
+  await page.getByRole('button', { name: 'New game' }).click();
+  const setup = page.getByRole('dialog', { name: 'New game' });
+  await setup.getByRole('button', { name: 'Play vs computer' }).click();
+  await setup.getByRole('button', { name: 'X', exact: true }).click();
+  await setup.getByRole('button', { name: 'Start game' }).click();
+
   await expect(page.locator('.analysis-panel')).toHaveCount(0);
   await expect(page.locator('#analysis-dialog')).toHaveCount(0);
-  const analysisToggle = page.getByRole('button', { name: 'Analysis', exact: true });
-  await analysisToggle.hover();
-  await expect(page.locator('#analysis-dialog')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hint', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Hint', exact: true }).click();
   await expect(page.locator('.cell-suggested')).toHaveCount(1, { timeout: 20000 });
   await expect(page.locator('.analysis-panel')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Hint shown' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toBeVisible();
-
-  await analysisToggle.click();
-  const dialog = page.getByRole('dialog', { name: 'Position analysis' });
-  await expect(dialog).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(dialog.locator('.advantage-track')).toBeVisible({ timeout: 20000 });
-  await expect(dialog.locator('.advantage-track')).toHaveAttribute('role', 'meter');
-  await expect(dialog.locator('.candidate-lines .candidate-line')).toHaveCount(1);
-  await expect(dialog.locator('.alternative-lines')).toHaveCount(1);
-  await expect(dialog.locator('.alternative-lines')).not.toHaveAttribute('open', '');
-  await expect(dialog.getByText('not win odds')).toBeVisible();
-  await dialog.getByRole('button', { name: 'Done' }).click();
-  await expect(dialog).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 });
 
-test('analysis proves the screenshot position is a forced O win', async ({ page }) => {
+test('live Hint and Analysis stay unavailable in two-player mode', async ({ page }) => {
   await page.goto('/');
-  const state = forcedWinState();
-  await page.evaluate(saved => localStorage.setItem('ultimate-tic-tac-toe:v1', JSON.stringify({ version: 1, state: saved, undo: [] })), state);
-  await page.reload();
-  await expect(page.locator('.turn-title')).toHaveText('O to play');
+  await expect(page.getByRole('button', { name: 'Hint', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Analysis', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Position analysis' });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByText('O can force a win')).toBeVisible({ timeout: 10000 });
-  await expect(dialog.locator('.candidate-line code')).toHaveText('B5·1');
-  await expect(dialog.locator('.advantage-track')).toHaveAttribute('aria-valuetext', /O can force a win/);
-  await expect(dialog.locator('.advantage-track')).toHaveAttribute('aria-valuenow', '100');
+  await page.locator('[data-board="4"][data-cell="4"]').click();
+  await expect(page.getByRole('button', { name: 'Hint', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 });
 
 test('a completed game can be reviewed move by move', async ({ page }) => {
@@ -246,7 +209,7 @@ test('a completed game can be reviewed move by move', async ({ page }) => {
   expect(await page.evaluate(() => localStorage.getItem('ultimate-tic-tac-toe:v1'))).toBe(savedGame);
 });
 
-test('the board stays fixed while an open analysis updates after the computer moves', async ({ page }) => {
+test('Hint stays disabled for the computer opening and enables on the human O turn', async ({ page }) => {
   await page.route('**/models/policy-value.onnx', async route => {
     await new Promise(resolve => setTimeout(resolve, 700));
     await route.fulfill({ status: 404, body: 'use search fallback' });
@@ -258,16 +221,12 @@ test('the board stays fixed while an open analysis updates after the computer mo
   await setup.getByRole('button', { name: 'O', exact: true }).click();
   await setup.getByRole('button', { name: 'Start game' }).click();
 
-  const board = page.locator('.board-frame');
-  const before = await board.evaluate(element => element.getBoundingClientRect().top);
-  await page.getByRole('button', { name: 'Analysis', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Position analysis' });
-  await expect(dialog).toBeVisible();
+  const hint = page.getByRole('button', { name: 'Hint', exact: true });
+  await expect(hint).toBeVisible();
+  await expect(hint).toBeDisabled();
   await expect(page.locator('.cell-x')).toHaveCount(1, { timeout: 20000 });
-  const after = await board.evaluate(element => element.getBoundingClientRect().top);
-  expect(Math.abs(after - before)).toBeLessThan(1);
-  await expect(dialog.locator('.advantage-track')).toBeVisible();
-  await expect(dialog.locator('.analysis-panel')).toHaveAttribute('data-position-moves', '1');
+  await expect(hint).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Analysis', exact: true })).toHaveCount(0);
 });
 
 test('a new computer game can assign O to the player so the computer opens as X', async ({ page }) => {

@@ -784,7 +784,16 @@ function render(): void {
         <div class="route-map" aria-label="${state.winner ? 'Game complete' : state.forced === null ? 'Any open board' : 'Play board ' + (state.forced + 1)}">
           ${Array.from({ length: 9 }, (_, i) => '<i class="' + (legal.has(i) ? 'lit' : '') + '"></i>').join('')}
         </div>
-        ${reviewActive || state.winner ? `<div class="board-tools"><div class="analysis-actions"><button class="analysis-button" type="button" data-action="review-toggle" aria-pressed="${reviewActive}">${reviewActive ? 'Exit review' : 'Review game'}</button></div></div>` : ''}
+        ${reviewActive || state.winner
+          ? `<div class="board-tools"><div class="analysis-actions"><button class="analysis-button" type="button" data-action="review-toggle" aria-pressed="${reviewActive}">${reviewActive ? 'Exit review' : 'Review game'}</button></div></div>`
+          : opponentMode === 'computer'
+            ? `<div class="board-tools">
+                <span class="hint-status" role="status" aria-live="polite">${hintPending ? 'Finding a move…' : hintMove !== null ? `Try ${boardMoveName(hintMove)}` : hintFailed ? 'Hint unavailable' : ''}</span>
+                <div class="analysis-actions">
+                  <button class="analysis-button" type="button" data-action="hint"${isComputerTurn() || computerThinking || hintPending ? ' disabled' : ''}>${hintPending ? 'Finding…' : hintMove !== null ? 'Hint shown' : 'Hint'}</button>
+                </div>
+              </div>`
+            : ''}
       </div>
       </div>
       ${reviewPanelMarkup()}
@@ -1365,8 +1374,7 @@ function cancelAnalysisWork(): void {
 }
 
 function showHint(): void {
-  if (reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending
-    || opponentMode === 'online' && !canPlayTurn()) return;
+  if (opponentMode !== 'computer' || reviewActive || state.winner || isComputerTurn() || computerThinking || hintPending) return;
   analysisToken += 1;
   analyzer.cancel();
   const token = ++hintToken;
@@ -1375,7 +1383,7 @@ function showHint(): void {
   hintPending = true;
   render();
   void analyzer.analyze(snapshot(state), 'hint').then(analysis => {
-    if (token !== hintToken || state.winner || isComputerTurn()) return;
+    if (token !== hintToken || opponentMode !== 'computer' || state.winner || isComputerTurn()) return;
     hintPending = false;
     hintMove = analysis.lines[0]?.[0] ?? null;
     hintFailed = hintMove === null;
