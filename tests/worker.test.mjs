@@ -8,7 +8,8 @@ import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const CODE_PATTERN = /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{8}$/;
-const APP_PATH = '/ultimate-tic-tac-toe';
+const APP_PATH = '/play/ultimate-tic-tac-toe';
+const LEGACY_APP_PATH = '/ultimate-tic-tac-toe';
 
 async function availablePort() {
   const server = createServer();
@@ -101,6 +102,15 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   const modelResponse = await fetch(`${base}${APP_PATH}/models/policy-value.onnx`);
   assert.equal(modelResponse.status, 200);
 
+  const legacyPage = await fetch(`${base}${LEGACY_APP_PATH}/?room=ABCD2345`);
+  assert.equal(legacyPage.status, 200);
+  assert.equal(await legacyPage.text(), html);
+  const legacyScript = await fetch(new URL(scriptPath, `${base}${LEGACY_APP_PATH}/`));
+  assert.equal(legacyScript.status, 200);
+  assert.match(legacyScript.headers.get('content-type'), /javascript/);
+  const legacyModel = await fetch(`${base}${LEGACY_APP_PATH}/models/policy-value.onnx`);
+  assert.equal(legacyModel.status, 200);
+
   const createResponse = await fetch(`${base}${APP_PATH}/api/rooms`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(createResponse.status, 201);
   const host = await createResponse.json();
@@ -109,7 +119,8 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   assert.equal(host.room.players, 1);
   assert.equal(JSON.stringify(host.room).includes(host.token), false);
 
-  const joinResponse = await fetch(`${base}${APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+  // Legacy invites and the new /play/ URL must reach the same room namespace.
+  const joinResponse = await fetch(`${base}${LEGACY_APP_PATH}/api/rooms/${host.code}/join`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   assert.equal(joinResponse.status, 200);
   const guest = await joinResponse.json();
   assert.equal(guest.seat, 'O');
@@ -120,7 +131,7 @@ test('local Worker serves the app and enforces real two-seat rooms over WebSocke
   const wsUrl = `ws://127.0.0.1:${port}${APP_PATH}/api/rooms/${host.code}/socket`;
   const hostClient = await connectSeat(wsUrl, host.token);
   assert.equal(hostClient.snapshot.room.version, 0);
-  const guestClient = await connectSeat(wsUrl, guest.token);
+  const guestClient = await connectSeat(wsUrl.replace(APP_PATH, LEGACY_APP_PATH), guest.token);
   assert.equal(guestClient.snapshot.room.players, 2);
 
   const afterHostMove = nextMessage(guestClient.socket, message => message.type === 'snapshot' && message.room.version === 1);

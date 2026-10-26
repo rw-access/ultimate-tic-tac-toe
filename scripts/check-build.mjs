@@ -5,8 +5,8 @@ import { extname, resolve, sep } from 'node:path';
 import { chromium, devices } from '@playwright/test';
 
 // Serve only beneath a prefix to catch accidental absolute asset URLs.
-const root = resolve('dist/ultimate-tic-tac-toe');
-const prefix = '/ultimate-tic-tac-toe/';
+const root = resolve('dist/play/ultimate-tic-tac-toe');
+const prefix = '/play/ultimate-tic-tac-toe/';
 const MAX_ONNX_MODEL_BYTES = 1_500_000;
 const modelBytes = await readFile(resolve(root, 'models/policy-value.onnx'));
 assert.ok(modelBytes.byteLength <= MAX_ONNX_MODEL_BYTES,

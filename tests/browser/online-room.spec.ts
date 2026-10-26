@@ -3,7 +3,7 @@ import { createGame, play } from '../../src/game';
 import type { PublicRoom } from '../../src/multiplayer/core';
 
 const CODE = 'ABCD2345';
-const APP_PATH = '/ultimate-tic-tac-toe';
+const APP_PATH = '/play/ultimate-tic-tac-toe';
 
 function room(state = createGame(), players = 2, version = 0, moves: number[] = []): PublicRoom {
   return { code: CODE, state, players, version, moves, status: players === 1 ? 'waiting' : 'playing' };

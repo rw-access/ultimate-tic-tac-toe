@@ -7,10 +7,14 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/ultimate-tic-tac-toe/api/*"],
+    "run_worker_first": ["/", "/play/ultimate-tic-tac-toe/api/*", "/ultimate-tic-tac-toe/api/*"],
     "not_found_handling": "single-page-application"
   },
   "routes": [
+    { "pattern": "rw-access.dev/play/ultimate-tic-tac-toe", "zone_name": "rw-access.dev" },
+    { "pattern": "rw-access.dev/play/ultimate-tic-tac-toe/*", "zone_name": "rw-access.dev" },
+    { "pattern": "www.rw-access.dev/play/ultimate-tic-tac-toe", "zone_name": "rw-access.dev" },
+    { "pattern": "www.rw-access.dev/play/ultimate-tic-tac-toe/*", "zone_name": "rw-access.dev" },
     { "pattern": "play.rw-access.dev/ultimate-tic-tac-toe", "zone_name": "rw-access.dev" },
     { "pattern": "play.rw-access.dev/ultimate-tic-tac-toe/*", "zone_name": "rw-access.dev" }
   ],

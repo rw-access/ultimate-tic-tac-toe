@@ -1,5 +1,5 @@
 import { isRoomCode, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from '../multiplayer/core.ts';
-import { stripAppBasePath } from '../app-path.ts';
+import { APP_BASE_PATH, stripAppBasePath } from '../app-path.ts';
 
 interface Env {
   ASSETS: Fetcher;
@@ -46,7 +46,7 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname === '/') {
-      url.pathname = '/ultimate-tic-tac-toe/';
+      url.pathname = `${APP_BASE_PATH}/`;
       return Response.redirect(url, 302);
     }
     const pathname = stripAppBasePath(url.pathname);

@@ -36,7 +36,7 @@ npm run dev
 
 `npm run dev` serves the static game at the Vite root. Use `npm run dev:worker`
 to build it and run the Worker, room API, and Durable Objects locally at
-`/ultimate-tic-tac-toe/`. The Worker serves the static assets and API from that
+`/play/ultimate-tic-tac-toe/`. The Worker serves the static assets and API from that
 path on one origin.
 
 ## Checks
@@ -50,9 +50,9 @@ npm run test:browser
 npm run test:production
 ```
 
-`npm run build` produces static files under `dist/ultimate-tic-tac-toe/`, with
+`npm run build` produces static files under `dist/play/ultimate-tic-tac-toe/`, with
 relative asset URLs. `npm run preview` previews the build at
-`/ultimate-tic-tac-toe/`.
+`/play/ultimate-tic-tac-toe/`.
 
 `wrangler.jsonc` configures Cloudflare Workers Static Assets and one SQLite-backed
 Durable Object per room. Rooms are authoritative, accept only legal moves from
@@ -71,7 +71,12 @@ npm run deploy:worker
 ```
 
 The Worker name can also come from `UTTT_WORKER_NAME`. The production route is
-`play.rw-access.dev/ultimate-tic-tac-toe/`, configured in `wrangler.jsonc`.
+`rw-access.dev/play/ultimate-tic-tac-toe/`, configured in `wrangler.jsonc`.
+The portfolio at `rw-access.dev/play/` provides the game catalog. The existing
+`play.rw-access.dev/ultimate-tic-tac-toe/` routes, assets, and API prefix remain
+available so previous invitations and browser-stored seat tokens keep working.
+Both URLs use the same Worker and room namespace; the build stages a second
+asset copy under `dist/ultimate-tic-tac-toe/` for compatibility.
 Authenticate Wrangler with `wrangler login`, or provide `CLOUDFLARE_API_TOKEN`
 and `CLOUDFLARE_ACCOUNT_ID` in the environment.
 
