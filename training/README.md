@@ -154,12 +154,13 @@ model to `public/models/policy-value.onnx` and its run details, validation
 losses, source dataset metadata, artifact size, and SHA-256 to
 `public/models/metadata.json`. The dataset stays local and is ignored by git.
 
-The bundled R16 checkpoint is a 280-input policy/value network with 512/256
-hidden units and is 1,186,321 bytes. In 4,096 paired games it scored 55.03%
-against R10 (97.5% interval 53.57–56.49%), establishing a head-to-head gain.
-Against heuristic search, R16 scored 98.63% versus R10's 97.85%; the estimated
-0.78-point difference remains uncertain (97.5% interval −0.30 to +1.86). See
-`plans/training-2026-10-25-12h.md` for the full training summary and
+The bundled R20 checkpoint is a 280-input policy/value network with 512/256
+hidden units and is 1,186,321 bytes. At equal 64-simulation search effort it
+scored 51.99% against R16 over 4,096 games with paired openings and swapped
+seats (95% paired interval 50.81–53.17%), establishing a head-to-head gain.
+The separate 99.96% score against the heuristic used an offline 1,024-simulation
+configuration with tactical proof and exact endgame search; it does not measure
+the browser difficulty modes. See `plans/model-r20-release-2026-10-26.md` and
 `public/models/metadata.json` for the bundled checkpoint details.
 
 Generation optimization improved a fixed 100-game, 24-simulation, seed-420

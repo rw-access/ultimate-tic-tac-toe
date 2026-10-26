@@ -1,0 +1,154 @@
+{
+  "equalSearchAgainstR16": {
+    "format": "ultimate-tic-tac-toe-paired-arena-v1",
+    "challengerModel": {
+      "model": "training/runs/session-20261026T0144MDT-r20/candidate.onnx",
+      "sha256": "cd561330a1666ed3286f3f411277144c335f096b4105190864b5adc49054f135"
+    },
+    "championModel": {
+      "model": "public/models/policy-value.onnx",
+      "sha256": "d3b655d11dc6385ac4810658e640bcf0f074c1655993765bb54d8363d538a3d7"
+    },
+    "pairs": 2048,
+    "games": 4096,
+    "simulations": 64,
+    "challengerValueMode": "model",
+    "championValueMode": "model",
+    "tacticalProof": false,
+    "seed": 2026102649,
+    "openingPlyCount": 2,
+    "openingProtocol": "same seeded two-ply random opening in both games of each pair; challenger and champion swap X/O",
+    "requestedParallelGames": 16,
+    "parallelGames": 16,
+    "challenger": {
+      "wins": 1441,
+      "draws": 1377,
+      "losses": 1278,
+      "games": 4096,
+      "scoreRate": 0.5198974609375
+    },
+    "pairedConfidence95": {
+      "lower": 0.5080712015459681,
+      "upper": 0.5317237203290319
+    },
+    "results": {
+      "pairs": {
+        "wins": 699,
+        "draws": 751,
+        "losses": 598
+      },
+      "pairedScoreRate": 0.5198974609375
+    },
+    "generatedAt": "2026-10-26T12:57:45.587Z",
+    "sourceReportSha256": "878af25985d38fb4dfdd9e7b0bb6b20d1e3f7fbd0b4acc1bd608c433f3bdd4be"
+  },
+  "offlineSearchProfile": {
+    "selectedAt": "2026-10-26T19:06:28.651855+00:00",
+    "status": "selected offline search configuration; no production model replacement",
+    "model": "r20-frozen/candidate.onnx",
+    "modelSha256": "cd561330a1666ed3286f3f411277144c335f096b4105190864b5adc49054f135",
+    "search": {
+      "simulations": 1024,
+      "tacticalProof": true,
+      "exactEndgame": true,
+      "endgameOptions": {
+        "maxEmptySquares": 18,
+        "maxNodes": 32000,
+        "timeMs": 36,
+        "optimizeMateDistance": true
+      }
+    },
+    "heuristicOpponent": {
+      "evaluator": "full TypeScript policy and value",
+      "simulations": 64,
+      "tacticalProof": false,
+      "exactEndgame": false
+    },
+    "heldoutSamples": [
+      {
+        "file": "mate1024-vs-heuristic-seed2694.json",
+        "seed": 2026102694,
+        "wins": 2046,
+        "draws": 1,
+        "losses": 1,
+        "games": 2048,
+        "scoreRate": 0.999267578125
+      },
+      {
+        "file": "mate1024-vs-heuristic-seed2695.json",
+        "seed": 2026102695,
+        "wins": 2048,
+        "draws": 0,
+        "losses": 0,
+        "games": 2048,
+        "scoreRate": 1
+      },
+      {
+        "file": "mate1024-vs-heuristic-seed2700.json",
+        "seed": 2026102700,
+        "wins": 255,
+        "draws": 1,
+        "losses": 0,
+        "games": 256,
+        "scoreRate": 0.998046875
+      },
+      {
+        "file": "mate1024-vs-heuristic-seed2704.json",
+        "seed": 2026102704,
+        "wins": 512,
+        "draws": 0,
+        "losses": 0,
+        "games": 512,
+        "scoreRate": 1
+      }
+    ],
+    "heldoutPooled": {
+      "games": 4864,
+      "wins": 4861,
+      "draws": 2,
+      "losses": 1,
+      "scoreRate": 0.9995888157894737,
+      "winRate": 0.9993832236842105,
+      "pairedConfidence95": {
+        "lower": 0.9963993079594158,
+        "upper": 1,
+        "method": "Exact perfect-pair probability bound; conservative lower bound on mean score"
+      }
+    },
+    "previousPassingSystemGate": {
+      "status": "pass",
+      "provisionalPass": true,
+      "completeSamples": 1,
+      "expectedSamples": 1,
+      "samples": [
+        {
+          "file": "mate1024-vs-legacy512-seed2689.json",
+          "seed": 2026102689,
+          "wins": 365,
+          "draws": 542,
+          "losses": 117,
+          "games": 1024,
+          "scoreRate": 0.62109375,
+          "pairs": 512
+        }
+      ],
+      "games": 1024,
+      "wins": 365,
+      "draws": 542,
+      "losses": 117,
+      "scoreRate": 0.62109375,
+      "winRate": 0.3564453125,
+      "pairs": 512,
+      "pairedConfidence95": {
+        "lower": 0.6020816601724601,
+        "upper": 0.6401058398275399,
+        "method": "Normal approximation over opening-pair scores"
+      }
+    },
+    "observed999TargetMet": true,
+    "population999Guarantee": false,
+    "webCommit": "4a083ef",
+    "webRuntimeIsDifferentProfile": true,
+    "productionModelReplaced": false
+  }
+}

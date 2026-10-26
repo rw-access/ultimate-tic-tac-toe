@@ -92,18 +92,20 @@ See [training/README.md](training/README.md) for setup and commands, and
 checkpoint's provenance and measured results. Training data and Python
 environments stay out of Git.
 
-The bundled checkpoint is R16: a policy/value network with 280 inputs and
+The bundled checkpoint is R20: a policy/value network with 280 inputs and
 512/256 hidden units, exported as a 1,186,321-byte ONNX file (about 1.13 MiB).
 Inputs include mini-board wins and draws, legal cells, and the forced
 destination. Hard mode searches in a web worker with a 140 ms search budget;
 model loading and the first inference take longer.
 
-R16 scored 55.03% against R10 over 4,096 paired games (97.5% interval
-53.57%–56.49%). Against heuristic search it scored 98.63%, compared with
-R10's 97.85%; the estimated 0.78-point gain remains uncertain (97.5% interval
-−0.30 to +1.86). These results support the direct R16-over-R10 choice, not a
-proven heuristic-strength increase. See the [session report](plans/training-2026-10-25-12h.md)
-for details and limits.
+At equal 64-simulation search effort, R20 scored 51.99% against the previously
+bundled R16 over 4,096 games with paired openings and swapped seats (95% paired
+interval 50.81%–53.17%; 1,441 wins, 1,377 draws, 1,278 losses).
+An offline R20 configuration with 1,024 simulations, tactical proof, and exact
+endgame search scored 99.96% against the 64-simulation heuristic over 4,864 games.
+Browser difficulty modes use different search budgets; that offline result is
+not their measured win rate. See the [R20 release notes](plans/model-r20-release-2026-10-26.md)
+for configuration and evidence.
 
 Run the Python checks after installing the training dependencies:
 
