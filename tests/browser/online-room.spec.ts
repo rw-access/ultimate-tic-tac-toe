@@ -11,6 +11,7 @@ function room(state = createGame(), players = 2, version = 0, moves: number[] = 
 
 test('online host creates a shareable room and submits authoritative moves', async ({ page }) => {
   let current = room();
+  let pushSnapshot: (snapshot: PublicRoom) => void = () => { throw new Error('Room socket is not connected'); };
   const waitingRoom = room(createGame(), 1);
   await page.route(`**${APP_PATH}/api/rooms`, route => route.fulfill({
     status: 201,
@@ -18,6 +19,7 @@ test('online host creates a shareable room and submits authoritative moves', asy
     body: JSON.stringify({ code: CODE, seat: 'X', token: 'host-token', room: waitingRoom }),
   }));
   await page.routeWebSocket(/\/ultimate-tic-tac-toe\/api\/rooms\/ABCD2345\/socket$/, socket => {
+    pushSnapshot = snapshot => socket.send(JSON.stringify({ type: 'snapshot', room: snapshot }));
     socket.onMessage(message => {
       const input = JSON.parse(String(message)) as { type: string; board?: number; cell?: number; version?: number };
       if (input.type === 'hello') {
@@ -40,6 +42,12 @@ test('online host creates a shareable room and submits authoritative moves', asy
   await expect(page.locator('[data-board="0"][data-cell="0"]')).toBeEnabled();
   await page.locator('[data-board="0"][data-cell="0"]').click();
   await expect(page.locator('[data-board="0"][data-cell="0"]')).toContainText('X');
+  await expect(page.locator('.cell-last-played')).toHaveCount(1);
+  await expect(page.locator('.cell-last-played')).toHaveAttribute('aria-label', 'Board 1, square 1, X, last move');
+  current = room(play(current.state, 0, 4), 2, current.version + 1, [...current.moves, 4]);
+  pushSnapshot(current);
+  await expect(page.locator('.cell-last-played')).toHaveCount(1);
+  await expect(page.locator('.cell-last-played')).toHaveAttribute('aria-label', 'Board 1, square 5, O, last move');
   await expect(page).toHaveURL(new RegExp(`${APP_PATH}/\\?room=ABCD2345`));
 });
 

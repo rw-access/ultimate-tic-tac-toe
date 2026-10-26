@@ -170,6 +170,8 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .is-forced .cell { background: var(--cell-active); }
 .cell:focus-visible { outline: 2px solid var(--turn, var(--text)); outline-offset: -3px; }
 .cell-suggested { box-shadow: inset 0 0 0 2px var(--turn, var(--text)); }
+.cell-last-played { position: relative; z-index: 2; box-shadow: inset 0 0 0 3px var(--text); }
+.cell-last-played::after { content: ''; position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border: 1px solid var(--surface-raised); border-radius: 50%; background: var(--text); }
 .cell-mark { font-size: clamp(17px, 4.8vw, 34px); font-weight: 700; line-height: 1; animation: pop .16s ease-out; }
 .mark-x { color: var(--x); }
 .mark-o { color: var(--o); }
@@ -182,6 +184,11 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .just-completed .result-overlay { animation: claim .35s ease-out both; }
 .just-completed .result-overlay svg path, .just-completed .result-overlay svg circle { stroke-dashoffset: 220; animation: draw .45s .12s ease-out forwards; }
 .under-board { display: flex; align-items: center; justify-content: space-between; margin: 14px 2px; }
+.board-meta { display: flex; align-items: center; gap: 8px; }
+.repo-link { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 4px; color: var(--muted); }
+.repo-link svg { width: 16px; height: 16px; fill: currentColor; }
+.repo-link:hover { color: var(--text); }
+.repo-link:focus-visible { outline: 2px solid var(--o); outline-offset: 2px; }
 .theme-button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 57px; min-height: 29px; padding: 0 5px; border: 1px solid var(--border); border-radius: 4px; color: var(--muted); background: var(--surface-raised); font-size: 11px; font-weight: 700; }
 .theme-button:hover { color: var(--text); background: var(--surface); }
 .theme-button svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

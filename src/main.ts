@@ -640,25 +640,41 @@ function analysisDialogMarkup(): string {
   </dialog>`;
 }
 
-function boardMarkup(board: number, legal: Set<number>, reviewedMove: number | null = null): string {
+function lastPlayedMove(): number | null {
+  const before = undoStack.at(-1);
+  if (!before || state.moves !== before.moves + 1) return null;
+  let move: number | null = null;
+  for (let board = 0; board < 9; board += 1) {
+    for (let cell = 0; cell < 9; cell += 1) {
+      if (before.boards[board][cell] === state.boards[board][cell]) continue;
+      if (move !== null || before.boards[board][cell] !== null || state.boards[board][cell] !== before.turn) return null;
+      move = board * 9 + cell;
+    }
+  }
+  return move;
+}
+
+function boardMarkup(board: number, legal: Set<number>, reviewedMove: number | null = null, lastMove: number | null = null): string {
   const result = state.results[board];
   const cells = state.boards[board]
     .map((mark, cell) => {
       const playable = !reviewActive && !result && isLegal(state, board, cell) && canPlayTurn();
       const suggested = hintMove === board * 9 + cell;
       const isReviewedMove = reviewedMove === board * 9 + cell;
+      const isLastMove = mark !== null && lastMove === board * 9 + cell;
       const classes = [
         'cell',
         mark ? `cell-${mark.toLowerCase()}` : '',
         suggested ? 'cell-suggested' : '',
         isReviewedMove ? 'cell-review-current' : '',
+        isLastMove ? 'cell-last-played' : '',
       ]
         .filter(Boolean)
         .join(' ');
       const label = mark
-        ? `Board ${board + 1}, square ${cell + 1}, ${mark}${isReviewedMove ? ', reviewed move' : ''}`
+        ? `Board ${board + 1}, square ${cell + 1}, ${mark}${isReviewedMove ? ', reviewed move' : isLastMove ? ', last move' : ''}`
         : `Board ${board + 1}, square ${cell + 1}${suggested ? ', hinted move' : playable ? ', available' : ', unavailable'}`;
-      return `<button class="${classes}" type="button" data-board="${board}" data-cell="${cell}" aria-label="${label}"${suggested ? ' title="Suggested move"' : ''}${playable ? '' : ' disabled'}>${mark ? `<span class="cell-mark mark-${mark.toLowerCase()}" aria-hidden="true">${mark}</span>` : ''}</button>`;
+      return `<button class="${classes}" type="button" data-board="${board}" data-cell="${cell}" aria-label="${label}"${suggested ? ' title="Suggested move"' : isLastMove ? ' title="Last move"' : ''}${playable ? '' : ' disabled'}>${mark ? `<span class="cell-mark mark-${mark.toLowerCase()}" aria-hidden="true">${mark}</span>` : ''}</button>`;
     })
     .join('');
 
@@ -738,6 +754,7 @@ function render(): void {
     }
     : null;
   const legal = new Set(legalBoards(state));
+  const lastMove = reviewActive ? null : lastPlayedMove();
   const title = reviewActive ? 'Game review'
     : opponentMode === 'online' && onlineSeat && state.winner
       ? state.winner === 'draw' ? 'Draw' : state.winner === onlineSeat.seat ? 'You win' : `${state.winner} wins`
@@ -777,10 +794,13 @@ function render(): void {
       <div class="computer-status" role="status" aria-live="polite" data-computer-source="${reviewActive ? '' : computerSource}">${status}${computerFailed && !reviewActive ? '<button class="retry-computer" type="button" data-action="retry-computer">Retry computer</button>' : ''}</div>
       ${onlineRoomMarkup()}
       <div class="board-frame turn-${kind}" aria-label="Ultimate Tic-Tac-Toe board">
-        <div class="big-board">${Array.from({ length: 9 }, (_, board) => boardMarkup(board, legal, reviewActive && reviewCursor > 0 ? reviewMoves[reviewCursor - 1]?.move ?? null : null)).join('')}</div>
+        <div class="big-board">${Array.from({ length: 9 }, (_, board) => boardMarkup(board, legal, reviewActive && reviewCursor > 0 ? reviewMoves[reviewCursor - 1]?.move ?? null : null, lastMove)).join('')}</div>
       </div>
       <div class="under-board">
-        ${themeButtonMarkup()}
+        <div class="board-meta">
+          ${themeButtonMarkup()}
+          <a class="repo-link" href="https://github.com/rw-access/ultimate-tic-tac-toe" target="_blank" rel="noopener noreferrer" aria-label="Source on GitHub" title="View source on GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.65 7.65 0 0 1 2-.27c.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg></a>
+        </div>
         <div class="route-map" aria-label="${state.winner ? 'Game complete' : state.forced === null ? 'Any open board' : 'Play board ' + (state.forced + 1)}">
           ${Array.from({ length: 9 }, (_, i) => '<i class="' + (legal.has(i) ? 'lit' : '') + '"></i>').join('')}
         </div>
