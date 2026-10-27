@@ -1,6 +1,5 @@
 {
   "format": "onnx",
-  "generation": 20,
   "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
   "hidden_widths": [
     512,
@@ -64,229 +63,93 @@
     ],
     "no_forced_board_index": 9
   },
+  "generation": 21,
   "training": {
-    "dataset": "training/data/session-20261026T0144MDT-r20-window.jsonl",
-    "dataset_sha256": "4e05db0bcb7337d6246844810385e18e7a237dcb5ad8636fb5a21e596aeb0226",
-    "validation_dataset": "training/data/session-20261026T0144MDT-r20-validation.jsonl",
-    "validation_dataset_sha256": "b09e22f7bc2fbe404ed022fd263f99b35753e83080a6f197cbb81e7044c66382",
-    "validation_mode": "external_game_holdout",
-    "validation_game_identity": "sha256 of ordered float32 features and value labels; excludes game index and policy",
-    "games": 14244,
-    "train_games": 14244,
-    "validation_games": 300,
-    "train_positions_before_augmentation": 699997,
-    "train_positions_after_augmentation": 699997,
-    "train_positions_per_epoch": 699997,
-    "validation_positions": 14700,
-    "seed": 2026102636,
-    "shuffle_seed": 2026102637,
-    "epochs": 5,
-    "epochs_requested": 16,
-    "epochs_actual": 5,
-    "max_updates": null,
-    "optimizer_updates": 6840,
-    "selected_optimizer_updates": 2736,
-    "batch_size": 512,
-    "threads": 1,
-    "best_epoch": 2,
-    "initial_model": "training/runs/session-20261026T0055MDT-r19/candidate.onnx",
-    "initial_model_sha256": "333f9158fa606d8025db2bc9da13fcf1e6a836f43dd11c1c852c01ec668b657f",
-    "initialization": {
-      "method": "exact_load",
-      "parent_hidden_widths": [
-        512,
-        256
-      ],
-      "hidden_widths": [
-        512,
-        256
-      ],
-      "seed": null,
-      "noise_scale": 0.0,
-      "preserves_function": true
-    },
-    "initial_validation": {
-      "policy_cross_entropy": 0.9224314304273956,
-      "value_mse": 0.52404508702609,
-      "diagnostics": {
-        "policy_target_entropy": 0.7565322671549762,
-        "policy_cross_entropy": 0.9224314304273956,
-        "policy_kl": 0.16589916327241938,
-        "value_target_mean": 0.009591836734693878,
-        "value_target_variance": 0.6475950714979869,
-        "value_zero_mse": 0.6476870748299319,
-        "value_empirical_mean_mse": 0.6475950714979869,
-        "value_train_mean_mse": 0.6475951096588544
-      }
-    },
-    "learning_rate": 0.0001,
-    "weight_decay": 0.001,
-    "value_loss_weight": 0.1,
-    "augmentation_mode": "random",
-    "dihedral_augmentation": true,
-    "patience": 3,
-    "max_seconds": null,
-    "stopped_early": true,
-    "stop_reason": "patience",
-    "epochs_without_improvement_at_stop": 3,
-    "elapsed_seconds": 206.11,
-    "validation_policy_cross_entropy": 0.9216913542942125,
-    "validation_value_mse": 0.5246745874443832,
-    "validation_diagnostics": {
-      "policy_target_entropy": 0.7565322671549762,
-      "policy_cross_entropy": 0.9216913542942125,
-      "policy_kl": 0.16515908713923622,
-      "value_target_mean": 0.009591836734693878,
-      "value_target_variance": 0.6475950714979869,
-      "value_zero_mse": 0.6476870748299319,
-      "value_empirical_mean_mse": 0.6475950714979869,
-      "value_train_mean_mse": 0.6475951096588544
-    },
-    "history": [
-      {
-        "epoch": 1,
-        "optimizer_updates": 1368,
-        "validation_policy_loss": 0.9230603311013202,
-        "validation_policy_kl": 0.166528063946344,
-        "validation_value_mse": 0.5236376436064843,
-        "validation_loss": 0.9754240954619686
-      },
-      {
-        "epoch": 2,
-        "optimizer_updates": 2736,
-        "validation_policy_loss": 0.9216913542942125,
-        "validation_policy_kl": 0.16515908713923622,
-        "validation_value_mse": 0.5246745874443832,
-        "validation_loss": 0.9741588130386508
-      },
-      {
-        "epoch": 3,
-        "optimizer_updates": 4104,
-        "validation_policy_loss": 0.9225467297657818,
-        "validation_policy_kl": 0.16601446261080555,
-        "validation_value_mse": 0.5259720585946324,
-        "validation_loss": 0.975143935625245
-      },
-      {
-        "epoch": 4,
-        "optimizer_updates": 5472,
-        "validation_policy_loss": 0.9231435099102202,
-        "validation_policy_kl": 0.16661124275524397,
-        "validation_value_mse": 0.5281511316818445,
-        "validation_loss": 0.9759586230784046
-      },
-      {
-        "epoch": 5,
-        "optimizer_updates": 6840,
-        "validation_policy_loss": 0.9227999656054439,
-        "validation_policy_kl": 0.16626769845046763,
-        "validation_value_mse": 0.5257801292948171,
-        "validation_loss": 0.9753779785349256
-      }
-    ],
-    "export_parity": {
-      "policy_max_abs_error": 7.62939453125e-06,
-      "value_max_abs_error": 8.940696716308594e-08,
-      "tolerance": 0.0001
-    },
-    "status": "bundled",
-    "replay": {
-      "format": "metatictactoe-position-bounded-replay-v1",
-      "maximum_positions": 700000,
-      "games": 14244,
-      "positions": 699997,
-      "original_games": 20259,
-      "original_positions": 994958,
-      "dropped_prefix_games": 6015,
-      "holdout_sha256": "b09e22f7bc2fbe404ed022fd263f99b35753e83080a6f197cbb81e7044c66382",
-      "components": [
-        {
-          "sha256": "0ffbfdf4b989257f7f6a876b01bf4793c86e4fd4679e706858869cf77562aa4a",
-          "games": 14259,
-          "positions": 699966,
-          "dataset": "session-20261026T0055MDT-r19-window.jsonl"
-        },
-        {
-          "sha256": "f337004a5665bdc3da31eaa7978cdb9a2af9abe38d1cfdc6ea37730203abcff2",
-          "games": 1500,
-          "positions": 73858,
-          "dataset": "session-20261026T0144MDT-r20-sirius-cpu1.jsonl"
-        },
-        {
-          "sha256": "a6f3af56309437fd55b1af44714ee3d305c37ee856c1ec66021875a613e61da9",
-          "games": 1500,
-          "positions": 73887,
-          "dataset": "session-20261026T0144MDT-r20-sirius-cpu2.jsonl"
-        },
-        {
-          "sha256": "8a4de2a722e7432af1a89baf53f71409cc458dec49a350140d4fecb386644d2f",
-          "games": 1500,
-          "positions": 73772,
-          "dataset": "session-20261026T0144MDT-r20-sirius-cpu3.jsonl"
-        },
-        {
-          "sha256": "6c2c7b4faf4dc4ec0f856efb14cb8e07bf7da58b12b7cb646486f5b7a7204cbe",
-          "games": 1500,
-          "positions": 73475,
-          "dataset": "session-20261026T0144MDT-r20-local-cpu0.jsonl"
-        }
-      ],
-      "dataset_sha256": "4e05db0bcb7337d6246844810385e18e7a237dcb5ad8636fb5a21e596aeb0226",
-      "builder_sha256": "f9cc9c451bc3711ab8c6cded6ca49969a3468c6ce3e780c8a7b85327fb083614"
-    }
+    "experiment": "focused-512-fixed",
+    "note": "Selected candidate for independent confirmation; raw training data and run provenance remain private."
   },
   "artifact_bytes": 1186321,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "cd561330a1666ed3286f3f411277144c335f096b4105190864b5adc49054f135",
+  "sha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
   "evaluation": {
-    "againstR16": {
-      "games": 4096,
-      "pairs": 2048,
-      "simulationsPerSide": 64,
-      "wins": 1441,
-      "draws": 1377,
-      "losses": 1278,
-      "scoreRate": 0.5198974609375,
-      "scorePercent": 51.98974609375,
+    "nativeVsR20": {
+      "seed": 2026105002,
+      "pairs": 1024,
+      "games": 2048,
+      "wins": 684,
+      "draws": 865,
+      "losses": 499,
+      "scorePercent": 54.516,
       "pairedConfidence95Percent": {
-        "lower": 50.80712015459681,
-        "upper": 53.17237203290319
-      },
-      "opponentSha256": "d3b655d11dc6385ac4810658e640bcf0f074c1655993765bb54d8363d538a3d7",
-      "tacticalProof": false
+        "lower": 52.929,
+        "upper": 56.104
+      }
     },
-    "offlineSearchAgainstHeuristic": {
-      "games": 4864,
-      "wins": 4861,
-      "draws": 2,
-      "losses": 1,
-      "scoreRate": 0.9995888157894737,
-      "winRate": 0.9993832236842105,
-      "pairedConfidence95": {
-        "lower": 0.9963993079594158,
-        "upper": 1,
-        "method": "Exact perfect-pair probability bound; conservative lower bound on mean score"
+    "productionBrowserVsR20": {
+      "seed": 2026105003,
+      "pairs": 1024,
+      "games": 2048,
+      "wins": 647,
+      "draws": 1002,
+      "losses": 399,
+      "scorePercent": 56.0546875,
+      "pairedConfidence95Percent": {
+        "lower": 54.5575426,
+        "upper": 57.5518324
       },
-      "search": {
-        "simulations": 1024,
-        "tacticalProof": true,
-        "exactEndgame": true,
-        "endgameOptions": {
-          "maxEmptySquares": 18,
-          "maxNodes": 32000,
-          "timeMs": 36,
-          "optimizeMateDistance": true
+      "openingClusters": 558,
+      "openingClusterNormalConfidence95Percent": {
+        "lower": 54.1108799,
+        "upper": 57.9984951
+      },
+      "openingClusterBootstrapConfidence95Percent": {
+        "lower": 54.1142303,
+        "upper": 57.9891839
+      },
+      "runtime": "Headless Chromium 156; production Hard settings: 4096 simulations, 140 ms, tactical proof."
+    },
+    "offlineFixedHeuristic": {
+      "games": 4864,
+      "wins": 4851,
+      "draws": 13,
+      "losses": 0,
+      "scorePercent": 99.8668,
+      "target100PercentMet": false
+    },
+    "externalOpponents": {
+      "seed": 2026105204,
+      "pairedOpeningsPerOpponent": 512,
+      "scoreDeltaVsR20PercentagePoints": {
+        "Rust alpha-beta": {
+          "estimate": -1.953,
+          "confidence95": [
+            -5.36,
+            1.45
+          ]
+        },
+        "Rust learned PUCT": {
+          "estimate": -1.855,
+          "confidence95": [
+            -3.826,
+            0.115
+          ]
+        },
+        "uttt.ai": {
+          "estimate": -1.807,
+          "confidence95": [
+            -4.952,
+            1.339
+          ]
+        },
+        "CodinGame": {
+          "estimate": -0.781,
+          "confidence95": [
+            -1.888,
+            0.326
+          ]
         }
       },
-      "opponent": {
-        "evaluator": "full TypeScript policy and value",
-        "simulations": 64,
-        "tacticalProof": false,
-        "exactEndgame": false
-      },
-      "sameAsWebRuntime": false,
-      "interpretation": "Offline search-system result; not a measured win rate for browser difficulty modes."
-    },
-    "evidence": "plans/artifacts/r20-release-evaluation.json"
+      "interpretation": "No statistically supported regression; significant gains against these opponents were not established."
+    }
   }
 }
