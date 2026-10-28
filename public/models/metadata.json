@@ -1,5 +1,6 @@
 {
   "format": "onnx",
+  "generation": 22,
   "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
   "hidden_widths": [
     512,
@@ -63,93 +64,360 @@
     ],
     "no_forced_board_index": 9
   },
-  "generation": 21,
   "training": {
-    "experiment": "focused-512-fixed",
-    "note": "Selected candidate for independent confirmation; raw training data and run provenance remain private."
+    "status": "bundled",
+    "data_source": "fresh 30,000-game self-play from candidate A; 60 opening clusters held out before fitting",
+    "dataset_sha256": "0daadd32691094f6416cd99d9f6d66bbbbbb283511c2541e331f2644611d4b7e",
+    "validation_mode": "internal_game_split",
+    "games": 22398,
+    "train_games": 20158,
+    "validation_games": 2240,
+    "train_positions_before_augmentation": 979109,
+    "train_positions_after_augmentation": 979109,
+    "train_positions_per_epoch": 979109,
+    "validation_positions": 109224,
+    "seed": 2026102804,
+    "shuffle_seed": 2026102904,
+    "epochs": 5,
+    "epochs_requested": 12,
+    "epochs_actual": 5,
+    "best_epoch": 5,
+    "max_updates": 8000,
+    "optimizer_updates": 8000,
+    "selected_optimizer_updates": 8000,
+    "batch_size": 512,
+    "threads": 1,
+    "device": "cuda",
+    "initial_model": "candidate A",
+    "initial_model_sha256": "8f333f3200dc5230df89705b2c27153faf2e07976361512e1512a19e6f429ada",
+    "initialization": {
+      "method": "exact_load",
+      "preserves_function": true
+    },
+    "learning_rate": 2.5e-05,
+    "weight_decay": 0.0001,
+    "value_loss_weight": 0.1,
+    "augmentation_mode": "random",
+    "elapsed_seconds": 58.5,
+    "self_play": {
+      "games": 30000,
+      "simulations_per_position": 128,
+      "parallel_games": 16,
+      "root_noise_epsilon": 0.25,
+      "root_noise_concentration_mass": 2.7
+    },
+    "validation_policy_cross_entropy": 1.324744036981215,
+    "validation_value_mse": 0.6811241629507344,
+    "export_parity": {
+      "policy_max_abs_error": 4.0531158447265625e-06,
+      "value_max_abs_error": 1.9371509552001953e-07,
+      "tolerance": 0.0001
+    }
   },
   "artifact_bytes": 1186321,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
-  "evaluation": {
-    "nativeVsR20": {
-      "seed": 2026105002,
-      "pairs": 1024,
-      "games": 2048,
-      "wins": 684,
-      "draws": 865,
-      "losses": 499,
-      "scorePercent": 54.516,
+  "sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+  "historical_generation20_evaluation": {
+    "againstR16": {
+      "games": 4096,
+      "pairs": 2048,
+      "simulationsPerSide": 64,
+      "wins": 1441,
+      "draws": 1377,
+      "losses": 1278,
+      "scoreRate": 0.5198974609375,
+      "scorePercent": 51.98974609375,
       "pairedConfidence95Percent": {
-        "lower": 52.929,
-        "upper": 56.104
-      }
+        "lower": 50.80712015459681,
+        "upper": 53.17237203290319
+      },
+      "opponentSha256": "d3b655d11dc6385ac4810658e640bcf0f074c1655993765bb54d8363d538a3d7",
+      "tacticalProof": false
     },
-    "productionBrowserVsR20": {
-      "seed": 2026105003,
-      "pairs": 1024,
-      "games": 2048,
-      "wins": 647,
-      "draws": 1002,
-      "losses": 399,
-      "scorePercent": 56.0546875,
-      "pairedConfidence95Percent": {
-        "lower": 54.5575426,
-        "upper": 57.5518324
-      },
-      "openingClusters": 558,
-      "openingClusterNormalConfidence95Percent": {
-        "lower": 54.1108799,
-        "upper": 57.9984951
-      },
-      "openingClusterBootstrapConfidence95Percent": {
-        "lower": 54.1142303,
-        "upper": 57.9891839
-      },
-      "runtime": "Headless Chromium 156; production Hard settings: 4096 simulations, 140 ms, tactical proof."
-    },
-    "offlineFixedHeuristic": {
+    "offlineSearchAgainstHeuristic": {
       "games": 4864,
-      "wins": 4851,
-      "draws": 13,
-      "losses": 0,
-      "scorePercent": 99.8668,
-      "target100PercentMet": false
+      "wins": 4861,
+      "draws": 2,
+      "losses": 1,
+      "scoreRate": 0.9995888157894737,
+      "winRate": 0.9993832236842105,
+      "pairedConfidence95": {
+        "lower": 0.9963993079594158,
+        "upper": 1,
+        "method": "Exact perfect-pair probability bound; conservative lower bound on mean score"
+      },
+      "search": {
+        "simulations": 1024,
+        "tacticalProof": true,
+        "exactEndgame": true,
+        "endgameOptions": {
+          "maxEmptySquares": 18,
+          "maxNodes": 32000,
+          "timeMs": 36,
+          "optimizeMateDistance": true
+        }
+      },
+      "opponent": {
+        "evaluator": "full TypeScript policy and value",
+        "simulations": 64,
+        "tacticalProof": false,
+        "exactEndgame": false
+      },
+      "sameAsWebRuntime": false,
+      "interpretation": "Offline search-system result; not a measured win rate for browser difficulty modes."
     },
-    "externalOpponents": {
-      "seed": 2026105204,
-      "pairedOpeningsPerOpponent": 512,
-      "scoreDeltaVsR20PercentagePoints": {
-        "Rust alpha-beta": {
-          "estimate": -1.953,
-          "confidence95": [
-            -5.36,
-            1.45
+    "evidence": "plans/artifacts/r20-release-evaluation.json"
+  },
+  "evaluation": {
+    "externalSuite": {
+      "format": "external-arena-v1",
+      "pairs": 128,
+      "openingClusters": 115,
+      "seed": 2026102931,
+      "timeMs": 140,
+      "protocol": "native TypeScript/ONNX opponent matches; same paired openings and seat swap across all models; host-timed 140 ms per search",
+      "comparison": "paired score delta: candidate minus generation20 checkpoint; bootstrap over ordered two-ply opening clusters",
+      "opponents": {
+        "alpha-beta": {
+          "bWDL": [
+            134,
+            76,
+            46
+          ],
+          "bScorePercent": 67.19,
+          "shippedWDL": [
+            135,
+            74,
+            47
+          ],
+          "shippedScorePercent": 67.19,
+          "bMinusShippedPercentagePoints": 0.54,
+          "pairedOpeningCluster95Percent": [
+            -5.54,
+            6.74
           ]
         },
-        "Rust learned PUCT": {
-          "estimate": -1.855,
-          "confidence95": [
-            -3.826,
-            0.115
+        "learned-puct": {
+          "bWDL": [
+            246,
+            10,
+            0
+          ],
+          "bScorePercent": 98.05,
+          "shippedWDL": [
+            221,
+            33,
+            2
+          ],
+          "shippedScorePercent": 92.77,
+          "bMinusShippedPercentagePoints": 4.57,
+          "pairedOpeningCluster95Percent": [
+            1.85,
+            7.39
           ]
         },
-        "uttt.ai": {
-          "estimate": -1.807,
-          "confidence95": [
-            -4.952,
-            1.339
+        "utttai": {
+          "bWDL": [
+            33,
+            107,
+            116
+          ],
+          "bScorePercent": 33.79,
+          "shippedWDL": [
+            51,
+            79,
+            126
+          ],
+          "shippedScorePercent": 35.35,
+          "bMinusShippedPercentagePoints": -2.28,
+          "pairedOpeningCluster95Percent": [
+            -8.8,
+            4.02
           ]
         },
-        "CodinGame": {
-          "estimate": -0.781,
-          "confidence95": [
-            -1.888,
-            0.326
+        "codingame": {
+          "bWDL": [
+            252,
+            3,
+            1
+          ],
+          "bScorePercent": 99.02,
+          "shippedWDL": [
+            251,
+            3,
+            2
+          ],
+          "shippedScorePercent": 98.63,
+          "bMinusShippedPercentagePoints": 0.22,
+          "pairedOpeningCluster95Percent": [
+            -1.52,
+            1.96
           ]
         }
       },
-      "interpretation": "No statistically supported regression; significant gains against these opponents were not established."
+      "limitations": "140 ms results are host-timed native matches, not a browser benchmark. No external comparison showed a supported regression; learned-PUCT improved significantly, while alpha-beta, uttt.ai, and CodinGame intervals include parity."
+    },
+    "fixedWorkAgainstGeneration20": {
+      "protocol": "native CPU ONNX PUCT; tactical proof and bounded exact endgame; seat-swapped pairs; deadlines disabled",
+      "primarySimulations": 256,
+      "guardrailSimulations": 64,
+      "seed": 2026102921,
+      "pairs": 1024,
+      "openingClusters": 545,
+      "puct256": {
+        "wins": 761,
+        "draws": 693,
+        "losses": 594,
+        "scorePercent": 54.08,
+        "openingCluster95Percent": [
+          51.42,
+          56.72
+        ],
+        "sourceCluster95Percent": [
+          52.39,
+          55.79
+        ]
+      },
+      "puct64": {
+        "wins": 816,
+        "draws": 575,
+        "losses": 657,
+        "scorePercent": 53.88,
+        "openingCluster95Percent": [
+          51.1,
+          56.63
+        ],
+        "sourceCluster95Percent": [
+          52.05,
+          55.71
+        ]
+      }
+    },
+    "fixedWorkAgainstGeneration21": {
+      "protocol": "native CPU ONNX PUCT; tactical proof and bounded exact endgame; seat-swapped pairs; deadlines disabled",
+      "opponentSha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
+      "seed": 2026102933,
+      "pairs": 512,
+      "games": 1024,
+      "openingPlyCount": 2,
+      "openingClusters": 353,
+      "puct256": {
+        "wins": 365,
+        "draws": 383,
+        "losses": 276,
+        "scorePercent": 54.3457,
+        "pairedConfidence95Percent": {
+          "lower": 51.9118,
+          "upper": 56.7796
+        },
+        "openingClusterBootstrapConfidence95Percent": {
+          "lower": 51.0784,
+          "upper": 57.5787
+        }
+      },
+      "puct64": {
+        "wins": 403,
+        "draws": 288,
+        "losses": 333,
+        "scorePercent": 53.418,
+        "pairedConfidence95Percent": {
+          "lower": 50.8503,
+          "upper": 55.9857
+        },
+        "openingClusterBootstrapConfidence95Percent": {
+          "lower": 49.9012,
+          "upper": 56.8406
+        }
+      },
+      "limitations": "Fresh seeded two-ply schedule with 353 unique opening clusters; repeated clusters bootstrapped together. This is a native fixed-work comparison, not a strict held-out training-data test or browser benchmark."
+    }
+  },
+  "historical_generation21_evaluation": {
+    "sha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
+    "training": {
+      "experiment": "focused-512-fixed",
+      "note": "Selected candidate for independent confirmation; raw training data and run provenance remain private."
+    },
+    "evaluation": {
+      "nativeVsR20": {
+        "seed": 2026105002,
+        "pairs": 1024,
+        "games": 2048,
+        "wins": 684,
+        "draws": 865,
+        "losses": 499,
+        "scorePercent": 54.516,
+        "pairedConfidence95Percent": {
+          "lower": 52.929,
+          "upper": 56.104
+        }
+      },
+      "productionBrowserVsR20": {
+        "seed": 2026105003,
+        "pairs": 1024,
+        "games": 2048,
+        "wins": 647,
+        "draws": 1002,
+        "losses": 399,
+        "scorePercent": 56.0546875,
+        "pairedConfidence95Percent": {
+          "lower": 54.5575426,
+          "upper": 57.5518324
+        },
+        "openingClusters": 558,
+        "openingClusterNormalConfidence95Percent": {
+          "lower": 54.1108799,
+          "upper": 57.9984951
+        },
+        "openingClusterBootstrapConfidence95Percent": {
+          "lower": 54.1142303,
+          "upper": 57.9891839
+        },
+        "runtime": "Headless Chromium 156; production Hard settings: 4096 simulations, 140 ms, tactical proof."
+      },
+      "offlineFixedHeuristic": {
+        "games": 4864,
+        "wins": 4851,
+        "draws": 13,
+        "losses": 0,
+        "scorePercent": 99.8668,
+        "target100PercentMet": false
+      },
+      "externalOpponents": {
+        "seed": 2026105204,
+        "pairedOpeningsPerOpponent": 512,
+        "scoreDeltaVsR20PercentagePoints": {
+          "Rust alpha-beta": {
+            "estimate": -1.953,
+            "confidence95": [
+              -5.36,
+              1.45
+            ]
+          },
+          "Rust learned PUCT": {
+            "estimate": -1.855,
+            "confidence95": [
+              -3.826,
+              0.115
+            ]
+          },
+          "uttt.ai": {
+            "estimate": -1.807,
+            "confidence95": [
+              -4.952,
+              1.339
+            ]
+          },
+          "CodinGame": {
+            "estimate": -0.781,
+            "confidence95": [
+              -1.888,
+              0.326
+            ]
+          }
+        },
+        "interpretation": "No statistically supported regression; significant gains against these opponents were not established."
+      }
     }
   }
 }
