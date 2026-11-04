@@ -1,6 +1,6 @@
 {
   "format": "onnx",
-  "generation": 22,
+  "generation": 23,
   "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
   "hidden_widths": [
     512,
@@ -66,57 +66,52 @@
   },
   "training": {
     "status": "bundled",
-    "data_source": "fresh 30,000-game self-play from candidate A; 60 opening clusters held out before fitting",
-    "dataset_sha256": "0daadd32691094f6416cd99d9f6d66bbbbbb283511c2541e331f2644611d4b7e",
-    "validation_mode": "internal_game_split",
-    "games": 22398,
-    "train_games": 20158,
-    "validation_games": 2240,
-    "train_positions_before_augmentation": 979109,
-    "train_positions_after_augmentation": 979109,
-    "train_positions_per_epoch": 979109,
-    "validation_positions": 109224,
-    "seed": 2026102804,
-    "shuffle_seed": 2026102904,
-    "epochs": 5,
-    "epochs_requested": 12,
-    "epochs_actual": 5,
-    "best_epoch": 5,
-    "max_updates": 8000,
-    "optimizer_updates": 8000,
-    "selected_optimizer_updates": 8000,
-    "batch_size": 512,
-    "threads": 1,
-    "device": "cuda",
-    "initial_model": "candidate A",
-    "initial_model_sha256": "8f333f3200dc5230df89705b2c27153faf2e07976361512e1512a19e6f429ada",
-    "initialization": {
-      "method": "exact_load",
-      "preserves_function": true
-    },
-    "learning_rate": 2.5e-05,
-    "weight_decay": 0.0001,
-    "value_loss_weight": 0.1,
-    "augmentation_mode": "random",
-    "elapsed_seconds": 58.5,
-    "self_play": {
-      "games": 30000,
-      "simulations_per_position": 128,
-      "parallel_games": 16,
-      "root_noise_epsilon": 0.25,
-      "root_noise_concentration_mass": 2.7
-    },
-    "validation_policy_cross_entropy": 1.324744036981215,
-    "validation_value_mse": 0.6811241629507344,
-    "export_parity": {
-      "policy_max_abs_error": 4.0531158447265625e-06,
-      "value_max_abs_error": 1.9371509552001953e-07,
-      "tolerance": 0.0001
-    }
+    "method": "weight_space_programming_svd9_policy_surgical",
+    "initial_model": "generation 22",
+    "initial_model_sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+    "reclaimed_layer2_neurons": [
+      35,
+      40,
+      152,
+      162,
+      236,
+      167,
+      151,
+      175,
+      179
+    ],
+    "policy_head_blend": 0.35,
+    "value_head_preserved": true
   },
   "artifact_bytes": 1186321,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+  "sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
+  "evaluation": {
+    "fixedWorkAgainstGeneration22": {
+      "opponentSha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+      "puct64": {
+        "seeds": [
+          20261104,
+          20261105,
+          20261106
+        ],
+        "pairs": 384,
+        "games": 768,
+        "wins": 278,
+        "draws": 237,
+        "losses": 253,
+        "scoreRate": 0.5162760416666666,
+        "scorePercent": 51.627604166666664
+      },
+      "puct1": {
+        "seed": 20261105,
+        "pairs": 256,
+        "games": 512,
+        "scoreRate": 0.5263671875,
+        "scorePercent": 52.63671875
+      }
+    }
+  },
   "historical_generation20_evaluation": {
     "againstR16": {
       "games": 4096,
@@ -168,7 +163,8 @@
     },
     "evidence": "plans/artifacts/r20-release-evaluation.json"
   },
-  "evaluation": {
+  "historical_generation22_evaluation": {
+    "sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
     "externalSuite": {
       "format": "external-arena-v1",
       "pairs": 128,
