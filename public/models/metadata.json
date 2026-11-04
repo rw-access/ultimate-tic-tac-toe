@@ -1,6 +1,6 @@
 {
   "format": "onnx",
-  "generation": 23,
+  "generation": 25,
   "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
   "hidden_widths": [
     512,
@@ -66,9 +66,9 @@
   },
   "training": {
     "status": "bundled",
-    "method": "weight_space_programming_svd9_policy_surgical",
-    "initial_model": "generation 22",
-    "initial_model_sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+    "method": "weight_space_programming_hybrid_teacher_svd9",
+    "initial_model": "generation 23",
+    "initial_model_sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
     "reclaimed_layer2_neurons": [
       35,
       40,
@@ -80,13 +80,48 @@
       175,
       179
     ],
-    "policy_head_blend": 0.35,
+    "layer2_sparsity_quantile": 0.4,
+    "policy_head_blend": 0.4,
     "value_head_preserved": true
   },
   "artifact_bytes": 1186321,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
+  "sha256": "a5caba3ffe5b2cda77ee8f6ee792e70d90797a84fb7b5eb66c8083be4a3eaa3b",
   "evaluation": {
+    "fixedWorkAgainstGeneration23": {
+      "opponentSha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
+      "puct64": {
+        "seeds": [
+          20261104,
+          20261105,
+          20261106
+        ],
+        "pairs": 384,
+        "games": 768,
+        "wins": 293,
+        "draws": 214,
+        "losses": 261,
+        "scoreRate": 0.5208333333333334,
+        "scorePercent": 52.083333333333336
+      }
+    },
+    "fixedWorkAgainstGeneration22": {
+      "opponentSha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
+      "puct64": {
+        "seeds": [
+          20261104,
+          20261105,
+          20261106
+        ],
+        "pairs": 384,
+        "games": 768,
+        "scoreRate": 0.5032552083333334,
+        "scorePercent": 50.325520833333336
+      }
+    }
+  },
+  "historical_generation23_evaluation": {
+    "sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
     "fixedWorkAgainstGeneration22": {
       "opponentSha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
       "puct64": {
