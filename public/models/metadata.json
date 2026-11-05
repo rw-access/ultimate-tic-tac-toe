@@ -1,6 +1,6 @@
 {
   "format": "onnx",
-  "generation": 29,
+  "generation": 30,
   "architecture": "280-600-ReLU-288-ReLU-policy81-value1",
   "hidden_widths": [
     600,
