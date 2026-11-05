@@ -1,6 +1,6 @@
 {
   "format": "onnx",
-  "generation": 25,
+  "generation": 28,
   "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
   "hidden_widths": [
     512,
@@ -66,57 +66,29 @@
   },
   "training": {
     "status": "bundled",
-    "method": "weight_space_programming_hybrid_teacher_svd9",
-    "initial_model": "generation 23",
-    "initial_model_sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
-    "reclaimed_layer2_neurons": [
-      35,
-      40,
-      152,
-      162,
-      236,
-      167,
-      151,
-      175,
-      179
-    ],
-    "layer2_sparsity_quantile": 0.4,
-    "policy_head_blend": 0.4,
-    "value_head_preserved": true
+    "method": "deep_mcts_teacher_knowledge_distillation",
+    "teacher_architecture": "13.27M-ResNet-50MB",
+    "selfplay_depth": 512,
+    "selfplay_games": 24000
   },
   "artifact_bytes": 1186321,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "a5caba3ffe5b2cda77ee8f6ee792e70d90797a84fb7b5eb66c8083be4a3eaa3b",
+  "sha256": "4d301d7fd749764f76ba447ff614544b47ce54a70ae25063b5e19722e51fcd18",
   "evaluation": {
-    "fixedWorkAgainstGeneration23": {
-      "opponentSha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
+    "fixedWorkAgainstGeneration26": {
+      "opponentSha256": "f2d823d268f0321daedbbcac955c6533dd6460a4485981d6b3a1e60999d31d19",
       "puct64": {
-        "seeds": [
-          20261104,
-          20261105,
-          20261106
-        ],
-        "pairs": 384,
-        "games": 768,
-        "wins": 293,
-        "draws": 214,
-        "losses": 261,
-        "scoreRate": 0.5208333333333334,
-        "scorePercent": 52.083333333333336
-      }
-    },
-    "fixedWorkAgainstGeneration22": {
-      "opponentSha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
-      "puct64": {
-        "seeds": [
-          20261104,
-          20261105,
-          20261106
-        ],
-        "pairs": 384,
-        "games": 768,
-        "scoreRate": 0.5032552083333334,
-        "scorePercent": 50.325520833333336
+        "pairs": 256,
+        "games": 512,
+        "scoreRate": 0.548828125,
+        "scorePercent": 54.8828125
+      },
+      "solverMcts64": {
+        "pairs": 256,
+        "games": 512,
+        "scoreRate": 0.556640625,
+        "scorePercent": 55.6640625,
+        "tacticalProof": true
       }
     }
   },

@@ -39,7 +39,7 @@ function parseCli(argv: string[]): { command: Command; options: Options } {
       process.exit(0);
     }
     if (!token.startsWith('--')) throw new Error(`Unexpected argument: ${token}`);
-    if (command === 'arena' && token === '--tactical-proof') {
+    if ((command === 'arena' || command === 'generate') && token === '--tactical-proof') {
       if (options['tactical-proof'] !== undefined) throw new Error('Option --tactical-proof was provided more than once');
       options['tactical-proof'] = 'true';
       continue;
@@ -52,7 +52,7 @@ function parseCli(argv: string[]): { command: Command; options: Options } {
     options[key] = value;
   }
   const allowed: Record<Command, string[]> = {
-    generate: ['games', 'simulations', 'seed', 'output', 'model', 'parallel-games', 'teacher-mix', 'root-noise', 'root-noise-mass', 'fast-simulations', 'full-search-probability'],
+    generate: ['games', 'simulations', 'seed', 'output', 'model', 'parallel-games', 'teacher-mix', 'root-noise', 'root-noise-mass', 'fast-simulations', 'full-search-probability', 'tactical-proof'],
     evaluate: ['model', 'games-per-seat', 'simulations', 'seed', 'opening-moves', 'metadata'],
     parity: ['model', 'output', 'seed'],
     arena: ['challenger', 'champion', 'pairs', 'pair-offset', 'pair-count', 'simulations', 'seed', 'parallel-games', 'output', 'challenger-value', 'champion-value', 'tactical-proof'],
@@ -244,10 +244,26 @@ async function createModelClient(modelPath: string, signal: AbortSignal): Promis
   // Native ONNX inference stays inside the self-play process. Python is used
   // only between training rounds to fit/export the network, never per leaf.
   const { InferenceSession, Tensor } = await import('onnxruntime-node');
-  const session = await InferenceSession.create(modelPath, {
-    executionProviders: ['cpu'], intraOpNumThreads: 1, interOpNumThreads: 1,
-    graphOptimizationLevel: 'all',
-  });
+  const useCuda = process.env.ORT_CUDA === '1';
+  let session: InstanceType<typeof InferenceSession>;
+  if (useCuda) {
+    try {
+      session = await InferenceSession.create(modelPath, {
+        executionProviders: [{ name: 'cuda', device_id: 0, do_copy_in_default_stream: true }],
+        graphOptimizationLevel: 'all',
+      });
+    } catch {
+      session = await InferenceSession.create(modelPath, {
+        executionProviders: ['cpu'], intraOpNumThreads: 4, interOpNumThreads: 1,
+        graphOptimizationLevel: 'all',
+      });
+    }
+  } else {
+    session = await InferenceSession.create(modelPath, {
+      executionProviders: ['cpu'], intraOpNumThreads: 4, interOpNumThreads: 1,
+      graphOptimizationLevel: 'all',
+    });
+  }
   if (session.inputNames.join() !== 'state' || session.outputNames.join() !== 'policy,value') {
     await session.release();
     throw new Error('Unsupported policy/value model interface');
@@ -442,6 +458,7 @@ async function generateGame(
   rootNoise: RootNoiseOptions | undefined,
   capExperiment: SearchCapExperiment | undefined,
   capRandom: SeededRandom | undefined,
+  tacticalProof: boolean,
   signal: AbortSignal,
 ): Promise<GeneratedGame> {
   let state = createGame();
@@ -462,6 +479,7 @@ async function generateGame(
       evaluate: modelClient?.evaluate,
       seed: random.nextUint32(),
       rootNoise,
+      tacticalProof,
     });
     const moves = legalMoves(state);
     if (!moves.length || result.move === null) throw new Error(`Search returned no move during game ${game}`);
@@ -510,6 +528,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
   const rootNoise: RootNoiseOptions | undefined = rootNoiseEpsilon > 0
     ? { epsilon: rootNoiseEpsilon, concentrationMass: rootNoiseMass }
     : undefined;
+  const tacticalProof = booleanOption(options, 'tactical-proof', false);
   if (teacherMix > 0 && !model) throw new Error('--teacher-mix requires --model');
   const parallelGames = Math.min(games, intOption(options, 'parallel-games', model ? 16 : 1, 1));
   if (model) await requireFile(model, 'Model');
@@ -570,6 +589,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
           rootNoise,
           capExperiment,
           searchCapSeeds ? new SeededRandom(searchCapSeeds[game]) : undefined,
+          tacticalProof,
           signal,
         ));
       }
@@ -587,6 +607,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
             rootNoise,
             capExperiment,
             searchCapSeeds ? new SeededRandom(searchCapSeeds[game]) : undefined,
+            tacticalProof,
             signal,
           );
         });

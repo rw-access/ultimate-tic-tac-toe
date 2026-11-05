@@ -106,6 +106,44 @@ function immediateWinningMoves(state: GameState, moves = legalMoves(state)): num
   return wins;
 }
 
+/** Fast necessary condition for whether the opponent could win on the next ply. */
+function hasOpponentImmediateThreat(state: GameState): boolean {
+  if (state.winner !== null) return false;
+  const opponent: Player = state.turn === 'X' ? 'O' : 'X';
+  for (const [a, b, c] of lines) {
+    let opp = 0;
+    let openBoard = -1;
+    for (const board of [a, b, c]) {
+      const result = state.results[board];
+      if (result === opponent) opp++;
+      else if (result === null) openBoard = board;
+      else break;
+    }
+    if (opp === 2 && openBoard !== -1) {
+      const cells = state.boards[openBoard];
+      for (const [x, y, z] of lines) {
+        const c0 = cells[x];
+        const c1 = cells[y];
+        const c2 = cells[z];
+        const oppMarks = Number(c0 === opponent) + Number(c1 === opponent) + Number(c2 === opponent);
+        const emptyMarks = Number(c0 === null) + Number(c1 === null) + Number(c2 === null);
+        if (oppMarks === 2 && emptyMarks === 1) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function filterSafeMoves(state: GameState, moves: number[]): number[] {
+  if (!hasOpponentImmediateThreat(state)) return moves;
+  const safeMoves: number[] = [];
+  for (const move of moves) {
+    const next = play(state, Math.floor(move / 9), move % 9);
+    if (next.winner !== null || immediateWinningMoves(next).length === 0) safeMoves.push(move);
+  }
+  return safeMoves;
+}
+
 type CellResult = Player | 'draw' | null;
 
 function linePotential(
@@ -232,6 +270,7 @@ interface Node {
   valueSum: number;
   children: Child[] | null;
   priors: Float32Array | null;
+  proven: 1 | -1 | 0;
 }
 
 function softmaxLegal(policy: Float32Array | undefined, moves: number[]): Map<number, number> {
@@ -261,8 +300,17 @@ function makeRng(seed: number): () => number {
   };
 }
 
-function chooseChild(node: Node, random: () => number): Child {
-  const children = node.children!;
+function chooseChild(node: Node, random: () => number, tacticalProof = false): Child {
+  const allChildren = node.children!;
+  if (tacticalProof) {
+    for (const child of allChildren) {
+      if (child.node?.proven === -1) return child;
+    }
+  }
+  const nonLosing = tacticalProof
+    ? allChildren.filter(child => child.node?.proven !== 1)
+    : allChildren;
+  const children = nonLosing.length > 0 ? nonLosing : allChildren;
   const exploration = Math.SQRT2;
   let bestScore = -Infinity;
   let best: Child[] = [];
@@ -379,11 +427,7 @@ export async function search(
       policy[move] = 1;
       return { move, policy, simulations: 0 };
     }
-    const safeMoves: number[] = [];
-    for (const move of rootMoves) {
-      const next = play(state, Math.floor(move / 9), move % 9);
-      if (next.winner !== null || immediateWinningMoves(next).length === 0) safeMoves.push(move);
-    }
+    const safeMoves = filterSafeMoves(state, rootMoves);
     // If defeat cannot be prevented in one move, keep the full legal action set.
     if (safeMoves.length > 0) rootMoves = safeMoves;
   } else {
@@ -406,7 +450,7 @@ export async function search(
   const noiseRandom = rootNoise && rootNoise.epsilon > 0
     ? makeRng((options.seed ?? 1) ^ 0x6d2b79f5)
     : undefined;
-  const root: Node = { state, visits: 0, valueSum: 0, children: null, priors: null };
+  const root: Node = { state, visits: 0, valueSum: 0, children: null, priors: null, proven: 0 };
   const path: Node[] = [];
   let simulations = 0;
 
@@ -414,8 +458,8 @@ export async function search(
     path.length = 0;
     let node = root;
     path.push(node);
-    while (node.children !== null && node.children.length > 0) {
-      const selected = chooseChild(node, searchRandom);
+    while (node.children !== null && node.children.length > 0 && (!tacticalProof || node.proven === 0)) {
+      const selected = chooseChild(node, searchRandom, tacticalProof);
       if (selected.node === null) {
         selected.node = {
           state: play(node.state, Math.floor(selected.move / 9), selected.move % 9),
@@ -423,6 +467,7 @@ export async function search(
           valueSum: 0,
           children: null,
           priors: null,
+          proven: 0,
         };
       }
       node = selected.node;
@@ -430,9 +475,16 @@ export async function search(
     }
 
     let value: number;
-    if (node.state.winner !== null) value = terminalValue(node.state);
-    else {
-      const moves = node === root ? rootMoves : legalMoves(node.state);
+    if (tacticalProof && node.proven !== 0) {
+      value = node.proven;
+    } else if (node.state.winner !== null) {
+      value = terminalValue(node.state);
+      if (tacticalProof) {
+        if (value === 1) node.proven = 1;
+        else if (value === -1) node.proven = -1;
+      }
+    } else {
+      let moves = node === root ? rootMoves : legalMoves(node.state);
       if (!moves.length) value = 0;
       else {
         const winningMoves = tacticalProof && node !== root
@@ -448,25 +500,35 @@ export async function search(
             return { move, prior: movePrior, node: null };
           });
           // This node can force an immediate win, from its current-player view.
+          node.proven = 1;
           value = 1;
         } else {
-          const evaluation = await evaluate(options.evaluate, node.state);
-          const priors = softmaxLegal(evaluation.policy, moves);
-          if (node === root && rootNoise && noiseRandom) {
-            const noise = sampleDirichlet(moves, rootNoise.concentrationMass, noiseRandom);
-            for (const move of moves) {
-              const prior = priors.get(move) ?? 0;
-              const noisePrior = noise.get(move) ?? 0;
-              priors.set(move, (1 - rootNoise.epsilon) * prior + rootNoise.epsilon * noisePrior);
+          const safeMoves = tacticalProof && node !== root
+            ? filterSafeMoves(node.state, moves)
+            : moves;
+          if (tacticalProof && node !== root && safeMoves.length === 0) {
+            node.proven = -1;
+            value = -1;
+          } else {
+            if (safeMoves.length > 0) moves = safeMoves;
+            const evaluation = await evaluate(options.evaluate, node.state);
+            const priors = softmaxLegal(evaluation.policy, moves);
+            if (node === root && rootNoise && noiseRandom) {
+              const noise = sampleDirichlet(moves, rootNoise.concentrationMass, noiseRandom);
+              for (const move of moves) {
+                const prior = priors.get(move) ?? 0;
+                const noisePrior = noise.get(move) ?? 0;
+                priors.set(move, (1 - rootNoise.epsilon) * prior + rootNoise.epsilon * noisePrior);
+              }
             }
+            node.priors = new Float32Array(ACTIONS);
+            node.children = moves.map(move => {
+              const prior = priors.get(move) ?? 0;
+              node.priors![move] = prior;
+              return { move, prior, node: null };
+            });
+            value = evaluation.value;
           }
-          node.priors = new Float32Array(ACTIONS);
-          node.children = moves.map(move => {
-            const prior = priors.get(move) ?? 0;
-            node.priors![move] = prior;
-            return { move, prior, node: null };
-          });
-          value = evaluation.value;
         }
       }
     }
@@ -475,6 +537,15 @@ export async function search(
     // every parent edge so each node accumulates values for its own player.
     for (let index = path.length - 1; index >= 0; index--) {
       const visited = path[index];
+      if (tacticalProof && visited.proven === 0 && visited.children !== null && visited.children.length > 0) {
+        if (visited.children.some(child => child.node?.proven === -1)) {
+          visited.proven = 1;
+          value = 1;
+        } else if (visited.children.every(child => child.node?.proven === 1)) {
+          visited.proven = -1;
+          value = -1;
+        }
+      }
       visited.visits++;
       visited.valueSum += value;
       value = -value;
@@ -483,13 +554,58 @@ export async function search(
   }
 
   const rootChildren = root.children ?? [];
-  const visitTotal = rootChildren.reduce((sum, child) => sum + (child.node?.visits ?? 0), 0);
+  if (tacticalProof) {
+    const provenWinChild = rootChildren.find(child => child.node?.proven === -1);
+    if (provenWinChild) {
+      policy[provenWinChild.move] = 1;
+      return { move: provenWinChild.move, policy, simulations };
+    }
+  }
+
+  const activeChildren = tacticalProof
+    ? (() => {
+        const surviving = rootChildren.filter(child => child.node?.proven !== 1);
+        return surviving.length > 0 ? surviving : rootChildren;
+      })()
+    : rootChildren;
+  const visitTotal = activeChildren.reduce((sum, child) => sum + (child.node?.visits ?? 0), 0);
   if (visitTotal > 0) {
-    for (const child of rootChildren) policy[child.move] = (child.node?.visits ?? 0) / visitTotal;
+    for (const child of activeChildren) policy[child.move] = (child.node?.visits ?? 0) / visitTotal;
   } else if (root.priors) {
-    policy.set(root.priors);
+    if (tacticalProof && activeChildren.length < rootChildren.length) {
+      const priorSum = activeChildren.reduce((sum, child) => sum + (root.priors![child.move] ?? 0), 0);
+      for (const child of activeChildren) {
+        policy[child.move] = priorSum > 0 ? root.priors![child.move] / priorSum : 1 / activeChildren.length;
+      }
+    } else {
+      policy.set(root.priors);
+    }
   } else {
     for (const move of rootMoves) policy[move] = 1 / rootMoves.length;
+  }
+
+  if (tacticalProof && activeChildren.length > 0) {
+    let bestChild = activeChildren[0];
+    for (const candidate of activeChildren) {
+      const candScore = policy[candidate.move];
+      const bestScore = policy[bestChild.move];
+      if (candScore > bestScore + 1e-12) {
+        bestChild = candidate;
+      } else if (Math.abs(candScore - bestScore) <= 1e-12) {
+        const candVisits = candidate.node?.visits ?? 0;
+        const bestVisits = bestChild.node?.visits ?? 0;
+        if (candVisits > 0 && bestVisits > 0) {
+          const candQ = -candidate.node!.valueSum / candVisits;
+          const bestQ = -bestChild.node!.valueSum / bestVisits;
+          if (candQ > bestQ + 1e-12 || (Math.abs(candQ - bestQ) <= 1e-12 && candidate.prior > bestChild.prior + 1e-12)) {
+            bestChild = candidate;
+          }
+        } else if (candidate.prior > bestChild.prior + 1e-12) {
+          bestChild = candidate;
+        }
+      }
+    }
+    return { move: bestChild.move, policy, simulations };
   }
 
   let move = rootMoves[0];

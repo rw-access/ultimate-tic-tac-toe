@@ -272,3 +272,40 @@ test('tactical proof keeps legal moves when every move permits an immediate loss
   // The root is evaluated once; its proven winning-reply leaf bypasses inference.
   assert.equal(inferenceCalls, 1);
 });
+
+test('tactical proof propagates internal forced-loss refutations and unstoppable double threats', async () => {
+  // Position where X at root is forced into board 4 with two legal moves:
+  // - move 38 (board 4, cell 2) sends O to board 2, where O is not yet winning in 1 move,
+  //   but every legal move O has in board 2 sends X to board 0 where X wins globally in 1 move!
+  //   Thus move 38 is a 3-ply forced win for X (child node has safeMoves.length === 0 for O).
+  // - move 41 (board 4, cell 5) sends O to board 5, where X has no immediate win.
+  const state = createGame();
+  state.turn = 'X';
+  state.results[1] = state.results[2] = 'X'; // X threatens board 0 for a global win (0-1-2)
+  state.boards[0] = ['X', 'X', null, null, null, null, null, null, null]; // X has 2-in-a-row at cell 2 on board 0
+  // Make board 4 have legal cells 3 (sends O to board 3) and 5 (sends O to board 5)
+  state.boards[4] = ['X', 'O', 'X', null, 'O', null, 'O', 'X', 'O'];
+  // On board 3, leave only cell 0 open (which forces X to board 0, where X wins immediately!)
+  state.boards[3] = [null, 'X', 'O', 'O', 'X', 'X', 'X', 'O', 'O'];
+  state.forced = 4;
+
+  const result = await search(state, {
+    simulations: 16,
+    timeMs: 10_000,
+    tacticalProof: true,
+    evaluate: async position => {
+      const policy = new Float32Array(81).fill(-100);
+      for (const move of legalMoves(position)) policy[move] = 0;
+      // Deliberately bias the network toward the non-forcing move 41 over the 3-ply forced win 39 (board 4, cell 3).
+      if (position === state) {
+        policy[41] = 2;
+        policy[39] = 0;
+      }
+      return { policy, value: 0 };
+    },
+  });
+  // Once child 39 (board 4, cell 3) is visited once, internal safeMoves detects O has zero safe replies
+  // (proven = -1 for O => proven = +1 for X at root), so X selects move 39 with policy 1.
+  assert.equal(result.move, 39);
+  assert.equal(result.policy[39], 1);
+});
