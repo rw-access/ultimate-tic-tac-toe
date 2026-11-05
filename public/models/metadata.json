@@ -1,12 +1,13 @@
 {
   "format": "onnx",
-  "generation": 30,
-  "architecture": "280-600-ReLU-288-ReLU-policy81-value1",
+  "generation": 31,
+  "architecture": "HARNet-micro32-macro80-routing112-shared9",
   "hidden_widths": [
-    600,
-    288
+    32,
+    80,
+    112
   ],
-  "parameters": 365386,
+  "parameters": 369042,
   "input": {
     "name": "state",
     "shape": [
@@ -66,22 +67,22 @@
   },
   "training": {
     "status": "bundled",
-    "method": "deep_1024sim_teacher_knowledge_distillation",
-    "teacher_architecture": "13.27M-ResNet-50MB",
+    "method": "hierarchical_action_routing_distillation",
+    "teacher_architecture": "HARNet-50MB-13.48M",
     "selfplay_depth": 1024,
-    "selfplay_games": 30400
+    "selfplay_games": 32000
   },
-  "artifact_bytes": 1462769,
+  "artifact_bytes": 1492758,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "7678d1ad5187b55e5d50c7c2cc84d31e31cbbd8c46267e8c86e334d90a1c869a",
+  "sha256": "9e0862af0102878e127ac576776dd6755b13a533edb15ff124ca0abcfdb7b6b9",
   "evaluation": {
-    "headToHeadAgainstGeneration28": {
-      "opponentSha256": "4d301d7fd749764f76ba447ff614544b47ce54a70ae25063b5e19722e51fcd18",
+    "headToHeadAgainstGeneration30": {
+      "opponentSha256": "ee4a10da24418dae3167485199120314dd11834cf2a3363bed7cf068149c1d05",
       "puct64": {
-        "pairs": 256,
-        "games": 512,
-        "scoreRate": 0.51953125,
-        "scorePercent": 51.953125
+        "pairs": 128,
+        "games": 256,
+        "scoreRate": 0.60546875,
+        "scorePercent": 60.55
       }
     },
     "fixedWorkAgainstGeneration26": {
