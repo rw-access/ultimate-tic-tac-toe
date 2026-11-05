@@ -1,12 +1,12 @@
 {
   "format": "onnx",
-  "generation": 28,
-  "architecture": "280-512-ReLU-256-ReLU-policy81-value1",
+  "generation": 29,
+  "architecture": "280-600-ReLU-288-ReLU-policy81-value1",
   "hidden_widths": [
-    512,
-    256
+    600,
+    288
   ],
-  "parameters": 296274,
+  "parameters": 365386,
   "input": {
     "name": "state",
     "shape": [
@@ -66,29 +66,31 @@
   },
   "training": {
     "status": "bundled",
-    "method": "deep_mcts_teacher_knowledge_distillation",
+    "method": "deep_1024sim_teacher_knowledge_distillation",
     "teacher_architecture": "13.27M-ResNet-50MB",
-    "selfplay_depth": 512,
-    "selfplay_games": 24000
+    "selfplay_depth": 1024,
+    "selfplay_games": 30400
   },
-  "artifact_bytes": 1186321,
+  "artifact_bytes": 1462769,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "4d301d7fd749764f76ba447ff614544b47ce54a70ae25063b5e19722e51fcd18",
+  "sha256": "7678d1ad5187b55e5d50c7c2cc84d31e31cbbd8c46267e8c86e334d90a1c869a",
   "evaluation": {
-    "fixedWorkAgainstGeneration26": {
-      "opponentSha256": "f2d823d268f0321daedbbcac955c6533dd6460a4485981d6b3a1e60999d31d19",
+    "headToHeadAgainstGeneration28": {
+      "opponentSha256": "4d301d7fd749764f76ba447ff614544b47ce54a70ae25063b5e19722e51fcd18",
       "puct64": {
         "pairs": 256,
         "games": 512,
-        "scoreRate": 0.548828125,
-        "scorePercent": 54.8828125
-      },
-      "solverMcts64": {
+        "scoreRate": 0.51953125,
+        "scorePercent": 51.953125
+      }
+    },
+    "fixedWorkAgainstGeneration26": {
+      "opponentSha256": "cd561330a1666ed3286f3f411277144c335f096b4105190864b5adc49054f135",
+      "puct64": {
         "pairs": 256,
         "games": 512,
-        "scoreRate": 0.556640625,
-        "scorePercent": 55.6640625,
-        "tacticalProof": true
+        "scoreRate": 0.5869140625,
+        "scorePercent": 58.69140625
       }
     }
   },
