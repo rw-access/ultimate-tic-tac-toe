@@ -17,7 +17,7 @@ from harnet import build_harnet
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--teacher-weights", required=True, help="Path to PyTorch .pt state dict of teacher")
-    parser.add_argument("--student-tier", default="challenger20m", choices=["challenger20m", "student1_5m"])
+    parser.add_argument("--student-tier", default="challenger20m", choices=["challenger20m", "student1_5m", "fast_student1_5m"])
     parser.add_argument("--data", nargs="+", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--epochs", type=int, default=15)
@@ -167,6 +167,7 @@ def main():
     dummy = torch.randn(1, 280)
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(best_weights, out_path.with_suffix(".pt"))
 
     torch.onnx.export(
         student_cpu, dummy, str(out_path),

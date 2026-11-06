@@ -2,12 +2,24 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-class HARNetResBlock(nn.Module):
-    def __init__(self, channels: int):
+class DepthwiseSeparableConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
         super().__init__()
-        self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
+        self.depthwise = nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, groups=in_channels)
+        self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1)
+    def forward(self, x):
+        return self.pointwise(self.depthwise(x))
+
+class HARNetResBlock(nn.Module):
+    def __init__(self, channels: int, depthwise: bool = False):
+        super().__init__()
+        if depthwise:
+            self.conv1 = DepthwiseSeparableConv2d(channels, channels, 3, padding=1)
+            self.conv2 = DepthwiseSeparableConv2d(channels, channels, 3, padding=1)
+        else:
+            self.conv1 = nn.Conv2d(channels, channels, 3, padding=1)
+            self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
         self.bn1 = nn.BatchNorm2d(channels)
-        self.conv2 = nn.Conv2d(channels, channels, 3, padding=1)
         self.bn2 = nn.BatchNorm2d(channels)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -29,7 +41,8 @@ class HARNet(nn.Module):
         num_micro_blocks: int = 2,
         macro_channels: int = 192,
         num_macro_blocks: int = 4,
-        action_hidden: int = 256
+        action_hidden: int = 256,
+        depthwise: bool = False
     ):
         super().__init__()
         self.micro_channels = micro_channels
@@ -38,12 +51,12 @@ class HARNet(nn.Module):
         # 1. Micro-Board Shared ConvNet (shared across 9 sub-boards)
         self.micro_in = nn.Conv2d(3, micro_channels, 3, padding=1)
         self.micro_bn = nn.BatchNorm2d(micro_channels)
-        self.micro_blocks = nn.ModuleList([HARNetResBlock(micro_channels) for _ in range(num_micro_blocks)])
+        self.micro_blocks = nn.ModuleList([HARNetResBlock(micro_channels, depthwise=depthwise) for _ in range(num_micro_blocks)])
         
         # 2. Macro-Board Reasoning
         macro_in_dim = micro_channels + 4  # pooled micro + own_won + opp_won + drawn + forced
         self.macro_proj = nn.Linear(macro_in_dim, macro_channels)
-        self.macro_blocks = nn.ModuleList([HARNetResBlock(macro_channels) for _ in range(num_macro_blocks)])
+        self.macro_blocks = nn.ModuleList([HARNetResBlock(macro_channels, depthwise=depthwise) for _ in range(num_macro_blocks)])
         
         # 3. Action-Routing Integration Head
         # move (b, c) combines: cell features at (b, c) + origin board b + target board c
@@ -140,5 +153,9 @@ def build_harnet(tier: str):
     elif tier == "student1_5m":
         # 369,042 params (1,476,168 bytes / 1.408 MB) - strictly <= 1,500,000 bytes
         return HARNet(micro_channels=32, num_micro_blocks=1, macro_channels=80, num_macro_blocks=2, action_hidden=112)
+    elif tier == "fast_student1_5m":
+        # Depthwise-separable convolutions for 1.6x+ CPU leaf evaluation speed in browser
+        # Strictly <= 1,500,000 bytes budget (target ~1.46 MB ONNX)
+        return HARNet(micro_channels=48, num_micro_blocks=1, macro_channels=128, num_macro_blocks=2, action_hidden=168, depthwise=True)
     else:
         raise ValueError(f"Unknown tier: {tier}")
