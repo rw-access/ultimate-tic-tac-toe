@@ -1,7 +1,7 @@
 {
   "format": "onnx",
-  "generation": 31,
-  "architecture": "HARNet-micro32-macro80-routing112-shared9",
+  "generation": 32,
+  "architecture": "HARNet-micro32-macro80-routing112-v2",
   "hidden_widths": [
     32,
     80,
@@ -67,22 +67,22 @@
   },
   "training": {
     "status": "bundled",
-    "method": "hierarchical_action_routing_distillation",
-    "teacher_architecture": "HARNet-50MB-13.48M",
+    "method": "hierarchical_action_routing_exploratory_distillation",
+    "teacher_architecture": "HARNet-50MB-v2-40pct-uttt",
     "selfplay_depth": 1024,
-    "selfplay_games": 32000
+    "selfplay_games": 33200
   },
   "artifact_bytes": 1492758,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "9e0862af0102878e127ac576776dd6755b13a533edb15ff124ca0abcfdb7b6b9",
+  "sha256": "d353cf08ec9904d6cc63f3847662daed99d571a2a6f5f60f9f84c21b2c631bc7",
   "evaluation": {
-    "headToHeadAgainstGeneration30": {
-      "opponentSha256": "ee4a10da24418dae3167485199120314dd11834cf2a3363bed7cf068149c1d05",
+    "headToHeadAgainstGeneration31": {
+      "opponentSha256": "9e0862af0102878e127ac576776dd6755b13a533edb15ff124ca0abcfdb7b6b9",
       "puct64": {
         "pairs": 128,
         "games": 256,
-        "scoreRate": 0.60546875,
-        "scorePercent": 60.55
+        "scoreRate": 0.529296875,
+        "scorePercent": 52.93
       }
     },
     "fixedWorkAgainstGeneration26": {

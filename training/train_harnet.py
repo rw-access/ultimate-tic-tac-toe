@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=512)
     parser.add_argument("--lr", type=float, default=0.0003)
+    parser.add_argument("--initial-weights", default=None, help="Warm-start checkpoint (.pt)")
     parser.add_argument("--utttai-weight", type=float, default=0.50)
     parser.add_argument("--seed", type=int, default=20261109)
     args = parser.parse_args()
@@ -33,6 +34,9 @@ def main():
     print(f"Device: {device} ({torch.cuda.get_device_name(0)})")
 
     model = build_harnet(args.tier).to(device)
+    if args.initial_weights:
+        print(f"Loading initial weights from {args.initial_weights}...")
+        model.load_state_dict(torch.load(args.initial_weights, map_location=device))
     num_params, size_mb = model.count_params()
     print(f"HARNet [{args.tier}] initialized: {num_params:,} parameters ({size_mb:.2f} MB ONNX)")
 
