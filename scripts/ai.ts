@@ -240,7 +240,7 @@ interface InferenceRequest {
   reject: (error: Error) => void;
 }
 
-async function createModelClient(modelPath: string, signal: AbortSignal): Promise<ModelClient> {
+async function createModelClient(modelPath: string, signal: AbortSignal, maxBatchSize: number = MAX_INFERENCE_BATCH): Promise<ModelClient> {
   // Native ONNX inference stays inside the self-play process. Python is used
   // only between training rounds to fit/export the network, never per leaf.
   const { InferenceSession, Tensor } = await import('onnxruntime-node');
@@ -283,7 +283,7 @@ async function createModelClient(modelPath: string, signal: AbortSignal): Promis
   const flush = () => {
     scheduled = null;
     if (closed || failure || inFlight || queue.length === 0) return;
-    const batch = queue.splice(0, MAX_INFERENCE_BATCH);
+    const batch = queue.splice(0, maxBatchSize);
     const runBatch = async () => {
       let input: InstanceType<typeof Tensor> | undefined;
       let output: Awaited<ReturnType<typeof session.run>> | undefined;
@@ -536,7 +536,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
   if (!isInsideRoot(output)) process.stderr.write('Note: output is outside the repository; provenance will use a relative path.\n');
   await mkdir(dirname(output), { recursive: true });
   const temporary = `${output}.${process.pid}.partial`;
-  const modelClient = model ? await createModelClient(model, signal) : undefined;
+  const modelClient = model ? await createModelClient(model, signal, Math.max(MAX_INFERENCE_BATCH, parallelGames)) : undefined;
   const teacherEvaluator = modelClient ? makeTeacherEvaluator(modelClient.evaluate, teacherMix) : undefined;
   const legacyBaselineRandom = !model && parallelGames === 1 ? new SeededRandom(seed) : undefined;
   let gameSeeds: number[] | undefined;
@@ -973,10 +973,10 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
     };
   }).slice(pairOffset, pairOffset + pairs);
 
-  const challengerClient = await createModelClient(challengerPath, signal);
+  const challengerClient = await createModelClient(challengerPath, signal, Math.max(MAX_INFERENCE_BATCH, requestedParallelGames));
   let championClient: ModelClient | undefined;
   try {
-    championClient = await createModelClient(championPath, signal);
+    championClient = await createModelClient(championPath, signal, Math.max(MAX_INFERENCE_BATCH, requestedParallelGames));
     const challengerEvaluator = withValueMode(challengerClient.evaluate, challengerValueMode);
     const championEvaluator = withValueMode(championClient.evaluate, championValueMode);
     const perPair: Array<Record<string, unknown>> = [];
