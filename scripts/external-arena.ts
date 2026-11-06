@@ -455,8 +455,45 @@ async function game(
   return { winner: state.winner, moves: history, modelTurns, opponentTurns, modelWork, opponentWork };
 }
 
+async function calibrateModel140ms(modelPath: string): Promise<number> {
+  const { InferenceSession, Tensor } = await import('onnxruntime-node');
+  const session = await InferenceSession.create(modelPath, {
+    executionProviders: ['cpu'], intraOpNumThreads: 1, interOpNumThreads: 1, graphOptimizationLevel: 'all',
+  });
+  try {
+    const evaluate: Evaluator = async (state) => {
+      const input = new Tensor('float32', encodeState(state), [1, 280]);
+      const out = await session.run({ state: input });
+      try {
+        return { policy: Float32Array.from(out.policy.data as Float32Array), value: Number((out.value.data as Float32Array)[0]) };
+      } finally { input.dispose(); for (const t of Object.values(out)) t.dispose(); }
+    };
+    let state = createGame();
+    await search(state, { simulations: 50, timeMs: 50, evaluate });
+    const samples: number[] = [];
+    for (let ply = 0; ply < 8; ply++) {
+      const res = await search(state, { simulations: 10000, timeMs: 140, evaluate, seed: 100 + ply });
+      samples.push(res.simulations);
+      const moves = legalMoves(state);
+      state = play(state, Math.floor(moves[0] / 9), moves[0] % 9);
+    }
+    return Math.round(samples.reduce((a, b) => a + b, 0) / samples.length);
+  } finally {
+    await session.release();
+  }
+}
+
 async function main(): Promise<void> {
   const options = args();
+  if (options.opponent === 'utttai' && (options.simulations === 1253 || options.modelSimulations === 1253)) {
+    if (options.model.includes('wide') || options.model.includes('fast') || options.model.includes('37b') || options.model.includes('gen38')) {
+      console.log(`[Calibration] Detected architectural variant (${options.model}). Calibrating exact 140ms single-thread CPU throughput...`);
+      const calibratedSims = await calibrateModel140ms(options.model);
+      console.log(`[Calibration] Dynamic 140ms hardware equivalent: ${calibratedSims} simulations/move (was default ${options.modelSimulations})`);
+      options.modelSimulations = calibratedSims;
+      if (options.simulations !== undefined) options.simulations = calibratedSims;
+    }
+  }
   const [externalHash, modelHash] = await Promise.all([sha((options.engine ?? options.externalModel)!), sha(options.model)]);
   if (options.engine) await parity(options.engine);
   if (options.parityOnly) return;

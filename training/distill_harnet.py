@@ -25,6 +25,7 @@ def main():
     parser.add_argument("--lr", type=float, default=0.0003)
     parser.add_argument("--temperature", type=float, default=1.5)
     parser.add_argument("--alpha", type=float, default=0.6, help="Weight on teacher soft distillation")
+    parser.add_argument("--feature-weight", type=float, default=0.0, help="Weight for intermediate feature alignment")
     parser.add_argument("--seed", type=int, default=20261111)
     args = parser.parse_args()
 
@@ -66,6 +67,16 @@ def main():
     total_steps = (len(train_x) // args.batch_size) * args.epochs
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=max(total_steps, 1), eta_min=1e-5)
 
+    if args.feature_weight > 0:
+        proj_micro = nn.Linear(student.micro_channels, teacher.micro_channels).to(device)
+        proj_macro = nn.Linear(student.macro_channels, teacher.macro_channels).to(device)
+        feat_params = list(proj_micro.parameters()) + list(proj_macro.parameters())
+        feat_optimizer = torch.optim.AdamW(feat_params, lr=args.lr, weight_decay=1e-4)
+    else:
+        proj_micro = None
+        proj_macro = None
+        feat_optimizer = None
+
     maps = _symmetry_maps()
     aug_rng = np.random.default_rng(args.seed)
 
@@ -104,12 +115,21 @@ def main():
             hard_v = torch.from_numpy(bv).to(device)
             legal_mask = x[:, 162:243] >= 0.5
 
-            with torch.no_grad():
-                t_logits, t_val = teacher(x)
-                t_logits = t_logits.masked_fill(~legal_mask, -1e9)
-                t_soft_p = F.softmax(t_logits / T, dim=1)
+            if args.feature_weight > 0:
+                with torch.no_grad():
+                    t_logits, t_val, t_micro, t_macro = teacher(x, return_features=True)
+                    t_logits = t_logits.masked_fill(~legal_mask, -1e9)
+                    t_soft_p = F.softmax(t_logits / T, dim=1)
+                s_logits, s_val, s_micro, s_macro = student(x, return_features=True)
+                feat_loss = (F.mse_loss(proj_micro(s_micro), t_micro) + F.mse_loss(proj_macro(s_macro), t_macro)) * args.feature_weight
+            else:
+                with torch.no_grad():
+                    t_logits, t_val = teacher(x)
+                    t_logits = t_logits.masked_fill(~legal_mask, -1e9)
+                    t_soft_p = F.softmax(t_logits / T, dim=1)
+                s_logits, s_val = student(x)
+                feat_loss = 0.0
 
-            s_logits, s_val = student(x)
             s_logits_masked = s_logits.masked_fill(~legal_mask, -1e9)
 
             # Soft teacher distillation loss (KL / cross-entropy)
@@ -126,13 +146,17 @@ def main():
             v_hard_loss = F.mse_loss(s_val.squeeze(-1), hard_v)
             value_loss = 0.5 * v_teacher_loss + 0.5 * v_hard_loss
 
-            loss = policy_loss + 0.5 * value_loss
+            loss = policy_loss + 0.5 * value_loss + feat_loss
 
             optimizer.zero_grad(set_to_none=True)
+            if feat_optimizer is not None:
+                feat_optimizer.zero_grad(set_to_none=True)
             loss.backward()
             torch.nn.utils.clip_grad_norm_(student.parameters(), 1.0)
             optimizer.step()
             scheduler.step()
+            if feat_optimizer is not None:
+                feat_optimizer.step()
 
             epoch_loss += loss.item()
             n_batches += 1
@@ -141,7 +165,8 @@ def main():
             if step % 500 == 0:
                 elapsed = time.time() - start_time
                 ups = step / max(elapsed, 1e-3)
-                print(f"  Step {step:5d}/{total_steps} | Loss: {loss.item():.4f} (P-Distill: {distill_p_loss.item():.4f}, V: {value_loss.item():.4f}) | {ups:.1f} up/s")
+                feat_info = f", Feat: {feat_loss.item():.4f}" if isinstance(feat_loss, torch.Tensor) else ""
+                print(f"  Step {step:5d}/{total_steps} | Loss: {loss.item():.4f} (P-Distill: {distill_p_loss.item():.4f}, V: {value_loss.item():.4f}{feat_info}) | {ups:.1f} up/s")
 
         student.eval()
         with torch.no_grad():

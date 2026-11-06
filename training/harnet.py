@@ -79,7 +79,7 @@ class HARNet(nn.Module):
             nn.Tanh()
         )
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, return_features: bool = False):
         B = x.shape[0]
         
         # Slices from 280-feature encoding:
@@ -133,6 +133,8 @@ class HARNet(nn.Module):
         val_in = macro_embed.reshape(B, 9 * self.macro_channels)
         value = self.value_mlp(val_in)
         
+        if return_features:
+            return policy_logits, value, board_pooled, macro_embed
         return policy_logits, value
 
     def count_params(self):
