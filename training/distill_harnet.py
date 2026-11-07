@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--temperature", type=float, default=1.5)
     parser.add_argument("--alpha", type=float, default=0.6, help="Weight on teacher soft distillation")
     parser.add_argument("--feature-weight", type=float, default=0.0, help="Weight for intermediate feature alignment")
+    parser.add_argument("--swa-start-epoch", type=int, default=0, help="Epoch to start SWA averaging (0 to disable)")
     parser.add_argument("--seed", type=int, default=20261111)
     args = parser.parse_args()
 
@@ -87,6 +88,12 @@ def main():
 
     best_val_loss = float("inf")
     best_weights = None
+
+    if args.swa_start_epoch > 0:
+        from torch.optim.swa_utils import AveragedModel
+        swa_model = AveragedModel(student)
+    else:
+        swa_model = None
 
     T = args.temperature
     alpha = args.alpha
@@ -182,6 +189,24 @@ def main():
         if val_total < best_val_loss:
             best_val_loss = val_total
             best_weights = {k: v.cpu().clone() for k, v in student.state_dict().items()}
+
+        if swa_model is not None and (epoch + 1) >= args.swa_start_epoch:
+            swa_model.update_parameters(student)
+            print(f"  [SWA] Updated averaged model at epoch {epoch+1}")
+
+    if swa_model is not None:
+        swa_model.eval()
+        with torch.no_grad():
+            v_logits, v_pred_v = swa_model(val_x_t)
+            v_logits = v_logits.masked_fill(val_x_t[:, 162:243] < 0.5, -1e9)
+            v_p_loss = -(val_p_t * F.log_softmax(v_logits, dim=1)).sum(dim=1).mean().item()
+            v_v_loss = F.mse_loss(v_pred_v.squeeze(-1), val_v_t).item()
+            swa_val_total = v_p_loss + 0.5 * v_v_loss
+        print(f"[SWA] Final SWA Val Loss: {swa_val_total:.4f} vs Best Epoch: {best_val_loss:.4f}")
+        if swa_val_total <= best_val_loss:
+            print("  --> Adopting SWA averaged weights for promotion!")
+            best_weights = {k.replace("module.", ""): v.cpu().clone() for k, v in swa_model.module.state_dict().items()}
+            best_val_loss = swa_val_total
 
     print(f"Distillation completed in {time.time() - start_time:.1f}s. Best Val Loss: {best_val_loss:.4f}")
 

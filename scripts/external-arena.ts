@@ -26,6 +26,7 @@ type Options = {
   opponentSimulations: number;
   parityOnly: boolean;
   parallel: number;
+  fpuReduction?: number;
 };
 
 function args(): Options {
@@ -56,6 +57,7 @@ function args(): Options {
   const opponentSimulations = values['opponent-simulations'] !== undefined ? integer('opponent-simulations', 512) : (rawSims ?? 4096);
   const isFixedSims = rawSims !== undefined || values['model-simulations'] !== undefined || values['opponent-simulations'] !== undefined;
   const timeMs = isFixedSims ? 30_000 : integer('time-ms', 140);
+  const fpuReduction = values['fpu-reduction'] !== undefined ? Number(values['fpu-reduction']) : undefined;
 
   return {
     engine: values.engine,
@@ -73,6 +75,7 @@ function args(): Options {
     opponentSimulations,
     parityOnly: values['parity-only'] === 'true',
     parallel,
+    fpuReduction,
   };
 }
 
@@ -414,6 +417,7 @@ async function game(
   externalEvaluate?: Evaluator,
   modelSimulations: number = 4096,
   opponentSimulations: number = 4096,
+  fpuReduction?: number,
 ): Promise<{ winner: GameState['winner']; moves: number[]; modelTurns: number; opponentTurns: number; modelWork: number; opponentWork: number }> {
   let state = initial.state;
   const history = [...initial.history];
@@ -434,6 +438,7 @@ async function game(
           tacticalProof: true,
           evaluate: modelTurn ? evaluate : externalEvaluate,
           seed: next(),
+          fpuReduction: modelTurn ? fpuReduction : undefined,
         });
         if (result.move === null) throw new Error(`${modelTurn ? 'R20' : 'uttt.ai'} returned no move`);
         move = result.move;
@@ -534,8 +539,8 @@ async function main(): Promise<void> {
         if (finished.has(pair)) return;
         const op = opening(seeds[pair]);
         const [x, o] = await Promise.all([
-          game(op, 'X', engine, model.evaluate, options.opponent, options.timeMs, seeds[pair] ^ 0x9e3779b9, external?.evaluate, options.modelSimulations, options.opponentSimulations),
-          game(op, 'O', engine, model.evaluate, options.opponent, options.timeMs, seeds[pair] ^ 0x85ebca6b, external?.evaluate, options.modelSimulations, options.opponentSimulations),
+          game(op, 'X', engine, model.evaluate, options.opponent, options.timeMs, seeds[pair] ^ 0x9e3779b9, external?.evaluate, options.modelSimulations, options.opponentSimulations, options.fpuReduction),
+          game(op, 'O', engine, model.evaluate, options.opponent, options.timeMs, seeds[pair] ^ 0x85ebca6b, external?.evaluate, options.modelSimulations, options.opponentSimulations, options.fpuReduction),
         ]);
         const score = (result: typeof x, seat: Player) => result.winner === 'draw' ? 0.5 : result.winner === seat ? 1 : 0;
         const row = {

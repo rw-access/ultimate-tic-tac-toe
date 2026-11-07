@@ -300,7 +300,7 @@ function makeRng(seed: number): () => number {
   };
 }
 
-function chooseChild(node: Node, random: () => number, tacticalProof = false): Child {
+function chooseChild(node: Node, random: () => number, tacticalProof = false, fpuReduction?: number): Child {
   const allChildren = node.children!;
   if (tacticalProof) {
     for (const child of allChildren) {
@@ -312,12 +312,16 @@ function chooseChild(node: Node, random: () => number, tacticalProof = false): C
     : allChildren;
   const children = nonLosing.length > 0 ? nonLosing : allChildren;
   const exploration = Math.SQRT2;
+  const parentQ = node.visits > 0 ? node.valueSum / node.visits : 0;
+  const defaultUnvisitedQ = fpuReduction !== undefined
+    ? Math.max(-1, Math.min(1, parentQ - fpuReduction))
+    : 0;
   let bestScore = -Infinity;
   let best: Child[] = [];
   for (const child of children) {
     const childNode = child.node;
     const visits = childNode?.visits ?? 0;
-    const q = visits === 0 ? 0 : -childNode!.valueSum / visits;
+    const q = visits === 0 ? defaultUnvisitedQ : -childNode!.valueSum / visits;
     const u = exploration * child.prior * Math.sqrt(Math.max(1, node.visits)) / (1 + visits);
     const score = q + u;
     if (score > bestScore + 1e-12) {
@@ -411,6 +415,7 @@ export async function search(
     seed?: number;
     tacticalProof?: boolean;
     rootNoise?: RootNoiseOptions;
+    fpuReduction?: number;
   } = {},
 ): Promise<{ move: number | null; policy: Float32Array; simulations: number }> {
   const rootNoise = validateRootNoise(options.rootNoise);
@@ -459,7 +464,7 @@ export async function search(
     let node = root;
     path.push(node);
     while (node.children !== null && node.children.length > 0 && (!tacticalProof || node.proven === 0)) {
-      const selected = chooseChild(node, searchRandom, tacticalProof);
+      const selected = chooseChild(node, searchRandom, tacticalProof, options.fpuReduction);
       if (selected.node === null) {
         selected.node = {
           state: play(node.state, Math.floor(selected.move / 9), selected.move % 9),
