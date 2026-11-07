@@ -1,6 +1,6 @@
 {
   "format": "onnx",
-  "generation": 51,
+  "generation": 56,
   "architecture": "HARNet-micro32-macro80-routing112-v2",
   "hidden_widths": [
     32,
@@ -67,18 +67,27 @@
   },
   "training": {
     "status": "bundled",
-    "method": "hierarchical_action_routing_exploratory_distillation",
-    "teacher_architecture": "HARNet-50MB-v11",
-    "selfplay_depth": 2048,
-    "selfplay_waves": "Waves 3 through 11",
-    "temperature": 1.55,
-    "alpha": 0.65,
-    "feature_weight": 0.05
+    "method": "pure_alphazero_direct_reinforcement",
+    "selfplay_depth": "2048 to 4096",
+    "selfplay_waves": "Waves 11 through 15",
+    "gpu_acceleration": "Tensor Core BF16 in VRAM (188k pos/s)"
   },
   "artifact_bytes": 1492760,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "5c12e49a045ad1fc75be277647fa94fd826a6d84ff755d8cec222249c22deeb7",
+  "sha256": "5d2380f31bb14b7eb7ef2c4c3aeee71426e456f45b10d3b9ee68fac4c2f2eab6",
   "evaluation": {
+    "headToHeadAgainstGeneration51": {
+      "opponentSha256": "5c12e49a045ad1fc75be277647fa94fd826a6d84ff755d8cec222249c22deeb7",
+      "puct256": {
+        "pairs": 50,
+        "games": 100,
+        "wins": 29,
+        "draws": 55,
+        "losses": 16,
+        "scoreRate": 0.565,
+        "scorePercent": 56.50
+      }
+    },
     "headToHeadAgainstGeneration37": {
       "opponentSha256": "165a03c8d6181d5499365a3415da08a23c7708ca33f53e2ef1372b121fbb6ad1",
       "puct256": {
