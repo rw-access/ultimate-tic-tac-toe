@@ -31,13 +31,13 @@ function findOpponentMove(before: GameState, after: GameState): number | null {
   return null;
 }
 
-function sampleMove(state: GameState, logits: Float32Array, candidates?: number[]): number | null {
+function sampleMove(state: GameState, logits: Float32Array, candidates?: number[], temperature = 1.25): number | null {
   const moves = candidates?.length ? candidates : legalMoves(state);
   if (!moves.length) return null;
   const winning = moves.find(move => play(state, Math.floor(move / 9), move % 9).winner === state.turn);
   if (winning !== undefined) return winning;
   const maximum = Math.max(...moves.map(move => logits[move]));
-  const weights = moves.map(move => Math.exp((logits[move] - maximum) / 1.25));
+  const weights = moves.map(move => Math.exp((logits[move] - maximum) / temperature));
   let remaining = Math.random() * weights.reduce((sum, value) => sum + value, 0);
   for (let i = 0; i < moves.length; i++) {
     remaining -= weights[i];
@@ -136,24 +136,38 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     }
 
     const difficulty = event.data.difficulty ?? 'medium';
-    const settings = difficulty === 'hard' ? { simulations: 4096, timeMs: 140, tacticalProof: true }
-      : difficulty === 'medium' ? { simulations: 96, timeMs: 200, tacticalProof: true }
-        : { simulations: 24, timeMs: 80, tacticalProof: false };
-    const endgame = solveEndgame(state, {
-      maxEmptySquares: 18,
-      maxNodes: 32_000,
-      timeMs: difficulty === 'hard' ? 2_000 : difficulty === 'medium' ? 1_000 : 500,
-    });
-    if (endgame && endgame.move !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
-      lastRoot = undefined;
-      lastAiMove = null;
-      lastAiStateAfterOurMove = undefined;
-      self.postMessage({ id, move: endgame.move, source: 'search', simulations: 0, settings });
-      return;
+    const settings = difficulty === 'hard'
+      ? { simulations: 4096, timeMs: 140, tacticalProof: true }
+      : difficulty === 'medium'
+        ? { simulations: 48, timeMs: 100, tacticalProof: true }
+        : { simulations: 16, timeMs: 50, tacticalProof: false };
+
+    // Endgame minimax solver:
+    // Only run on Hard (full 18 squares) and Medium (shallow 8 squares).
+    // Easy mode avoids the exact minimax endgame solver so casual players have fun.
+    if (difficulty !== 'easy') {
+      const maxEmpty = difficulty === 'hard' ? 18 : 8;
+      const maxNodes = difficulty === 'hard' ? 32_000 : 2_000;
+      const timeMs = difficulty === 'hard' ? 2_000 : 150;
+      const endgame = solveEndgame(state, {
+        maxEmptySquares: maxEmpty,
+        maxNodes: maxNodes,
+        timeMs: timeMs,
+      });
+      if (endgame && endgame.move !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
+        lastRoot = undefined;
+        lastAiMove = null;
+        lastAiStateAfterOurMove = undefined;
+        self.postMessage({ id, move: endgame.move, source: 'search', simulations: 0, settings });
+        return;
+      }
     }
 
+    // Subtree carryover:
+    // Exclusive to Hard difficulty so Hard reaches maximum search depth,
+    // while Medium stays accessible with independent per-turn search.
     let reusedRoot: Node | undefined;
-    if (lastRoot && lastAiStateAfterOurMove && lastAiMove !== null && state.moves > 1) {
+    if (difficulty === 'hard' && lastRoot && lastAiStateAfterOurMove && lastAiMove !== null && state.moves > 1) {
       const oppMove = findOpponentMove(lastAiStateAfterOurMove, state);
       if (oppMove !== null) {
         reusedRoot = advanceSubtree(lastRoot, lastAiMove, oppMove);
@@ -164,27 +178,31 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     let move: number | null;
     let simulations = 0;
     try {
-      if (difficulty === 'easy' && evaluate) {
+      if (difficulty === 'easy') {
         lastRoot = undefined;
         lastAiMove = null;
         lastAiStateAfterOurMove = undefined;
-        const evaluation = await evaluate(state);
-        const forcedWin = findForcedWinWithinPlies(state, {
-          maxPlies: 7,
-          maxNodes: 12_000,
-          timeMs: 24,
-          rootMoveScores: evaluation.policy,
-        });
-        if (forcedWin) move = forcedWin.move;
-        else {
+
+        // Take an immediate 1-move win if available right now.
+        const immediateWins = immediateWinningMoves(state);
+        if (immediateWins.length > 0) {
+          move = immediateWins[0];
+        } else if (evaluate) {
+          const evaluation = await evaluate(state);
+          // 75% of the time play safe moves with relaxed temperature; 25% allow loose play
           const safeMoves = movesSafeFromImmediateLoss(state);
-          move = sampleMove(state, evaluation.policy, safeMoves);
+          const candidates = (safeMoves.length > 0 && Math.random() < 0.75) ? safeMoves : legalMoves(state);
+          move = sampleMove(state, evaluation.policy, candidates, 2.0);
+        } else {
+          const safeMoves = movesSafeFromImmediateLoss(state);
+          const candidates = safeMoves.length > 0 && Math.random() < 0.75 ? safeMoves : legalMoves(state);
+          move = candidates[Math.floor(Math.random() * candidates.length)] ?? null;
         }
       } else {
         const result = await search(state, { ...settings, evaluate, reusedRoot });
         move = result.move;
         simulations = result.simulations;
-        if (result.move !== null) {
+        if (result.move !== null && difficulty === 'hard') {
           lastRoot = result.root;
           lastAiMove = result.move;
           lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
@@ -202,7 +220,7 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       const result = await search(state, { ...settings, reusedRoot });
       move = result.move;
       simulations = result.simulations;
-      if (result.move !== null) {
+      if (result.move !== null && difficulty === 'hard') {
         lastRoot = result.root;
         lastAiMove = result.move;
         lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
