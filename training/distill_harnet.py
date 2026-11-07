@@ -26,6 +26,7 @@ def main():
     parser.add_argument("--temperature", type=float, default=1.5)
     parser.add_argument("--alpha", type=float, default=0.6, help="Weight on teacher soft distillation")
     parser.add_argument("--feature-weight", type=float, default=0.0, help="Weight for intermediate feature alignment")
+    parser.add_argument("--utttai-weight", type=float, default=0.5, help="Weight for uttt.ai soft targets vs MCTS")
     parser.add_argument("--swa-start-epoch", type=int, default=0, help="Epoch to start SWA averaging (0 to disable)")
     parser.add_argument("--seed", type=int, default=20261111)
     args = parser.parse_args()
@@ -57,10 +58,13 @@ def main():
     val_x, val_mp, val_mv, val_up, val_uv = val_data
 
     # Combined target labels for regularization
-    train_p = 0.5 * train_mp + 0.5 * train_up
-    train_v = 0.5 * train_mv + 0.5 * train_uv
-    val_p = 0.5 * val_mp + 0.5 * val_up
-    val_v = 0.5 * val_mv + 0.5 * val_uv
+    w_u = args.utttai_weight
+    w_m = 1.0 - w_u
+    print(f"Hybrid Blend: {w_m:.2f} MCTS + {w_u:.2f} uttt.ai Soft Targets")
+    train_p = w_m * train_mp + w_u * train_up
+    train_v = w_m * train_mv + w_u * train_uv
+    val_p = w_m * val_mp + w_u * val_up
+    val_v = w_m * val_mv + w_u * val_uv
 
     print(f"Train: {len(train_x):,} positions | Val: {len(val_x):,} positions")
 
