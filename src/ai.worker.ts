@@ -1,4 +1,4 @@
-import { baselineEvaluation, legalMoves, search, type Evaluator } from './ai';
+import { advanceSubtree, baselineEvaluation, legalMoves, search, type Evaluator, type Node } from './ai';
 import { play, type GameState } from './game';
 import { createEvaluator, type ModelEvaluator } from './onnx';
 import { findForcedWinWithinPlies, immediateWinningMoves, movesSafeFromImmediateLoss, solveEndgame } from './endgame';
@@ -15,6 +15,21 @@ type Request = {
 
 let evaluator: Promise<ModelEvaluator> | null = null;
 let failed = false;
+
+let lastRoot: Node | undefined;
+let lastAiStateAfterOurMove: GameState | undefined;
+let lastAiMove: number | null = null;
+
+function findOpponentMove(before: GameState, after: GameState): number | null {
+  for (let b = 0; b < 9; b++) {
+    for (let c = 0; c < 9; c++) {
+      if (before.boards[b][c] === null && after.boards[b][c] !== null) {
+        return b * 9 + c;
+      }
+    }
+  }
+  return null;
+}
 
 function sampleMove(state: GameState, logits: Float32Array, candidates?: number[]): number | null {
   const moves = candidates?.length ? candidates : legalMoves(state);
@@ -130,8 +145,19 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       timeMs: difficulty === 'hard' ? 2_000 : difficulty === 'medium' ? 1_000 : 500,
     });
     if (endgame && endgame.move !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
+      lastRoot = undefined;
+      lastAiMove = null;
+      lastAiStateAfterOurMove = undefined;
       self.postMessage({ id, move: endgame.move, source: 'search', simulations: 0, settings });
       return;
+    }
+
+    let reusedRoot: Node | undefined;
+    if (lastRoot && lastAiStateAfterOurMove && lastAiMove !== null && state.moves > 1) {
+      const oppMove = findOpponentMove(lastAiStateAfterOurMove, state);
+      if (oppMove !== null) {
+        reusedRoot = advanceSubtree(lastRoot, lastAiMove, oppMove);
+      }
     }
 
     let evaluate = await loadEvaluator(modelUrl);
@@ -139,6 +165,9 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     let simulations = 0;
     try {
       if (difficulty === 'easy' && evaluate) {
+        lastRoot = undefined;
+        lastAiMove = null;
+        lastAiStateAfterOurMove = undefined;
         const evaluation = await evaluate(state);
         const forcedWin = findForcedWinWithinPlies(state, {
           maxPlies: 7,
@@ -152,18 +181,36 @@ self.onmessage = async (event: MessageEvent<Request>) => {
           move = sampleMove(state, evaluation.policy, safeMoves);
         }
       } else {
-        const result = await search(state, { ...settings, evaluate });
+        const result = await search(state, { ...settings, evaluate, reusedRoot });
         move = result.move;
         simulations = result.simulations;
+        if (result.move !== null) {
+          lastRoot = result.root;
+          lastAiMove = result.move;
+          lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
+        } else {
+          lastRoot = undefined;
+          lastAiMove = null;
+          lastAiStateAfterOurMove = undefined;
+        }
       }
     } catch {
       failed = true;
       await evaluator?.then(model => model.dispose()).catch(() => {});
       evaluator = null;
       evaluate = undefined;
-      const result = await search(state, settings);
+      const result = await search(state, { ...settings, reusedRoot });
       move = result.move;
       simulations = result.simulations;
+      if (result.move !== null) {
+        lastRoot = result.root;
+        lastAiMove = result.move;
+        lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
+      } else {
+        lastRoot = undefined;
+        lastAiMove = null;
+        lastAiStateAfterOurMove = undefined;
+      }
     }
     self.postMessage({ id, move, source: evaluate ? 'model' : 'search', simulations, settings });
   } catch {

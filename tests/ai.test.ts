@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { baselineEvaluation, encodeState, INPUT_SIZE, legalMoves, search } from '../src/ai.ts';
+import { advanceSubtree, baselineEvaluation, encodeState, INPUT_SIZE, legalMoves, search } from '../src/ai.ts';
 import { createGame, play } from '../src/game.ts';
 import type { GameState } from '../src/game.ts';
 
@@ -308,4 +308,30 @@ test('tactical proof propagates internal forced-loss refutations and unstoppable
   // (proven = -1 for O => proven = +1 for X at root), so X selects move 39 with policy 1.
   assert.equal(result.move, 39);
   assert.equal(result.policy[39], 1);
+});
+
+test('subtree reuse carries forward visit statistics across turns', async () => {
+  const initial = createGame();
+  const search1 = await search(initial, { simulations: 64, timeMs: 5000 });
+  assert.ok(search1.root, 'search must return the root node');
+  assert.ok(search1.root.visits >= 64, 'root must have at least 64 visits');
+  const ourMove = search1.move!;
+  assert.ok(Number.isInteger(ourMove));
+
+  // Opponent plays a valid reply
+  const afterOurMove = play(initial, Math.floor(ourMove / 9), ourMove % 9);
+  const legalReplies = legalMoves(afterOurMove);
+  const oppMove = legalReplies[0];
+  const afterOppMove = play(afterOurMove, Math.floor(oppMove / 9), oppMove % 9);
+
+  // Advance subtree
+  const reusedRoot = advanceSubtree(search1.root, ourMove, oppMove);
+  assert.ok(reusedRoot, 'advanceSubtree must successfully find the matching descendant node');
+  assert.ok(reusedRoot.visits > 0, 'reused subtree root must have retained prior visits');
+  const initialReusedVisits = reusedRoot.visits;
+
+  // Search with reused subtree
+  const search2 = await search(afterOppMove, { simulations: 64, timeMs: 5000, reusedRoot });
+  assert.ok(search2.simulations >= 64, 'simulations must reflect total visits');
+  assert.ok(search2.root!.visits >= initialReusedVisits, 'root visits must build on top of carried-over visits');
 });
