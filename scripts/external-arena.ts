@@ -5,9 +5,8 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { createInterface, type Interface } from 'node:readline';
 import { appendFile, readFile, stat } from 'node:fs/promises';
 import { createGame, play, type GameState, type Player } from '../src/game.ts';
-import { encodeState, legalMoves, search } from '../src/ai.ts';
+import { advanceSubtree, encodeState, legalMoves, search, type Evaluator, type Evaluation, type Node } from '../src/ai.ts';
 import { solveEndgame } from '../src/endgame.ts';
-import type { Evaluator, Evaluation } from '../src/ai.ts';
 
 type Opponent = 'alpha-beta' | 'learned-puct' | 'utttai';
 type Options = {
@@ -423,15 +422,32 @@ async function game(
   const history = [...initial.history];
   const next = random(seed);
   let modelTurns = 0, opponentTurns = 0, modelWork = 0, opponentWork = 0;
+  let modelRoot: Node | undefined;
+  let lastModelMove: number | null = null;
+  let lastModelStateAfterMove: GameState | undefined;
+
   while (state.winner === null) {
     const legal = legalMoves(state);
     let move: number;
     if (state.turn === modelSeat || opponent === 'utttai') {
       const endgame = solveEndgame(state, { maxEmptySquares: 18, maxNodes: 32_000, timeMs: 2_000 });
-      if (endgame?.move !== null && endgame !== null && (endgame.solved || endgame.guaranteedValue !== null)) move = endgame.move;
-      else {
+      if (endgame?.move !== null && endgame !== null && (endgame.solved || endgame.guaranteedValue !== null)) {
+        move = endgame.move;
+        if (state.turn === modelSeat) {
+          modelRoot = undefined;
+          lastModelMove = null;
+          lastModelStateAfterMove = undefined;
+        }
+      } else {
         const modelTurn = state.turn === modelSeat;
         const simBudget = modelTurn ? modelSimulations : opponentSimulations;
+        let reusedRoot: Node | undefined;
+        if (modelTurn && modelRoot && lastModelStateAfterMove && lastModelMove !== null && history.length > 0) {
+          const oppMove = history[history.length - 1];
+          if (oppMove !== undefined) {
+            reusedRoot = advanceSubtree(modelRoot, lastModelMove, oppMove);
+          }
+        }
         const result = await search(state, {
           simulations: simBudget,
           timeMs,
@@ -439,11 +455,18 @@ async function game(
           evaluate: modelTurn ? evaluate : externalEvaluate,
           seed: next(),
           fpuReduction: modelTurn ? fpuReduction : undefined,
+          reusedRoot: modelTurn ? reusedRoot : undefined,
         });
         if (result.move === null) throw new Error(`${modelTurn ? 'R20' : 'uttt.ai'} returned no move`);
         move = result.move;
-        if (modelTurn) modelWork += result.simulations;
-        else opponentWork += result.simulations;
+        if (modelTurn) {
+          modelWork += result.simulations;
+          modelRoot = result.root;
+          lastModelMove = result.move;
+          lastModelStateAfterMove = play(state, Math.floor(result.move / 9), result.move % 9);
+        } else {
+          opponentWork += result.simulations;
+        }
       }
       if (state.turn === modelSeat) modelTurns++;
       else opponentTurns++;
