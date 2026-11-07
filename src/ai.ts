@@ -258,19 +258,39 @@ export function baselineEvaluation(state: GameState): Evaluation {
   return { policy, value };
 }
 
-interface Child {
+export interface Child {
   move: number;
   prior: number;
   node: Node | null;
 }
 
-interface Node {
+export interface Node {
   state: GameState;
   visits: number;
   valueSum: number;
   children: Child[] | null;
   priors: Float32Array | null;
   proven: 1 | -1 | 0;
+}
+
+export function statesMatch(a: GameState, b: GameState): boolean {
+  if (a.turn !== b.turn || a.forced !== b.forced || a.winner !== b.winner) return false;
+  for (let i = 0; i < 9; i++) {
+    if (a.results[i] !== b.results[i]) return false;
+    const bA = a.boards[i], bB = b.boards[i];
+    for (let j = 0; j < 9; j++) {
+      if (bA[j] !== bB[j]) return false;
+    }
+  }
+  return true;
+}
+
+export function advanceSubtree(root: Node | undefined, ourMove: number, opponentMove: number): Node | undefined {
+  if (!root || !root.children) return undefined;
+  const ourChild = root.children.find(c => c.move === ourMove);
+  if (!ourChild?.node || !ourChild.node.children) return undefined;
+  const oppChild = ourChild.node.children.find(c => c.move === opponentMove);
+  return oppChild?.node ?? undefined;
 }
 
 function softmaxLegal(policy: Float32Array | undefined, moves: number[]): Map<number, number> {
@@ -416,8 +436,9 @@ export async function search(
     tacticalProof?: boolean;
     rootNoise?: RootNoiseOptions;
     fpuReduction?: number;
+    reusedRoot?: Node;
   } = {},
-): Promise<{ move: number | null; policy: Float32Array; simulations: number }> {
+): Promise<{ move: number | null; policy: Float32Array; simulations: number; root?: Node }> {
   const rootNoise = validateRootNoise(options.rootNoise);
   let rootMoves = legalMoves(state);
   const policy = new Float32Array(ACTIONS);
@@ -455,11 +476,14 @@ export async function search(
   const noiseRandom = rootNoise && rootNoise.epsilon > 0
     ? makeRng((options.seed ?? 1) ^ 0x6d2b79f5)
     : undefined;
-  const root: Node = { state, visits: 0, valueSum: 0, children: null, priors: null, proven: 0 };
+  const canReuse = options.reusedRoot !== undefined && statesMatch(options.reusedRoot.state, state);
+  const root: Node = canReuse
+    ? options.reusedRoot!
+    : { state, visits: 0, valueSum: 0, children: null, priors: null, proven: 0 };
   const path: Node[] = [];
-  let simulations = 0;
+  let simulations = root.visits;
 
-  for (let simulation = 0; simulation < simulationsLimit && performance.now() <= deadline; simulation++) {
+  for (let simulation = simulations; simulation < simulationsLimit && performance.now() <= deadline; simulation++) {
     path.length = 0;
     let node = root;
     path.push(node);
@@ -563,7 +587,7 @@ export async function search(
     const provenWinChild = rootChildren.find(child => child.node?.proven === -1);
     if (provenWinChild) {
       policy[provenWinChild.move] = 1;
-      return { move: provenWinChild.move, policy, simulations };
+      return { move: provenWinChild.move, policy, simulations, root };
     }
   }
 
@@ -610,10 +634,10 @@ export async function search(
         }
       }
     }
-    return { move: bestChild.move, policy, simulations };
+    return { move: bestChild.move, policy, simulations, root };
   }
 
   let move = rootMoves[0];
   for (const candidate of rootMoves) if (policy[candidate] > policy[move]) move = candidate;
-  return { move, policy, simulations };
+  return { move, policy, simulations, root };
 }
