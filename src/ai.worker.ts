@@ -31,19 +31,29 @@ function findOpponentMove(before: GameState, after: GameState): number | null {
   return null;
 }
 
-function sampleMove(state: GameState, logits: Float32Array, candidates?: number[], temperature = 1.25): number | null {
-  const moves = candidates?.length ? candidates : legalMoves(state);
-  if (!moves.length) return null;
-  const winning = moves.find(move => play(state, Math.floor(move / 9), move % 9).winner === state.turn);
-  if (winning !== undefined) return winning;
-  const maximum = Math.max(...moves.map(move => logits[move]));
-  const weights = moves.map(move => Math.exp((logits[move] - maximum) / temperature));
-  let remaining = Math.random() * weights.reduce((sum, value) => sum + value, 0);
-  for (let i = 0; i < moves.length; i++) {
-    remaining -= weights[i];
-    if (remaining <= 0) return moves[i];
+function sampleFromVisitDistribution(policy: Float32Array, temperature = 0.8): number | null {
+  const candidates: number[] = [];
+  const weights: number[] = [];
+  const invTemp = 1 / Math.max(0.01, temperature);
+  for (let move = 0; move < policy.length; move++) {
+    const p = policy[move];
+    if (p > 0) {
+      candidates.push(move);
+      weights.push(Math.pow(p, invTemp));
+    }
   }
-  return moves[moves.length - 1];
+  if (!candidates.length) return null;
+  if (candidates.length === 1) return candidates[0];
+
+  const sum = weights.reduce((acc, w) => acc + w, 0);
+  if (!(sum > 0) || !Number.isFinite(sum)) return candidates[0];
+
+  let remaining = Math.random() * sum;
+  for (let i = 0; i < candidates.length; i++) {
+    remaining -= weights[i];
+    if (remaining <= 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
 }
 
 async function loadEvaluator(modelUrl: string): Promise<Evaluator | undefined> {
@@ -137,18 +147,18 @@ self.onmessage = async (event: MessageEvent<Request>) => {
 
     const difficulty = event.data.difficulty ?? 'medium';
     const settings = difficulty === 'hard'
-      ? { simulations: 4096, timeMs: 140, tacticalProof: true }
+      ? { simulations: 384, timeMs: 220, tacticalProof: true }
       : difficulty === 'medium'
-        ? { simulations: 48, timeMs: 100, tacticalProof: true }
-        : { simulations: 16, timeMs: 50, tacticalProof: false };
+        ? { simulations: 64, timeMs: 120, tacticalProof: false }
+        : { simulations: 16, timeMs: 60, tacticalProof: false };
 
     // Endgame minimax solver:
-    // Only run on Hard (full 18 squares) and Medium (shallow 8 squares).
+    // Only run on Hard (up to 14 squares) and Medium (shallow 8 squares).
     // Easy mode avoids the exact minimax endgame solver so casual players have fun.
     if (difficulty !== 'easy') {
-      const maxEmpty = difficulty === 'hard' ? 18 : 8;
-      const maxNodes = difficulty === 'hard' ? 32_000 : 2_000;
-      const timeMs = difficulty === 'hard' ? 2_000 : 150;
+      const maxEmpty = difficulty === 'hard' ? 14 : 8;
+      const maxNodes = difficulty === 'hard' ? 16_000 : 1_000;
+      const timeMs = difficulty === 'hard' ? 250 : 50;
       const endgame = solveEndgame(state, {
         maxEmptySquares: maxEmpty,
         maxNodes: maxNodes,
@@ -178,39 +188,22 @@ self.onmessage = async (event: MessageEvent<Request>) => {
     let move: number | null;
     let simulations = 0;
     try {
-      if (difficulty === 'easy') {
+      const result = await search(state, { ...settings, evaluate, reusedRoot });
+      simulations = result.simulations;
+      if (difficulty === 'easy' && result.move !== null && result.simulations > 0) {
+        move = sampleFromVisitDistribution(result.policy, 0.8) ?? result.move;
+      } else {
+        move = result.move;
+      }
+
+      if (move !== null && difficulty === 'hard') {
+        lastRoot = result.root;
+        lastAiMove = move;
+        lastAiStateAfterOurMove = play(state, Math.floor(move / 9), move % 9);
+      } else {
         lastRoot = undefined;
         lastAiMove = null;
         lastAiStateAfterOurMove = undefined;
-
-        // Take an immediate 1-move win if available right now.
-        const immediateWins = immediateWinningMoves(state);
-        if (immediateWins.length > 0) {
-          move = immediateWins[0];
-        } else if (evaluate) {
-          const evaluation = await evaluate(state);
-          // 75% of the time play safe moves with relaxed temperature; 25% allow loose play
-          const safeMoves = movesSafeFromImmediateLoss(state);
-          const candidates = (safeMoves.length > 0 && Math.random() < 0.75) ? safeMoves : legalMoves(state);
-          move = sampleMove(state, evaluation.policy, candidates, 2.0);
-        } else {
-          const safeMoves = movesSafeFromImmediateLoss(state);
-          const candidates = safeMoves.length > 0 && Math.random() < 0.75 ? safeMoves : legalMoves(state);
-          move = candidates[Math.floor(Math.random() * candidates.length)] ?? null;
-        }
-      } else {
-        const result = await search(state, { ...settings, evaluate, reusedRoot });
-        move = result.move;
-        simulations = result.simulations;
-        if (result.move !== null && difficulty === 'hard') {
-          lastRoot = result.root;
-          lastAiMove = result.move;
-          lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
-        } else {
-          lastRoot = undefined;
-          lastAiMove = null;
-          lastAiStateAfterOurMove = undefined;
-        }
       }
     } catch {
       failed = true;
@@ -218,12 +211,17 @@ self.onmessage = async (event: MessageEvent<Request>) => {
       evaluator = null;
       evaluate = undefined;
       const result = await search(state, { ...settings, reusedRoot });
-      move = result.move;
       simulations = result.simulations;
-      if (result.move !== null && difficulty === 'hard') {
+      if (difficulty === 'easy' && result.move !== null && result.simulations > 0) {
+        move = sampleFromVisitDistribution(result.policy, 0.8) ?? result.move;
+      } else {
+        move = result.move;
+      }
+
+      if (move !== null && difficulty === 'hard') {
         lastRoot = result.root;
-        lastAiMove = result.move;
-        lastAiStateAfterOurMove = play(state, Math.floor(result.move / 9), result.move % 9);
+        lastAiMove = move;
+        lastAiStateAfterOurMove = play(state, Math.floor(move / 9), move % 9);
       } else {
         lastRoot = undefined;
         lastAiMove = null;
