@@ -11,6 +11,8 @@ export interface Evaluation {
   policy: Float32Array;
   /** Position value from the perspective of state.turn, in [-1, 1]. */
   value: number;
+  /** Predicted final mini-board ownership in [-1, 1] for each of the 9 mini-boards. */
+  ownership?: Float32Array;
 }
 
 export type Evaluator = (state: GameState) => Promise<Evaluation>;

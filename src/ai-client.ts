@@ -8,6 +8,7 @@ export type PositionAnalysis = {
   lines: number[][];
   source: 'model' | 'search';
   solved: boolean;
+  ownership?: number[];
 };
 
 type WorkerReply = {
@@ -17,6 +18,7 @@ type WorkerReply = {
   lines?: number[][];
   source?: 'model' | 'search';
   solved?: boolean;
+  ownership?: number[];
   error?: string;
 };
 
@@ -110,6 +112,7 @@ export class PositionAnalyzer {
       lines: reply.lines,
       source: reply.source,
       solved: reply.solved === true,
+      ownership: reply.ownership,
     };
   }
 

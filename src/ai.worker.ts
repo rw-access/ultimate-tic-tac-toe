@@ -141,7 +141,14 @@ self.onmessage = async (event: MessageEvent<Request>) => {
         }
         lines.push(line);
       }
-      self.postMessage({ id, value: estimate.value, lines, source: evaluate ? 'model' : 'search', solved: false });
+      self.postMessage({
+        id,
+        value: estimate.value,
+        lines,
+        source: evaluate ? 'model' : 'search',
+        solved: false,
+        ownership: estimate.ownership ? Array.from(estimate.ownership) : undefined,
+      });
       return;
     }
 

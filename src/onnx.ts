@@ -22,7 +22,7 @@ export async function createEvaluator(modelUrl: string): Promise<ModelEvaluator>
     executionProviders: ['wasm'],
     graphOptimizationLevel: 'all',
   });
-  if (session.inputNames.join() !== 'state' || session.outputNames.join() !== 'policy,value') {
+  if (session.inputNames.join() !== 'state' || (session.outputNames.join() !== 'policy,value' && session.outputNames.join() !== 'policy,value,ownership')) {
     await session.release();
     throw new Error('Unsupported policy/value model interface.');
   }
@@ -33,11 +33,13 @@ export async function createEvaluator(modelUrl: string): Promise<ModelEvaluator>
       output = await session.run({ state: input });
       const policy = Float32Array.from(output.policy.data as Float32Array);
       const value = Number(output.value.data[0]);
+      const ownership = output.ownership ? Float32Array.from(output.ownership.data as Float32Array) : undefined;
       if (output.policy.dims.join() !== '1,81' || output.value.dims.join() !== '1,1'
+        || (output.ownership && output.ownership.dims.join() !== '1,9')
         || policy.length !== 81 || !policy.every(Number.isFinite) || !Number.isFinite(value) || Math.abs(value) > 1.001) {
         throw new Error('Invalid policy/value model output.');
       }
-      return { policy, value };
+      return { policy, value, ...(ownership ? { ownership } : {}) };
     } finally {
       input.dispose();
       if (output) for (const tensor of Object.values(output)) tensor.dispose();

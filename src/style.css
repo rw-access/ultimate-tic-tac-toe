@@ -241,6 +241,24 @@ h1 span { display: block; margin: 6px 0 0 2px; font-size: 12px; font-weight: 700
 .review-evaluation.is-pending { color: var(--accent); font-size: 12px; }
 .review-evaluation .analysis-heading strong { font-size: 14px; }
 .review-evaluation .analysis-note { font-size: 11px; }
+.review-ownership { display: grid; gap: 8px; padding: 10px; border-radius: 5px; background: var(--page); }
+.ownership-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.ownership-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 6px 4px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-raised); font-size: 11px; text-align: center; transition: border-color .15s, background .15s; }
+.ownership-cell.is-forced { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.ownership-cell.has-won-x { background: color-mix(in srgb, var(--x) 15%, var(--surface-raised)); border-color: color-mix(in srgb, var(--x) 50%, var(--border)); }
+.ownership-cell.has-won-o { background: color-mix(in srgb, var(--o) 15%, var(--surface-raised)); border-color: color-mix(in srgb, var(--o) 50%, var(--border)); }
+.ownership-cell.has-draw { opacity: .75; }
+.ownership-cell.has-pred-x { background: color-mix(in srgb, var(--x) 8%, var(--surface-raised)); }
+.ownership-cell.has-pred-o { background: color-mix(in srgb, var(--o) 8%, var(--surface-raised)); }
+.ownership-pos { font-size: 10px; color: var(--muted); font-weight: 600; }
+.ownership-badge { display: inline-block; padding: 1px 4px; border-radius: 3px; font-size: 11px; font-weight: 700; line-height: 1.2; }
+.ownership-badge.is-x { color: var(--on-x); background: var(--x); }
+.ownership-badge.is-o { color: var(--on-o); background: var(--o); }
+.ownership-badge.is-draw { color: var(--muted); background: var(--surface); }
+.ownership-badge.is-pred-x { color: var(--x); }
+.ownership-badge.is-pred-o { color: var(--o); }
+.ownership-badge.is-pred-even { color: var(--muted); font-weight: 500; }
+.ownership-badge.is-open { color: var(--muted); opacity: .7; }
 .review-chart-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 2px; }
 .review-chart-heading strong { font-size: 13px; }
 .review-chart-heading span { color: var(--muted); font-size: 10px; text-align: right; }

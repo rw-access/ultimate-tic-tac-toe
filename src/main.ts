@@ -30,7 +30,7 @@ type SideChoice = Player | 'random';
 type AnalysisView = 'position' | null;
 type ReviewMove = { before: GameState; after: GameState; move: number; number: number; player: Player };
 type ReviewItem = { move: ReviewMove; best: number | null; line: number[]; note: string; kind: 'tactical' | 'model' };
-type ReviewEvaluation = { xValue: number; source: 'model' | 'search'; solved: boolean; lines: number[][] };
+type ReviewEvaluation = { xValue: number; source: 'model' | 'search'; solved: boolean; lines: number[][]; ownership?: number[] };
 type ReviewTimeline = { snapshots: GameState[]; moves: ReviewMove[] };
 type MoveGrade = { label: string; kind: string; delta: number; loss: number; tactical: boolean; brilliant: boolean };
 type CriticalMove = MoveGrade & { moveIndex: number; move: ReviewMove; magnitude: number };
@@ -538,6 +538,71 @@ function reviewMeterMarkup(): string {
       <span class="advantage-side advantage-o">O</span></div></div>`;
 }
 
+function reviewOwnershipMarkup(): string {
+  const position = reviewSnapshots[reviewCursor];
+  if (!position) return '';
+  const evaluation = reviewEvaluations[reviewCursor];
+  const detailIsCurrent = reviewDetailPosition === reviewCursor;
+  const detailAnalysis = detailIsCurrent ? reviewDetailAnalysis : null;
+  const rawOwnership = detailAnalysis?.ownership
+    ? detailAnalysis.ownership.map((v) => v * (position.turn === 'X' ? 1 : -1))
+    : evaluation?.ownership;
+
+  const labels = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9'];
+  const titles = [
+    'Top-Left', 'Top-Center', 'Top-Right',
+    'Mid-Left', 'Center', 'Mid-Right',
+    'Bottom-Left', 'Bottom-Center', 'Bottom-Right',
+  ];
+
+  const cells = labels.map((label, b) => {
+    const result = position.results[b];
+    const isForced = position.forced === b;
+    let badge = '';
+    let cellClass = 'ownership-cell';
+    if (isForced) cellClass += ' is-forced';
+
+    if (result === 'X') {
+      cellClass += ' has-won-x';
+      badge = '<span class="ownership-badge is-x">X won</span>';
+    } else if (result === 'O') {
+      cellClass += ' has-won-o';
+      badge = '<span class="ownership-badge is-o">O won</span>';
+    } else if (result === 'draw') {
+      cellClass += ' has-draw';
+      badge = '<span class="ownership-badge is-draw">Draw</span>';
+    } else if (rawOwnership && Number.isFinite(rawOwnership[b])) {
+      const val = rawOwnership[b];
+      const pct = Math.round(Math.abs(val) * 100);
+      if (val > 0.15) {
+        cellClass += ' has-pred-x';
+        badge = `<span class="ownership-badge is-pred-x" title="${pct}% X control predicted">X ${pct}%</span>`;
+      } else if (val < -0.15) {
+        cellClass += ' has-pred-o';
+        badge = `<span class="ownership-badge is-pred-o" title="${pct}% O control predicted">O ${pct}%</span>`;
+      } else {
+        cellClass += ' has-pred-even';
+        badge = '<span class="ownership-badge is-pred-even">Even</span>';
+      }
+    } else {
+      badge = '<span class="ownership-badge is-open">Open</span>';
+    }
+
+    return `<div class="${cellClass}" title="${titles[b]}${isForced ? ' (Target board)' : ''}">
+      <span class="ownership-pos">${label}</span>
+      ${badge}
+    </div>`;
+  }).join('');
+
+  return `<section class="review-ownership" aria-label="Meta-board predictions">
+    <div class="review-section-heading">
+      <strong>Meta-board predictions</strong>
+      <span>${rawOwnership ? 'Territory prediction' : 'Board status'}</span>
+    </div>
+    <div class="ownership-grid" role="region" aria-label="3x3 Macro board predictions">${cells}</div>
+  </section>`;
+}
+
 function reviewMoveChipMarkup(moveIndex: number): string {
   const move = reviewMoves[moveIndex];
   if (!move) return '';
@@ -609,6 +674,7 @@ function reviewPanelMarkup(): string {
     ${reviewCriticalMarkup()}
     ${reviewDetailMarkup()}
     ${reviewMeterMarkup()}
+    ${reviewOwnershipMarkup()}
     <div class="review-chart-heading"><strong>Evaluation over time</strong></div>
     <div class="review-chart"><div class="review-chart-scale" aria-hidden="true"><span>X</span><span>Even</span><span>O</span></div><div class="review-graph-wrap">${reviewGraphMarkup()}<div class="review-chart-endpoints"><span>Start</span><span>Move ${reviewMoves.length}</span></div></div></div>
     <div class="review-navigation">
@@ -1473,6 +1539,7 @@ function openGameReview(): void {
     source: 'search',
     solved: true,
     lines: [],
+    ownership: state.results.map((r) => r === 'X' ? 1 : r === 'O' ? -1 : 0),
   };
   reviewPending = reviewSnapshots.length > 1;
   reviewActive = true;
@@ -1625,7 +1692,13 @@ async function runGameReview(token: number): Promise<void> {
       const analysis = await analyzer.analyze(snapshot(position), 'review');
       if (token !== analysisToken || !reviewActive) return;
       const xValue = analysis.value * (position.turn === 'X' ? 1 : -1);
-      reviewEvaluations[index] = { xValue, source: analysis.source, solved: analysis.solved, lines: analysis.lines };
+      reviewEvaluations[index] = {
+        xValue,
+        source: analysis.source,
+        solved: analysis.solved,
+        lines: analysis.lines,
+        ownership: analysis.ownership ? analysis.ownership.map((v) => v * (position.turn === 'X' ? 1 : -1)) : undefined,
+      };
       const move = reviewMoves[index];
       const shouldExplainMove = move && (opponentMode !== 'computer' || move.player === humanSide);
       if (shouldExplainMove) {
