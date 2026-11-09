@@ -146,6 +146,9 @@ def build_harnet(tier: str):
     tier = tier.lower()
     if tier == "preview":
         return HARNet(micro_channels=64, num_micro_blocks=2, macro_channels=192, num_macro_blocks=3, action_hidden=256)
+    elif tier == "teacher75m":
+        # 17,679,427 params (~74.5 MB)
+        return HARNet(micro_channels=96, num_micro_blocks=2, macro_channels=448, num_macro_blocks=5, action_hidden=512)
     elif tier == "teacher50m":
         # 13,476,674 params (~51.41 MB)
         return HARNet(micro_channels=96, num_micro_blocks=2, macro_channels=384, num_macro_blocks=4, action_hidden=512)
