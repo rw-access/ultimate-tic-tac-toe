@@ -1,13 +1,13 @@
 {
   "format": "onnx",
-  "generation": 88,
+  "generation": 58,
   "architecture": "HARNet-micro32-macro80-routing112-v2",
   "hidden_widths": [
     32,
     80,
     112
   ],
-  "parameters": 369123,
+  "parameters": 369042,
   "input": {
     "name": "state",
     "shape": [
@@ -32,14 +32,6 @@
         1
       ],
       "meaning": "tanh estimate for the player to move"
-    },
-    {
-      "name": "ownership",
-      "shape": [
-        "batch",
-        9
-      ],
-      "meaning": "macro-board ownership prediction in [-1, 1]"
     }
   ],
   "encoding": {
