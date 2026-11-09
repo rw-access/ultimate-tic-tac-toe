@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
-import { access, mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { access, appendFile, mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGame, play } from '../src/game.ts';
@@ -52,10 +52,10 @@ function parseCli(argv: string[]): { command: Command; options: Options } {
     options[key] = value;
   }
   const allowed: Record<Command, string[]> = {
-    generate: ['games', 'simulations', 'seed', 'output', 'model', 'parallel-games', 'teacher-mix', 'root-noise', 'root-noise-mass', 'fast-simulations', 'full-search-probability', 'tactical-proof'],
+    generate: ['games', 'simulations', 'seed', 'output', 'model', 'parallel-games', 'teacher-mix', 'root-noise', 'root-noise-mass', 'fast-simulations', 'full-search-probability', 'tactical-proof', 'opening-plies'],
     evaluate: ['model', 'games-per-seat', 'simulations', 'seed', 'opening-moves', 'metadata'],
     parity: ['model', 'output', 'seed'],
-    arena: ['challenger', 'champion', 'pairs', 'pair-offset', 'pair-count', 'simulations', 'seed', 'parallel-games', 'output', 'challenger-value', 'champion-value', 'tactical-proof'],
+    arena: ['challenger', 'champion', 'pairs', 'pair-offset', 'pair-count', 'simulations', 'seed', 'parallel-games', 'output', 'challenger-value', 'champion-value', 'tactical-proof', 'record-games'],
   };
   for (const key of Object.keys(options)) {
     if (!allowed[command].includes(key)) throw new Error(`Unknown option for ${command}: --${key}`);
@@ -264,7 +264,7 @@ async function createModelClient(modelPath: string, signal: AbortSignal, maxBatc
       graphOptimizationLevel: 'all',
     });
   }
-  if (session.inputNames.join() !== 'state' || session.outputNames.join() !== 'policy,value') {
+  if (session.inputNames.join() !== 'state' || (session.outputNames.join() !== 'policy,value' && session.outputNames.join() !== 'policy,value,ownership')) {
     await session.release();
     throw new Error('Unsupported policy/value model interface');
   }
@@ -311,10 +311,13 @@ async function createModelClient(modelPath: string, signal: AbortSignal, maxBatc
         stats.batches++;
         stats.positions += batch.length;
         stats.meanBatchSize = stats.positions / stats.batches;
+        const ownershipTensor = output.ownership;
+        const ownershipData = ownershipTensor ? (ownershipTensor.data as Float32Array) : null;
         for (let row = 0; row < batch.length; row++) {
           batch[row].resolve({
             policy: policyData.slice(row * 81, (row + 1) * 81),
             value: valueData[row],
+            ...(ownershipData ? { ownership: ownershipData.slice(row * 9, (row + 1) * 9) } : {}),
           });
         }
       } catch (error) {
@@ -459,9 +462,16 @@ async function generateGame(
   capExperiment: SearchCapExperiment | undefined,
   capRandom: SeededRandom | undefined,
   tacticalProof: boolean,
+  openingPlies: number,
   signal: AbortSignal,
 ): Promise<GeneratedGame> {
   let state = createGame();
+  for (let ply = 0; ply < openingPlies && state.winner === null; ply++) {
+    const legal = legalMoves(state);
+    if (!legal.length) break;
+    const move = legal[random.integer(legal.length)];
+    state = play(state, Math.floor(move / 9), move % 9);
+  }
   const positions: { features: number[]; policy: number[]; turn: Player }[] = [];
   const stats: GameSearchStats = {
     fullSearchMoves: 0,
@@ -529,6 +539,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
     ? { epsilon: rootNoiseEpsilon, concentrationMass: rootNoiseMass }
     : undefined;
   const tacticalProof = booleanOption(options, 'tactical-proof', false);
+  const openingPlies = intOption(options, 'opening-plies', 0, 0);
   if (teacherMix > 0 && !model) throw new Error('--teacher-mix requires --model');
   const parallelGames = Math.min(games, intOption(options, 'parallel-games', model ? 16 : 1, 1));
   if (model) await requireFile(model, 'Model');
@@ -590,6 +601,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
           capExperiment,
           searchCapSeeds ? new SeededRandom(searchCapSeeds[game]) : undefined,
           tacticalProof,
+          openingPlies,
           signal,
         ));
       }
@@ -608,6 +620,7 @@ async function generate(options: Options, signal: AbortSignal): Promise<void> {
             capExperiment,
             searchCapSeeds ? new SeededRandom(searchCapSeeds[game]) : undefined,
             tacticalProof,
+            openingPlies,
             signal,
           );
         });
@@ -895,6 +908,7 @@ function withValueMode(evaluator: Evaluator, mode: ValueMode): Evaluator {
 
 async function playArenaGame(
   opening: GameState,
+  openingMoves: readonly number[],
   challengerSeat: Player,
   challenger: Evaluator,
   champion: Evaluator,
@@ -902,8 +916,9 @@ async function playArenaGame(
   tacticalProof: boolean,
   random: SeededRandom,
   signal: AbortSignal,
-): Promise<GameState> {
+): Promise<{ state: GameState; moves: number[] }> {
   let state = opening;
+  const history: number[] = [...openingMoves];
   while (state.winner === null) {
     if (signal.aborted) throw new Error('Operation interrupted');
     const actions = legalMoves(state);
@@ -919,9 +934,10 @@ async function playArenaGame(
     if (result.move === null || !actions.includes(result.move)) {
       throw new Error('Arena search returned no legal move');
     }
+    history.push(result.move);
     state = play(state, Math.floor(result.move / 9), result.move % 9);
   }
-  return state;
+  return { state, moves: history };
 }
 
 function matchScore(winner: GameState['winner'], challengerSeat: Player): number {
@@ -988,6 +1004,7 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
       const tasks = chunk.map(async plan => {
         const challengerX = playArenaGame(
           plan.state,
+          plan.moves,
           'X',
           challengerEvaluator,
           championEvaluator,
@@ -998,6 +1015,7 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
         );
         const challengerO = playArenaGame(
           plan.state,
+          plan.moves,
           'O',
           challengerEvaluator,
           championEvaluator,
@@ -1006,7 +1024,7 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
           new SeededRandom(plan.challengerOSeed),
           signal,
         );
-        let outcomes: [GameState, GameState];
+        let outcomes: [{ state: GameState; moves: number[] }, { state: GameState; moves: number[] }];
         try {
           outcomes = await Promise.all([challengerX, challengerO]);
         } catch (error) {
@@ -1014,17 +1032,27 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
           throw error;
         }
         const [asX, asO] = outcomes;
-        const scoreX = matchScore(asX.winner, 'X');
-        const scoreO = matchScore(asO.winner, 'O');
+        const scoreX = matchScore(asX.state.winner, 'X');
+        const scoreO = matchScore(asO.state.winner, 'O');
         const points = scoreX + scoreO;
         const pairScore = points / 2;
         gameScores.push(scoreX, scoreO);
+
+        if (options['record-games']) {
+          const row = {
+            pair: plan.pair,
+            modelX: { winner: asX.state.winner, moves: asX.moves },
+            modelO: { winner: asO.state.winner, moves: asO.moves },
+          };
+          await appendFile(options['record-games'], JSON.stringify(row) + '\n');
+        }
+
         return {
           pair: plan.pair,
           openingSeed: plan.seed,
           openingMoves: plan.moves,
-          challengerAsX: { winner: asX.winner, score: scoreX, result: wdl(scoreX) },
-          challengerAsO: { winner: asO.winner, score: scoreO, result: wdl(scoreO) },
+          challengerAsX: { winner: asX.state.winner, score: scoreX, result: wdl(scoreX) },
+          challengerAsO: { winner: asO.state.winner, score: scoreO, result: wdl(scoreO) },
           points,
           pairScore,
           pairResult: points > 1 ? 'win' : points < 1 ? 'loss' : 'draw',

@@ -248,7 +248,7 @@ async function createModelClient(modelPath: string, signal: AbortSignal): Promis
     executionProviders: ['cpu'], intraOpNumThreads: 1, interOpNumThreads: 1,
     graphOptimizationLevel: 'all',
   });
-  if (session.inputNames.join() !== 'state' || session.outputNames.join() !== 'policy,value') {
+  if (session.inputNames.join() !== 'state' || (session.outputNames.join() !== 'policy,value' && session.outputNames.join() !== 'policy,value,ownership')) {
     await session.release();
     throw new Error('Unsupported policy/value model interface');
   }

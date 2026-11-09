@@ -220,7 +220,7 @@ async function modelEvaluator(path: string, maxBatchSize: number = 64): Promise<
     });
   }
 
-  if (session.inputNames.join() !== 'state' || session.outputNames.join() !== 'policy,value') throw new Error('Bad model interface');
+  if (session.inputNames.join() !== 'state' || (session.outputNames.join() !== 'policy,value' && session.outputNames.join() !== 'policy,value,ownership')) throw new Error('Bad model interface');
 
   let closed = false;
   let inFlight: Promise<void> | null = null;
