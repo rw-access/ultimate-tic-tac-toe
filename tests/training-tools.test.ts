@@ -302,7 +302,7 @@ test('model-guided self-play batches concurrent games and remains deterministic 
   }
 });
 
-test('arena ranges preserve the full seeded opening stream and absolute pair identities', async () => {
+test('independent arena ranges preserve the full opening stream and absolute pair identities', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'ultimate-tic-tac-toe-arena-ranges-'));
   const model = resolve(ROOT, 'public/models/policy-value.onnx');
   const run = async (name: string, range: string[]) => {
@@ -310,7 +310,7 @@ test('arena ranges preserve the full seeded opening stream and absolute pair ide
     const child = spawnSync(process.execPath, [
       '--experimental-strip-types', resolve(ROOT, 'scripts/ai.ts'), 'arena',
       '--challenger', model, '--champion', model, '--pairs', '4',
-      '--simulations', '4', '--seed', '4281', '--parallel-games', '2',
+      '--simulations', '4', '--seed', '4281', '--parallel-games', '2', '--opening-schedule', 'independent',
       ...range, '--output', output,
     ], { cwd: ROOT, encoding: 'utf8', timeout: 30_000 });
     assert.ifError(child.error);
@@ -321,6 +321,15 @@ test('arena ranges preserve the full seeded opening stream and absolute pair ide
     const complete = await run('complete', []);
     const first = await run('first', ['--pair-offset', '0', '--pair-count', '2']);
     const second = await run('second', ['--pair-offset', '2', '--pair-count', '2']);
+    const deeper = await run('six-plies', ['--pair-count', '1', '--opening-plies', '6']);
+    assert.equal(deeper.openingPlyCount, 6);
+    assert.equal(deeper.perPair[0].openingMoves.length, 6);
+    assert.deepEqual(deeper.perPair[0].openingMoves.slice(0, 2), complete.perPair[0].openingMoves);
+    assert.equal(complete.openingSchedule, 'independent');
+    assert.deepEqual(complete.perPair.map((pair: { openingSeed: number; openingMoves: number[] }) =>
+      [pair.openingSeed, pair.openingMoves]), [
+      [836182677, [32, 47]], [633025248, [19, 15]], [3567897091, [25, 63]], [1566516698, [42, 56]],
+    ]);
     assert.equal(complete.arenaShard, undefined);
     assert.deepEqual(first.arenaShard, { plannedPairs: 4, pairOffset: 0, pairCount: 2 });
     assert.deepEqual(second.arenaShard, { plannedPairs: 4, pairOffset: 2, pairCount: 2 });
@@ -368,6 +377,9 @@ test('paired arena writes swapped-seat results, model hashes, and per-pair score
     assert.equal(result.championValueMode, 'model');
     assert.equal(result.tacticalProof, false);
     assert.equal(result.openingPlyCount, 2);
+    assert.equal(result.openingSchedule, 'legacy');
+    assert.equal(result.perPair[0].openingSeed, 111457918);
+    assert.deepEqual(result.perPair[0].openingMoves, [49, 40]);
     assert.match(result.challengerModel.sha256, /^[a-f0-9]{64}$/);
     assert.equal(result.challengerModel.sha256, result.championModel.sha256);
     assert.deepEqual(result.challenger, {

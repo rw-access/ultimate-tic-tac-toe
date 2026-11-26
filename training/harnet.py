@@ -147,7 +147,7 @@ def build_harnet(tier: str):
     if tier == "preview":
         return HARNet(micro_channels=64, num_micro_blocks=2, macro_channels=192, num_macro_blocks=3, action_hidden=256)
     elif tier == "teacher75m":
-        # 17,679,427 params (~74.5 MB)
+        # The historical tier name is retained; the policy/value trunk has 21,294,338 parameters.
         return HARNet(micro_channels=96, num_micro_blocks=2, macro_channels=448, num_macro_blocks=5, action_hidden=512)
     elif tier == "teacher50m":
         # 13,476,674 params (~51.41 MB)
@@ -155,6 +155,12 @@ def build_harnet(tier: str):
     elif tier == "challenger20m":
         # 4,966,274 params (~18.94 MB) - exact match to uttt.ai (4.99M params)
         return HARNet(micro_channels=64, num_micro_blocks=2, macro_channels=256, num_macro_blocks=3, action_hidden=384)
+    elif tier == "student512k":
+        return HARNet(micro_channels=24, num_micro_blocks=1, macro_channels=40, num_macro_blocks=2, action_hidden=64)
+    elif tier == "student5m":
+        return HARNet(micro_channels=48, num_micro_blocks=2, macro_channels=112, num_macro_blocks=3, action_hidden=192)
+    elif tier == "student25m":
+        return HARNet(micro_channels=64, num_micro_blocks=2, macro_channels=288, num_macro_blocks=3, action_hidden=384)
     elif tier == "student1_5m":
         # 369,042 params (1,476,168 bytes / 1.408 MB) - strictly <= 1,500,000 bytes
         return HARNet(micro_channels=32, num_micro_blocks=1, macro_channels=80, num_macro_blocks=2, action_hidden=112)

@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { encodeState, legalMoves } from '../src/ai.ts';
 import { play, type GameState } from '../src/game.ts';
 import { InferenceSession, Tensor } from 'onnxruntime-node';
+import { parityPositions } from '../scripts/ai.ts';
 
 interface ParityCase {
   state: GameState;
@@ -14,6 +15,22 @@ interface ParityCase {
   policy: number[];
   value: number;
 }
+
+test('parity generation selects distinct playable unrestricted and local-draw cases', () => {
+  for (const seed of [8901, 0, 1, 42]) {
+    const positions = new Map(parityPositions(seed));
+    assert.equal(positions.size, 12);
+    assert.equal(new Set(Array.from(positions.values(), state => JSON.stringify(encodeState(state)))).size, 12);
+    const unrestricted = positions.get('unrestricted_after_completed_destination')!;
+    assert.equal(unrestricted.forced, null);
+    assert.ok(unrestricted.results.some(result => result !== null));
+    assert.ok(legalMoves(unrestricted).length > 0);
+    const drawn = positions.get('local_draw_present')!;
+    assert.ok(drawn.results.includes('draw'));
+    assert.ok(legalMoves(drawn).length > 0);
+    assert.notEqual(positions.get('terminal')!.winner, null);
+  }
+});
 
 test('bundled checkpoint and numeric training/inference fixtures share one rules contract', () => {
   const fixture = JSON.parse(readFileSync(new URL('../training/parity.json', import.meta.url), 'utf8'));

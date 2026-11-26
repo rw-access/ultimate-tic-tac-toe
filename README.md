@@ -21,7 +21,7 @@ Model and runtime assets load only when the computer needs to move or you ask
 for a hint, analysis, or review, and are served by the same static site; no AI service, GPU, or
 cross-origin isolation is required. If the model cannot load or run, the
 computer uses basic search and shows that status.
-The model weights are about 1.2 MB; the ONNX WebAssembly runtime adds about
+The model weights are 1,480,935 bytes (1.48 MB); the ONNX WebAssembly runtime adds about
 14.2 MB uncompressed (about 3.7 MB with gzip). Enable HTTP compression when
 hosting. This does not include a service worker for offline page reloads.
 
@@ -80,32 +80,11 @@ and `CLOUDFLARE_ACCOUNT_ID` in the environment.
 
 ## Offline training
 
-The bundled model is trained locally from generated games. TypeScript generates
-games and evaluates both playing seats using the same rules and search engine
-as the browser, with native ONNX Runtime for local model inference. Python
-consumes numeric examples, trains with board symmetries, and exports ONNX.
-Model-guided self-play can provide another round of examples. The runtimes
-exchange dataset/model files between rounds; search never calls a Python
-subprocess for individual positions.
-See [training/README.md](training/README.md) for setup and commands, and
-[public/models/metadata.json](public/models/metadata.json) for the bundled
-checkpoint's provenance and measured results. Training data and Python
-environments stay out of Git.
+The bundled Gen101 model scored **67.2% against Gen69** in 192 games through the production Hard worker (85 wins, 88 draws, 19 losses, paired 95% interval 62.9%–71.4%). The final compiled worker scored 66.9% and 59.8% in follow-up matches on two machines. Both used the same production search budget of 384 simulations and 220 ms, with the same bounded endgame solver. Against the original uttt.ai Quick engine at 1,000 visits, Gen101 scored **39%** across both seats on all 50 published tournament openings. A draw counts as half a point. [Match report](plans/model-strength-2026-11-26.md)
 
-The bundled checkpoint is R20: a policy/value network with 280 inputs and
-512/256 hidden units, exported as a 1,186,321-byte ONNX file (about 1.13 MiB).
-Inputs include mini-board wins and draws, legal cells, and the forced
-destination. Hard mode searches in a web worker with a 140 ms search budget;
-model loading and the first inference take longer.
+Gen101 uses a low-rank student of the uttt.ai Stage 2 policy/value network. Training combined search targets and solved endgames, then refined the quantized weights by distillation. The 4-bit ONNX export is 11,825 bytes smaller than Gen69. [Model metadata](public/models/metadata.json) · [Upstream model and data](https://github.com/arnowaczynski/utttai) · [Apache 2.0 license](public/models/utttai-Apache-2.0.txt)
 
-At equal 64-simulation search effort, R20 scored 51.99% against the previously
-bundled R16 over 4,096 games with paired openings and swapped seats (95% paired
-interval 50.81%–53.17%; 1,441 wins, 1,377 draws, 1,278 losses).
-An offline R20 configuration with 1,024 simulations, tactical proof, and exact
-endgame search scored 99.96% against the 64-simulation heuristic over 4,864 games.
-Browser difficulty modes use different search budgets; that offline result is
-not their measured win rate. See the [R20 release notes](plans/model-r20-release-2026-10-26.md)
-for configuration and evidence.
+TypeScript generates games and plays both seats using the browser rules and native ONNX inference. Python trains on the resulting positions and exports the models. Offline weights for the other six size classes are separate downloads. [Training commands](training/README.md) · [Model downloads](https://github.com/rw-access/ultimate-tic-tac-toe/releases/tag/models-2026-11-26)
 
 Run the Python checks after installing the training dependencies:
 

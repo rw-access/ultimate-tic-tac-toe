@@ -5,13 +5,17 @@ import { access, mkdir, open, readFile, readdir, rename, writeFile } from 'node:
 import { dirname, extname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { pairSeedGenerator, parseOpeningSchedule, type OpeningSchedule } from './arena-openings.ts';
 import { legalMoves } from '../src/ai.ts';
+import { solveEndgame } from '../src/endgame.ts';
 import { createGame, play } from '../src/game.ts';
 import type { GameState, Player } from '../src/game.ts';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const DIST = resolve(ROOT, 'dist');
-const HARD_SETTINGS = { difficulty: 'hard', simulations: 4096, timeMs: 140, tacticalProof: true } as const;
+const SITE = '/play/ultimate-tic-tac-toe/';
+const DIST = resolve(ROOT, 'dist/play/ultimate-tic-tac-toe');
+const HARD_SETTINGS = { difficulty: 'hard', simulations: 384, timeMs: 220, tacticalProof: true } as const;
+const EASY_SETTINGS = { simulations: 16, timeMs: 60, tacticalProof: false } as const;
 const BASELINE_SETTINGS = { difficulty: 'hard', simulations: 384, timeMs: 650, tacticalProof: true } as const;
 const DEFAULT_PAIRS = 32;
 const DEFAULT_SEED = 15406102;
@@ -23,11 +27,13 @@ interface BrowserReply {
   source: 'model' | 'search';
   simulations: number;
   elapsedMs: number;
+  settings?: { simulations: number; timeMs: number; tacticalProof: boolean };
 }
 
 interface Observation {
   elapsedMs: number;
   simulations: number;
+  source: BrowserReply['source'];
 }
 
 interface Agent {
@@ -37,6 +43,7 @@ interface Agent {
   page: Page;
   context: BrowserContext;
   modelUrl: string;
+  modelLoads: number;
   observations: Observation[];
   settings: typeof HARD_SETTINGS | typeof BASELINE_SETTINGS;
   pageErrors: string[];
@@ -69,13 +76,13 @@ class SeededRandom {
   }
 }
 
-function parseArgs(argv: string[]): { pairs: number; seed: number; challenger: string; champion: string; output: string; championWorker?: string } {
+function parseArgs(argv: string[]): { pairs: number; seed: number; openingSchedule: OpeningSchedule; challenger: string; champion: string; output: string; championWorker?: string } {
   const options: Options = {};
   if (argv.length === 1 && ['--help', '-h'].includes(argv[0])) {
     process.stdout.write(
       'Usage: node --experimental-strip-types scripts/browser-arena.ts ' +
       '--challenger model.onnx --champion model.onnx --output result.json ' +
-      `[--pairs ${DEFAULT_PAIRS}] [--seed ${DEFAULT_SEED}] [--champion-worker baseline384.js]\n` +
+      `[--pairs ${DEFAULT_PAIRS}] [--seed ${DEFAULT_SEED}] [--champion-worker baseline384.js] [--opening-schedule legacy|independent]\n` +
       'Runs a paired arena through the production dist worker with hard settings.\n',
     );
     process.exit(0);
@@ -88,7 +95,7 @@ function parseArgs(argv: string[]): { pairs: number; seed: number; challenger: s
     const value = equal < 0 ? argv[++index] : token.slice(equal + 1);
     if (!key || value === undefined || value.startsWith('--')) throw new Error(`Expected a value for ${token}`);
     if (options[key] !== undefined) throw new Error(`Option --${key} was provided more than once`);
-    if (!['pairs', 'seed', 'challenger', 'champion', 'output', 'champion-worker'].includes(key)) {
+    if (!['pairs', 'seed', 'challenger', 'champion', 'output', 'champion-worker', 'opening-schedule'].includes(key)) {
       throw new Error(`Unknown option: --${key}`);
     }
     options[key] = value;
@@ -108,6 +115,7 @@ function parseArgs(argv: string[]): { pairs: number; seed: number; challenger: s
   return {
     pairs: integerOption('pairs', DEFAULT_PAIRS, 1),
     seed: integerOption('seed', DEFAULT_SEED, 0),
+    openingSchedule: parseOpeningSchedule(options['opening-schedule']),
     challenger: resolve(process.cwd(), options.challenger!),
     champion: resolve(process.cwd(), options.champion!),
     output: resolve(process.cwd(), options.output!),
@@ -127,13 +135,14 @@ function contentType(filePath: string): string {
   }
 }
 
-async function startStaticServer(): Promise<{ baseUrl: string; close: () => Promise<void> }> {
+async function startStaticServer(dist = DIST): Promise<{ baseUrl: string; close: () => Promise<void> }> {
   const server = createServer(async (request, response) => {
     try {
       const pathname = decodeURIComponent(new URL(request.url ?? '/', 'http://127.0.0.1').pathname);
-      const relativePath = pathname === '/' ? 'index.html' : pathname.slice(1);
-      const filePath = resolve(DIST, relativePath);
-      if (filePath !== DIST && !filePath.startsWith(`${DIST}${sep}`)) throw new Error('Path outside dist');
+      if (!pathname.startsWith(SITE)) throw new Error('Outside site prefix');
+      const relativePath = pathname.slice(SITE.length) || 'index.html';
+      const filePath = resolve(dist, relativePath);
+      if (filePath !== dist && !filePath.startsWith(`${dist}${sep}`)) throw new Error('Path outside dist');
       const bytes = await readFile(filePath);
       response.writeHead(200, { 'Content-Type': contentType(filePath), 'Cache-Control': 'no-store' });
       response.end(bytes);
@@ -149,12 +158,12 @@ async function startStaticServer(): Promise<{ baseUrl: string; close: () => Prom
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('Could not read local static server address');
   return {
-    baseUrl: `http://127.0.0.1:${address.port}/`,
+    baseUrl: `http://127.0.0.1:${address.port}${SITE}`,
     close: () => new Promise<void>((resolveClose, reject) => server.close(error => error ? reject(error) : resolveClose())),
   };
 }
 
-async function hashDistAssets(): Promise<Record<string, string>> {
+async function hashDistAssets(dist = DIST): Promise<Record<string, string>> {
   const files: string[] = [];
   const walk = async (directory: string): Promise<void> => {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -163,10 +172,10 @@ async function hashDistAssets(): Promise<Record<string, string>> {
       else if (entry.isFile()) files.push(filePath);
     }
   };
-  await walk(DIST);
+  await walk(dist);
   const result: Record<string, string> = {};
   for (const filePath of files.sort()) {
-    result[relative(DIST, filePath).split(sep).join('/')] = createHash('sha256')
+    result[relative(dist, filePath).split(sep).join('/')] = createHash('sha256')
       .update(await readFile(filePath)).digest('hex');
   }
   return result;
@@ -191,11 +200,11 @@ async function makeAgent(
   const page = await context.newPage();
   const pageErrors: string[] = [];
   page.on('pageerror', error => pageErrors.push(error.message));
-  await context.route('**/models/browser-arena.onnx', route => route.fulfill({
-    status: 200,
-    contentType: 'application/octet-stream',
-    body: modelBytes,
-  }));
+  let modelLoads = 0;
+  await context.route(new URL('models/browser-arena.onnx', baseUrl).href, async route => {
+    modelLoads++;
+    await route.fulfill({ status: 200, contentType: 'application/octet-stream', body: modelBytes });
+  });
   if (overrideWorker) await context.route(`**/assets/${workerAsset}`, route => route.fulfill({ status: 200, contentType: 'text/javascript', body: overrideWorker }));
   await page.goto(baseUrl, { waitUntil: 'load' });
   const modelUrl = new URL('models/browser-arena.onnx', baseUrl).href;
@@ -250,22 +259,57 @@ async function makeAgent(
       },
     };
   }, { workerUrl, modelUrl });
-  return { label, modelPath, modelSha256, page, context, modelUrl, observations: [], settings: overrideWorker ? BASELINE_SETTINGS : HARD_SETTINGS, pageErrors, warmupMs: 0 };
+  return { label, modelPath, modelSha256, page, context, modelUrl, get modelLoads() { return modelLoads; }, observations: [], settings: overrideWorker ? BASELINE_SETTINGS : HARD_SETTINGS, pageErrors, warmupMs: 0 };
 }
 
-async function requestMove(agent: Agent, state: GameState, difficulty: 'easy' | 'hard'): Promise<BrowserReply> {
+/** Independently verify a zero-visit return from the worker's bounded Hard endgame search. */
+function isEndgameMove(state: GameState, move: number): boolean {
+  const options = { maxEmptySquares: 14, maxNodes: 16_000, timeMs: 2_000 };
+  const root = solveEndgame(state, options);
+  if (!root) return false;
+  if (root.move === move && (root.solved || root.guaranteedValue !== null)) return true;
+  // The worker can time out after proving a draw, even when a later root move
+  // wins. Verify its actual child separately. A proved root loss admits any legal move.
+  if (root.solved && root.value === -1) return true;
+  const child = play(state, Math.floor(move / 9), move % 9);
+  if (child.winner !== null) return child.winner === 'draw' || child.winner === state.turn;
+  const reply = solveEndgame(child, { ...options, maxNodes: 200_000, optimizeMateDistance: false });
+  return !!reply?.solved && reply.value <= 0;
+}
+
+async function requestMove(agent: Agent, state: GameState, difficulty: 'easy' | 'hard', scored = false): Promise<BrowserReply> {
   const reply = await agent.page.evaluate(
     async ({ state, difficulty }) => await (window as any).__browserArena.request(state, difficulty),
     { state, difficulty },
   ) as BrowserReply;
-  if (reply.source !== 'model') throw new Error(`${agent.label} worker fell back to search`);
-  if (!Number.isInteger(reply.simulations) || reply.simulations < 0 || reply.simulations > agent.settings.simulations) {
+  const legacy = agent.settings === BASELINE_SETTINGS;
+  const expected = difficulty === 'hard' ? agent.settings : legacy ? undefined : EASY_SETTINGS;
+  // The archival override is identified by its plan and binary hash. Some
+  // historical workers did not echo a settings object at all.
+  if ((!reply.settings && !legacy) || (expected && reply.settings && (
+    reply.settings.simulations !== expected.simulations || reply.settings.timeMs !== expected.timeMs
+    || reply.settings.tacticalProof !== expected.tacticalProof
+  ))) throw new Error(`${agent.label} ${difficulty} worker settings mismatch: ${JSON.stringify(reply.settings)}`);
+  const cap = expected?.simulations ?? reply.settings?.simulations ?? agent.settings.simulations;
+  if (!Number.isInteger(reply.simulations) || reply.simulations < 0 || reply.simulations > cap) {
     throw new Error(`${agent.label} worker returned invalid simulation count: ${reply.simulations}`);
+  }
+  if (!legacy && difficulty === 'easy' && state.moves === 0 && reply.simulations === 0) {
+    throw new Error(`${agent.label} model probe completed no simulations`);
   }
   if (!Number.isFinite(reply.elapsedMs) || reply.elapsedMs < 0) {
     throw new Error(`${agent.label} worker returned invalid latency: ${reply.elapsedMs}`);
   }
-  agent.observations.push({ elapsedMs: reply.elapsedMs, simulations: reply.simulations });
+  if (reply.move === null || !legalMoves(state).includes(reply.move)) throw new Error(`${agent.label} returned illegal move ${reply.move}`);
+  if (reply.source !== 'model') {
+    if (reply.source !== 'search' || difficulty !== 'hard' || legacy || reply.simulations !== 0 || !isEndgameMove(state, reply.move)) {
+      throw new Error(`${agent.label} used an unverified search fallback`);
+    }
+    // A failed model session is sticky in the production worker. Easy on an
+    // empty board must exercise it, and an exact Hard return already cleared its subtree.
+    await requestMove(agent, createGame(), 'easy');
+  }
+  if (scored) agent.observations.push({ elapsedMs: reply.elapsedMs, simulations: reply.simulations, source: reply.source });
   return reply;
 }
 
@@ -288,6 +332,9 @@ async function playGame(
   challenger: Agent,
   champion: Agent,
 ): Promise<GameResult> {
+  // Easy moves clear the current worker's saved Hard subtree while preserving
+  // the warmed inference session. Run these probes outside scored timings.
+  for (const agent of [challenger, champion]) await requestMove(agent, createGame(), 'easy');
   let state = opening;
   let challengerTurns = 0;
   let championTurns = 0;
@@ -296,7 +343,7 @@ async function playGame(
     if (!actions.length) throw new Error('Browser arena reached a nonterminal state without legal actions');
     const isChallengerTurn = state.turn === challengerSeat;
     const agent = isChallengerTurn ? challenger : champion;
-    const reply = await requestMove(agent, state, 'hard');
+    const reply = await requestMove(agent, state, 'hard', true);
     if (reply.move === null || !actions.includes(reply.move)) {
       throw new Error(`${agent.label} selected an illegal move ${reply.move}`);
     }
@@ -333,6 +380,8 @@ function summarizeAgent(agent: Agent): Record<string, unknown> {
     model: relative(ROOT, agent.modelPath).split(sep).join('/'),
     modelSha256: agent.modelSha256,
     moveRequests: agent.observations.length,
+    modelMoves: agent.observations.filter(item => item.source === 'model').length,
+    verifiedEndgameMoves: agent.observations.filter(item => item.source === 'search').length,
     warmupMs: agent.warmupMs,
     simulationCounts: summarize(agent.observations.map(item => item.simulations)),
     elapsedMs: summarize(agent.observations.map(item => item.elapsedMs)),
@@ -341,6 +390,52 @@ function summarizeAgent(agent: Agent): Record<string, unknown> {
     pageErrors: agent.pageErrors,
     settings: agent.settings,
   };
+}
+
+async function bundledWorker(dist: string) {
+  const assets = await readdir(resolve(dist, 'assets'));
+  const workerAssets = assets.filter(name => /^ai\.worker-[A-Za-z0-9_-]+\.js$/.test(name));
+  if (workerAssets.length !== 1) throw new Error(`Expected exactly one bundled ai.worker asset, found ${workerAssets.length}`);
+  return workerAssets[0];
+}
+
+// One warmed production session, with a verified Easy reset before each game.
+// The official harness serializes games so no other game consumes CPU during a timed Hard turn.
+export async function createHardBrowserCandidate(distPath: string, modelPath: string, modelBytes: Buffer) {
+  const dist = resolve(distPath);
+  const workerAsset = await bundledWorker(dist);
+  const assets = await hashDistAssets(dist);
+  const modelSha256 = createHash('sha256').update(modelBytes).digest('hex');
+  const server = await startStaticServer(dist);
+  let browser: Browser | undefined;
+  async function close() {
+    try { await browser?.close(); } finally { await server.close(); }
+  }
+  try {
+    browser = await chromium.launch({ headless: true });
+    const agent = await makeAgent('challenger', modelPath, modelSha256, modelBytes, server.baseUrl, workerAsset, browser);
+    const warm = await requestMove(agent, createGame(), 'easy');
+    if (warm.source !== 'model' || !agent.modelLoads) throw new Error('Browser worker did not load the requested candidate model');
+    await requestMove(agent, createGame(), 'hard');
+    assertNoPageErrors([agent]);
+    return {
+      evidence: {
+        modelSha256, workerSha256: assets['assets/' + workerAsset],
+        distSha256: createHash('sha256').update(JSON.stringify(assets)).digest('hex'),
+        chromiumVersion: browser.version(), settings: HARD_SETTINGS, warmupMs: warm.elapsedMs,
+      },
+      async beginGame() {
+        await requestMove(agent, createGame(), 'easy');
+        assertNoPageErrors([agent]);
+      },
+      async move(state: GameState) {
+        const reply = await requestMove(agent, state, 'hard');
+        assertNoPageErrors([agent]);
+        return { move: reply.move!, source: reply.source, simulations: reply.simulations, elapsedMs: reply.elapsedMs };
+      },
+      close,
+    };
+  } catch (error) { await close(); throw error; }
 }
 
 async function main(): Promise<void> {
@@ -362,10 +457,8 @@ async function main(): Promise<void> {
     }
   }
 
-  const assets = await readdir(resolve(DIST, 'assets'));
-  const workerAssets = assets.filter(name => /^ai\.worker-[A-Za-z0-9_-]+\.js$/.test(name));
-  if (workerAssets.length !== 1) throw new Error(`Expected exactly one bundled ai.worker asset, found ${workerAssets.length}`);
-  const workerPath = resolve(DIST, 'assets', workerAssets[0]);
+  const workerAsset = await bundledWorker(DIST);
+  const workerPath = resolve(DIST, 'assets', workerAsset);
   const [challengerBytes, championBytes, workerBytes] = await Promise.all([
     readFile(challengerPath), readFile(championPath), readFile(workerPath),
   ]);
@@ -382,8 +475,10 @@ async function main(): Promise<void> {
 
   const sourcePaths = [
     resolve(ROOT, 'scripts/browser-arena.ts'),
+    resolve(ROOT, 'scripts/arena-openings.ts'),
     resolve(ROOT, 'src/game.ts'),
     resolve(ROOT, 'src/ai.ts'),
+    resolve(ROOT, 'src/endgame.ts'),
     resolve(ROOT, 'src/ai.worker.ts'),
     resolve(ROOT, 'src/onnx.ts'),
   ];
@@ -403,6 +498,7 @@ async function main(): Promise<void> {
     pairsCompleted: 0,
     gamesCompleted: 0,
     seed: options.seed,
+    openingSchedule: options.openingSchedule,
     settings: HARD_SETTINGS,
     workerComparison,
     challengerModel: { path: relative(ROOT, challengerPath).split(sep).join('/'), sha256: challengerSha256 },
@@ -427,11 +523,11 @@ async function main(): Promise<void> {
     browser = await chromium.launch({ headless: true });
     challengerAgent = await makeAgent(
       'challenger', challengerPath, challengerSha256, challengerBytes,
-      staticServer.baseUrl, workerAssets[0], browser,
+      staticServer.baseUrl, workerAsset, browser,
     );
     championAgent = await makeAgent(
       'champion', championPath, championSha256, championBytes,
-      staticServer.baseUrl, workerAssets[0], browser, championWorkerBytes,
+      staticServer.baseUrl, workerAsset, browser, championWorkerBytes,
     );
 
     // Load each exact pinned model session before scoring; record startup separately.
@@ -440,13 +536,10 @@ async function main(): Promise<void> {
     const championWarm = await requestMove(championAgent, warmState, 'easy');
     challengerAgent.warmupMs = challengerWarm.elapsedMs;
     championAgent.warmupMs = championWarm.elapsedMs;
-    challengerAgent.observations.pop();
-    championAgent.observations.pop();
     // Warm the actual Hard search path as well as loading the WASM sessions.
     // Exclude these requests from scored-game timing and simulation summaries.
     for (const agent of [challengerAgent, championAgent]) {
       await requestMove(agent, warmState, 'hard');
-      agent.observations.pop();
     }
     if (challengerWarm.source !== 'model' || championWarm.source !== 'model') {
       throw new Error('Model warm-up used a fallback evaluator');
@@ -454,6 +547,7 @@ async function main(): Promise<void> {
     assertNoPageErrors([challengerAgent, championAgent]);
 
     const random = new SeededRandom(options.seed);
+    const seedForPair = pairSeedGenerator(options.openingSchedule, options.seed, () => random.nextUint32());
     const perPair: Record<string, unknown>[] = [];
     const pairScores: number[] = [];
     const gameScores: number[] = [];
@@ -470,6 +564,7 @@ async function main(): Promise<void> {
         pairsCompleted: perPair.length,
         gamesCompleted: gameScores.length,
         seed: options.seed,
+        openingSchedule: options.openingSchedule,
         settings: HARD_SETTINGS,
         workerComparison,
         challengerModel: { path: relative(ROOT, challengerPath).split(sep).join('/'), sha256: challengerSha256 },
@@ -490,7 +585,7 @@ async function main(): Promise<void> {
     const startedAt = new Date().toISOString();
     for (let pair = 0; pair < options.pairs; pair++) {
       const pairStarted = performance.now();
-      const openingSeed = random.nextUint32();
+      const openingSeed = seedForPair(pair);
       const opening = makeOpening(openingSeed);
       let asX: GameResult;
       let asO: GameResult;
@@ -554,7 +649,7 @@ async function main(): Promise<void> {
         openingPlyCount: 2,
         openingProtocol: 'same seeded two-ply random opening in both games of each pair; challenger and champion swap X/O',
         gameOrder: 'alternate challenger-X-first and challenger-O-first across pairs',
-        warmup: 'one Easy inference and one Hard search per agent, excluded from scored-game summaries',
+        warmup: 'Initial Easy and Hard warm-up. Easy model probes before each game clear the Hard subtree; a further probe follows each verified endgame move. All probes are excluded from scored timings.',
         valueModes: { challenger: 'model', champion: 'model' },
       },
       challengerModel: { model: relative(ROOT, challengerPath).split(sep).join('/'), sha256: challengerSha256 },
@@ -562,6 +657,7 @@ async function main(): Promise<void> {
       pairs: options.pairs,
       games: gameScores.length,
       seed: options.seed,
+      openingSchedule: options.openingSchedule,
       challenger: {
         wins,
         draws,
@@ -604,7 +700,7 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(error => {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch(error => {
   process.stderr.write(`${error instanceof Error ? error.stack ?? error.message : String(error)}\n`);
   process.exitCode = 1;
 });

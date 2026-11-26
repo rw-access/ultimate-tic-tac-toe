@@ -335,3 +335,16 @@ test('subtree reuse carries forward visit statistics across turns', async () => 
   assert.ok(search2.simulations >= 64, 'simulations must reflect total visits');
   assert.ok(search2.root!.visits >= initialReusedVisits, 'root visits must build on top of carried-over visits');
 });
+
+test('offline search completes its visit budget with a slow evaluator', async () => {
+  const state = createGame();
+  const evaluate = async (position: GameState) => {
+    await new Promise(resolve => setTimeout(resolve, 3));
+    return baselineEvaluation(position);
+  };
+  const options = { simulations: 8, seed: 2411, evaluate };
+  const limited = await search(state, { ...options, timeMs: 1 });
+  const fixed = await search(state, { ...options, timeMs: null });
+  assert.ok(limited.simulations < options.simulations);
+  assert.equal(fixed.root?.visits, options.simulations);
+});

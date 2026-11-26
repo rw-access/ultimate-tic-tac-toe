@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { createHash } from 'node:crypto';
+import { pairSeedGenerator, parseOpeningSchedule } from './arena-openings.ts';
 import { access, appendFile, mkdir, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -55,7 +56,7 @@ function parseCli(argv: string[]): { command: Command; options: Options } {
     generate: ['games', 'simulations', 'seed', 'output', 'model', 'parallel-games', 'teacher-mix', 'root-noise', 'root-noise-mass', 'fast-simulations', 'full-search-probability', 'tactical-proof', 'opening-plies'],
     evaluate: ['model', 'games-per-seat', 'simulations', 'seed', 'opening-moves', 'metadata'],
     parity: ['model', 'output', 'seed'],
-    arena: ['challenger', 'champion', 'pairs', 'pair-offset', 'pair-count', 'simulations', 'seed', 'parallel-games', 'output', 'challenger-value', 'champion-value', 'tactical-proof', 'record-games'],
+    arena: ['challenger', 'champion', 'pairs', 'pair-offset', 'pair-count', 'simulations', 'seed', 'parallel-games', 'output', 'challenger-value', 'champion-value', 'tactical-proof', 'record-games', 'opening-schedule', 'opening-plies'],
   };
   for (const key of Object.keys(options)) {
     if (!allowed[command].includes(key)) throw new Error(`Unknown option for ${command}: --${key}`);
@@ -78,7 +79,7 @@ function printHelp(): void {
     `--seed 20262024 [--opening-moves 2] [--metadata path]\n` +
     `Parity options: --model path --output training/parity.json --seed 8901\n` +
     `Arena options: --challenger path --champion path --pairs 10 --simulations 64 ` +
-    `--seed 20262024 --parallel-games 16 --output training/arena/result.json ` +
+    `--seed 20262024 --parallel-games 16 --output training/arena/result.json [--opening-schedule legacy|independent] [--opening-plies 0..8] ` +
     `[--challenger-value model|zero|heuristic] [--champion-value model|zero|heuristic] [--tactical-proof]\n`);
 }
 
@@ -240,7 +241,7 @@ interface InferenceRequest {
   reject: (error: Error) => void;
 }
 
-async function createModelClient(modelPath: string, signal: AbortSignal, maxBatchSize: number = MAX_INFERENCE_BATCH): Promise<ModelClient> {
+export async function createModelClient(modelPath: string, signal: AbortSignal, maxBatchSize: number = MAX_INFERENCE_BATCH): Promise<ModelClient> {
   // Native ONNX inference stays inside the self-play process. Python is used
   // only between training rounds to fit/export the network, never per leaf.
   const { InferenceSession, Tensor } = await import('onnxruntime-node');
@@ -871,7 +872,7 @@ async function evaluateCommand(options: Options, signal: AbortSignal): Promise<v
 
 interface ArenaOpening {
   state: GameState;
-  moves: [number, number];
+  moves: number[];
 }
 
 interface ArenaPairPlan extends ArenaOpening {
@@ -881,17 +882,17 @@ interface ArenaPairPlan extends ArenaOpening {
   challengerOSeed: number;
 }
 
-function makeArenaOpening(seed: number): ArenaOpening {
+function makeArenaOpening(seed: number, plies: number): ArenaOpening {
   let state = createGame();
   const random = new SeededRandom(seed);
   const moves: number[] = [];
-  for (let ply = 0; ply < 2; ply++) {
+  for (let ply = 0; ply < plies; ply++) {
     const actions = legalMoves(state);
     const action = actions[random.integer(actions.length)];
     moves.push(action);
     state = play(state, Math.floor(action / 9), action % 9);
   }
-  return { state, moves: [moves[0], moves[1]] };
+  return { state, moves };
 }
 
 function withValueMode(evaluator: Evaluator, mode: ValueMode): Evaluator {
@@ -926,13 +927,16 @@ async function playArenaGame(
     const evaluator = state.turn === challengerSeat ? challenger : champion;
     const result = await search(state, {
       simulations,
-      timeMs: SEARCH_TIME_MS,
+      timeMs: null,
       evaluate: evaluator,
       seed: random.nextUint32(),
       tacticalProof,
     });
     if (result.move === null || !actions.includes(result.move)) {
       throw new Error('Arena search returned no legal move');
+    }
+    if (result.root && result.simulations !== simulations) {
+      throw new Error(`Arena search completed ${result.simulations} of ${simulations} requested simulations`);
     }
     history.push(result.move);
     state = play(state, Math.floor(result.move / 9), result.move % 9);
@@ -978,12 +982,16 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
   const parallelGames = Math.max(2, maxConcurrent - (maxConcurrent % 2));
   const parallelPairs = Math.max(1, parallelGames / 2);
   const seedSource = new SeededRandom(seed);
+  const openingSchedule = parseOpeningSchedule(options['opening-schedule']);
+  const openingPlies = intOption(options, 'opening-plies', 2, 0);
+  if (openingPlies > 8) throw new Error('--opening-plies must be in [0, 8]');
+  const seedForPair = pairSeedGenerator(openingSchedule, seed, () => seedSource.nextUint32());
   const plans: ArenaPairPlan[] = Array.from({ length: plannedPairs }, (_, pair) => {
-    const pairSeed = seedSource.nextUint32();
+    const pairSeed = seedForPair(pair);
     return {
       pair,
       seed: pairSeed,
-      ...makeArenaOpening(pairSeed),
+      ...makeArenaOpening(pairSeed, openingPlies),
       challengerXSeed: pairSeed ^ 0x9e3779b9,
       challengerOSeed: pairSeed ^ 0x85ebca6b,
     };
@@ -1109,8 +1117,9 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
       championValueMode,
       tacticalProof,
       seed,
-      openingPlyCount: 2,
-      openingProtocol: 'same seeded two-ply random opening in both games of each pair; challenger and champion swap X/O',
+      openingSchedule,
+      openingPlyCount: openingPlies,
+      openingProtocol: 'Same seeded random opening in both games of each pair, with seats swapped.',
       requestedParallelGames,
       parallelGames,
       challenger: { wins, draws, losses, games: gameScores.length, scoreRate },
@@ -1140,10 +1149,15 @@ async function arenaCommand(options: Options, signal: AbortSignal): Promise<void
   }
 }
 
-function randomLegalGameCandidates(seed: number): Map<string, GameState> {
+export function parityPositions(seed: number): [string, GameState][] {
   const random = new SeededRandom(seed);
   const candidates = new Map<string, GameState>([['initial', createGame()]]);
-  const milestones = [1, 2, 4, 8, 12, 18, 24, 30, 36];
+  const milestones = [4, 8, 12, 18, 24, 36];
+  const names = [
+    'initial', 'forced_after_first_move', 'opening_forced_move',
+    'move_4', 'move_8', 'move_12', 'move_18', 'move_24',
+    'unrestricted_after_completed_destination', 'local_draw_present', 'move_36', 'terminal',
+  ];
   const first = play(createGame(), 0, 0);
   candidates.set('forced_after_first_move', first);
   candidates.set('opening_forced_move', play(first, 0, 4));
@@ -1154,17 +1168,24 @@ function randomLegalGameCandidates(seed: number): Map<string, GameState> {
       if (!actions.length) break;
       const move = actions[random.integer(actions.length)];
       state = play(state, Math.floor(move / 9), move % 9);
-      if (candidates.size < 40) candidates.set(`random_${game}_${state.moves}`, state);
-      if (milestones.includes(state.moves)) candidates.set(`move_${state.moves}`, state);
-      if (state.forced === null && state.results.some(result => result !== null)) {
+      if (state.winner !== null) break;
+      if (milestones.includes(state.moves)) {
+        candidates.set(`move_${state.moves}`, state);
+      } else if (!candidates.has('unrestricted_after_completed_destination')
+        && state.forced === null && state.results.some(result => result !== null)) {
         candidates.set('unrestricted_after_completed_destination', state);
+      } else if (!candidates.has('local_draw_present') && state.results.includes('draw')) {
+        candidates.set('local_draw_present', state);
       }
-      if (state.results.includes('draw')) candidates.set('local_draw_present', state);
     }
     candidates.set('terminal', state);
-    if (candidates.has('unrestricted_after_completed_destination') && candidates.has('local_draw_present')) break;
+    if (candidates.size === names.length) break;
   }
-  return candidates;
+  return names.map(name => {
+    const state = candidates.get(name);
+    if (!state) throw new Error(`No parity position for ${name} with seed ${seed}`);
+    return [name, state];
+  });
 }
 
 function stateJson(state: GameState): GameState {
@@ -1186,27 +1207,8 @@ async function parityCommand(options: Options, signal: AbortSignal): Promise<voi
   const modelHash = createHash('sha256').update(await readFile(modelPath)).digest('hex');
   const client = await createModelClient(modelPath, signal);
   try {
-    const candidates = randomLegalGameCandidates(seed);
-    const names = [
-      'initial', 'forced_after_first_move', 'opening_forced_move',
-      'move_4', 'move_8', 'move_12', 'move_18', 'move_24',
-      'unrestricted_after_completed_destination', 'local_draw_present', 'move_36', 'terminal',
-    ];
-    const selected = names.flatMap(name => {
-      const state = candidates.get(name);
-      return state ? [[name, state] as const] : [];
-    });
-    const selectedStates = new Set(selected.map(([, state]) => state));
-    if (selected.length < 12) {
-      for (const [name, state] of candidates) {
-        if (selected.length >= 12) break;
-        if (selectedStates.has(state)) continue;
-        selected.push([name, state]);
-        selectedStates.add(state);
-      }
-    }
     const cases = [];
-    for (const [name, state] of selected) {
+    for (const [name, state] of parityPositions(seed)) {
       if (signal.aborted) throw new Error('Operation interrupted');
       const encoded = encodeState(state);
       const evaluation = await client.evaluate(state);
@@ -1262,8 +1264,10 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch(error => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`Error: ${message}\n`);
-  process.exitCode = 1;
-});
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(error => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`Error: ${message}\n`);
+    process.exitCode = 1;
+  });
+}

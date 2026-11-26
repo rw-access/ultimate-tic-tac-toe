@@ -432,7 +432,8 @@ export async function search(
   state: GameState,
   options: {
     simulations?: number;
-    timeMs?: number;
+    /** Pass null for offline matches that must complete a fixed visit count. */
+    timeMs?: number | null;
     evaluate?: Evaluator;
     seed?: number;
     tacticalProof?: boolean;
@@ -471,7 +472,7 @@ export async function search(
 
   const simulationsLimit = Math.max(1, Math.min(MAX_SIMULATIONS, Math.floor(options.simulations ?? 128)));
   const timeLimit = Math.max(0, Math.min(MAX_TIME_MS, options.timeMs ?? 1_000));
-  const deadline = performance.now() + timeLimit;
+  const deadline = options.timeMs === null ? Infinity : performance.now() + timeLimit;
   const searchRandom = makeRng(options.seed ?? 1);
   // Keep noise sampling on its own stream so enabling it cannot perturb the
   // legacy PUCT tie-break sequence.

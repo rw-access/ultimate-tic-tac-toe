@@ -17,16 +17,18 @@ self-play process. Python only handles dataset files and model exports between
 rounds; there is no per-position subprocess bridge. Install the Node dependencies
 with `npm ci` before running the tools.
 
-Generate TypeScript self-play positions, train, then evaluate and make parity
-fixtures with the TypeScript tools:
+The shipped Gen101 student uses the factorized Stage 2 architecture. The experiment report records its training targets, packing, selected checkpoints and match results. The following example trains a separate two-layer baseline. [Gen101 training and results](../plans/model-strength-2026-11-26.md)
+
+Generate self-play positions, train the baseline, then evaluate and generate its parity fixtures:
 
 ```sh
 npm run ai:generate -- --games 1000 --simulations 24 --seed 20261024
 .venv/bin/python -m training.pipeline train \
-  --data training/data/baseline.jsonl --epochs 12 --batch-size 512
-npm run ai:evaluate -- --model public/models/policy-value.onnx \
-  --games-per-seat 10 --simulations 32 --metadata public/models/metadata.json
-npm run ai:parity -- --model public/models/policy-value.onnx
+  --data training/data/baseline.jsonl --epochs 12 --batch-size 512 \
+  --output training/runs/baseline.onnx --metadata training/runs/baseline.metadata.json
+npm run ai:evaluate -- --model training/runs/baseline.onnx \
+  --games-per-seat 10 --simulations 32 --metadata training/runs/baseline.metadata.json
+npm run ai:parity -- --model training/runs/baseline.onnx --output training/runs/baseline.parity.json
 ```
 
 For continued training, prefer a separately generated holdout that is never
@@ -36,7 +38,7 @@ included in replay or any earlier training run:
 .venv/bin/python -m training.pipeline train \
   --data training/data/replay.jsonl \
   --validation-data training/data/frozen-validation.jsonl \
-  --initial-model public/models/policy-value.onnx \
+  --initial-model training/runs/baseline.onnx \
   --hidden-widths 512,256 \
   --augmentation-mode random --threads 1 \
   --output training/runs/candidate.onnx \
@@ -82,17 +84,14 @@ npm run ai:generate -- --games 1000 --simulations 128 \
   --output training/data/selfplay-v2.jsonl
 .venv/bin/python -m training.pipeline train \
   --data training/data/selfplay-v2.jsonl \
-  --initial-model public/models/policy-value.onnx \
+  --initial-model training/runs/baseline.onnx \
   --augmentation-mode random --threads 1 --patience 3 \
   --output training/runs/v2.onnx --metadata training/runs/v2.metadata.json
 npm run ai:evaluate -- --model training/runs/v2.onnx \
   --games-per-seat 25 --simulations 128 --metadata training/runs/v2.metadata.json
 ```
 
-Keep future candidate models separate until evaluation supports replacing the
-bundled checkpoint. The bundled R16 checkpoint is
-`public/models/policy-value.onnx`; its checksum and evaluation are recorded in
-`public/models/metadata.json` and `plans/training-2026-10-25-12h.md`.
+The bundled model is `public/models/policy-value.onnx`. Its SHA-256, license and current match results are in [the model metadata](../public/models/metadata.json).
 Intermediate replay data and per-round run artifacts are kept out of the source
 repository. Regenerate `training/parity.json` after replacing the bundled
 checkpoint.
@@ -140,7 +139,7 @@ splits whole games into train and validation partitions before applying board
 rotations and reflections. It can expand all eight symmetries or sample one
 random symmetry per position per epoch.
 
-The default network is `280 → 256 ReLU → 128 ReLU`, followed by 81 policy logits
+The baseline trainer’s default network is `280 → 256 ReLU → 128 ReLU`, followed by 81 policy logits
 and one tanh value. Optional widths change only the two hidden layers; the ONNX
 input/output interface and feature encoding stay fixed. Training masks illegal moves using the legal-move feature
 channel. Inputs are own marks `[0:81]`, opponent marks `[81:162]`, legal moves
@@ -154,14 +153,7 @@ model to `public/models/policy-value.onnx` and its run details, validation
 losses, source dataset metadata, artifact size, and SHA-256 to
 `public/models/metadata.json`. The dataset stays local and is ignored by git.
 
-The bundled R20 checkpoint is a 280-input policy/value network with 512/256
-hidden units and is 1,186,321 bytes. At equal 64-simulation search effort it
-scored 51.99% against R16 over 4,096 games with paired openings and swapped
-seats (95% paired interval 50.81–53.17%), establishing a head-to-head gain.
-The separate 99.96% score against the heuristic used an offline 1,024-simulation
-configuration with tactical proof and exact endgame search; it does not measure
-the browser difficulty modes. See `plans/model-r20-release-2026-10-26.md` and
-`public/models/metadata.json` for the bundled checkpoint details.
+Historical R20 results and configuration are recorded in the [R20 release notes](../plans/model-r20-release-2026-10-26.md).
 
 Generation optimization improved a fixed 100-game, 24-simulation, seed-420
 benchmark from 13.5 to 39.4 games/s on the development CPU, with byte-identical

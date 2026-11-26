@@ -1,13 +1,11 @@
 {
   "format": "onnx",
-  "generation": 58,
-  "architecture": "HARNet-micro32-macro80-routing112-v2",
-  "hidden_widths": [
-    32,
-    80,
-    112
-  ],
-  "parameters": 369042,
+  "generation": 101,
+  "previous_bundled_generation": 69,
+  "architecture": "Stage 2 policy/value student with four low-rank spatial lifts, 4-bit codebooks and board-major matrix multiplication",
+  "dense_equivalent_parameters": 2250498,
+  "packed_kernel_parameters": 2236160,
+  "learned_fp16_centroids": 139776,
   "input": {
     "name": "state",
     "shape": [
@@ -66,422 +64,312 @@
     "no_forced_board_index": 9
   },
   "training": {
-    "status": "bundled",
-    "method": "pure_alphazero_direct_reinforcement",
-    "selfplay_depth": "4096 simulations / move",
-    "selfplay_waves": "Waves 11 through 17 (Max-Depth 4,096 Self-Play)",
-    "gpu_acceleration": "Tensor Core BF16 in VRAM (189k pos/s)"
+    "initialization": "Activation-calibrated low-rank approximation of the published uttt.ai Stage 2 network",
+    "float_updates": 8500,
+    "float_targets": "All-legal-child one-ply backups with exact endgame replay",
+    "codebook_updates": 7800,
+    "codebook_target_teacher_mix": 0.8,
+    "quantization": "4-bit indices into FP16 codebooks, with up to 256 weights per group"
   },
-  "artifact_bytes": 1492760,
+  "upstream": {
+    "project": "uttt.ai",
+    "repository": "https://github.com/arnowaczynski/utttai",
+    "commit": "622dae66b18198f6f12aef0a0bccd5bd40de2d8e",
+    "original_onnx_sha256": "81161d2e262c9904dbb9a14961a2fcd043009fab4fd4f76b41451587f89c60d2",
+    "license": "Apache-2.0",
+    "license_file": "utttai-Apache-2.0.txt"
+  },
+  "artifact_bytes": 1480935,
   "artifact_size_limit_bytes": 1500000,
-  "sha256": "9167a67764a49694097764bff016518205ba6e7ca27681b93a81d4c37a353ea3",
+  "previous_bundled_bytes": 1492760,
+  "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825",
   "evaluation": {
-    "headToHeadAgainstGeneration56": {
-      "opponentSha256": "5d2380f31bb14b7eb7ef2c4c3aeee71426e456f45b10d3b9ee68fac4c2f2eab6",
-      "puct256": {
-        "pairs": 50,
-        "games": 100,
-        "wins": 22,
-        "draws": 60,
-        "losses": 18,
-        "scoreRate": 0.52,
-        "scorePercent": 52.00
-      }
-    },
-    "headToHeadAgainstGeneration57": {
-      "puct256": {
-        "pairs": 50,
-        "games": 100,
-        "wins": 25,
-        "draws": 54,
-        "losses": 21,
-        "scoreRate": 0.52,
-        "scorePercent": 52.00
-      }
-    },
-    "headToHeadAgainstGeneration51": {
-      "opponentSha256": "5c12e49a045ad1fc75be277647fa94fd826a6d84ff755d8cec222249c22deeb7",
-      "puct256": {
-        "pairs": 50,
-        "games": 100,
-        "wins": 29,
-        "draws": 55,
-        "losses": 16,
-        "scoreRate": 0.565,
-        "scorePercent": 56.50
-      }
-    },
-    "headToHeadAgainstGeneration37": {
-      "opponentSha256": "165a03c8d6181d5499365a3415da08a23c7708ca33f53e2ef1372b121fbb6ad1",
-      "puct256": {
-        "pairs": 50,
-        "games": 100,
-        "wins": 25,
-        "draws": 55,
-        "losses": 20,
-        "scoreRate": 0.525,
-        "scorePercent": 52.50
-      }
-    },
-    "headToHeadAgainstGeneration36": {
-      "opponentSha256": "a8fae85243fb328325ef01bbaf80f2d4ee560f47bf62c4314cfa5cff57579c32",
-      "puct256": {
-        "pairs": 50,
-        "games": 100,
-        "wins": 24,
-        "draws": 55,
-        "losses": 21,
-        "scoreRate": 0.515,
-        "scorePercent": 51.50
-      }
-    },
-    "headToHeadAgainstGeneration31": {
-      "opponentSha256": "9e0862af0102878e127ac576776dd6755b13a533edb15ff124ca0abcfdb7b6b9",
-      "puct64": {
-        "pairs": 128,
-        "games": 256,
-        "scoreRate": 0.529296875,
-        "scorePercent": 52.93
-      }
-    },
-    "fixedWorkAgainstGeneration26": {
-      "opponentSha256": "cd561330a1666ed3286f3f411277144c335f096b4105190864b5adc49054f135",
-      "puct64": {
-        "pairs": 256,
-        "games": 512,
-        "scoreRate": 0.5869140625,
-        "scorePercent": 58.69140625
-      }
-    }
-  },
-  "historical_generation23_evaluation": {
-    "sha256": "066866b88317f0b1e3e92fc4d5b16ea02e426945cd000aba09c59421f6029e2c",
-    "fixedWorkAgainstGeneration22": {
-      "opponentSha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
-      "puct64": {
-        "seeds": [
-          20261104,
-          20261105,
-          20261106
-        ],
-        "pairs": 384,
-        "games": 768,
-        "wins": 278,
-        "draws": 237,
-        "losses": 253,
-        "scoreRate": 0.5162760416666666,
-        "scorePercent": 51.627604166666664
+    "score_definition": "(wins + draws / 2) / games",
+    "hard_vs_gen69": {
+      "arena": "browser",
+      "opponent": {
+        "label": "Gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
       },
-      "puct1": {
-        "seed": 20261105,
-        "pairs": 256,
-        "games": 512,
-        "scoreRate": 0.5263671875,
-        "scorePercent": 52.63671875
-      }
-    }
-  },
-  "historical_generation20_evaluation": {
-    "againstR16": {
-      "games": 4096,
-      "pairs": 2048,
-      "simulationsPerSide": 64,
-      "wins": 1441,
-      "draws": 1377,
-      "losses": 1278,
-      "scoreRate": 0.5198974609375,
-      "scorePercent": 51.98974609375,
-      "pairedConfidence95Percent": {
-        "lower": 50.80712015459681,
-        "upper": 53.17237203290319
-      },
-      "opponentSha256": "d3b655d11dc6385ac4810658e640bcf0f074c1655993765bb54d8363d538a3d7",
-      "tacticalProof": false
-    },
-    "offlineSearchAgainstHeuristic": {
-      "games": 4864,
-      "wins": 4861,
-      "draws": 2,
-      "losses": 1,
-      "scoreRate": 0.9995888157894737,
-      "winRate": 0.9993832236842105,
-      "pairedConfidence95": {
-        "lower": 0.9963993079594158,
-        "upper": 1,
-        "method": "Exact perfect-pair probability bound; conservative lower bound on mean score"
+      "seed": 2026112881,
+      "pairs": 96,
+      "games": 192,
+      "wins": 85,
+      "draws": 88,
+      "losses": 19,
+      "score": 0.671875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 87,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.6289473684210526,
+          0.7139175257731959
+        ]
       },
       "search": {
-        "simulations": 1024,
-        "tacticalProof": true,
-        "exactEndgame": true,
-        "endgameOptions": {
-          "maxEmptySquares": 18,
-          "maxNodes": 32000,
-          "timeMs": 36,
-          "optimizeMateDistance": true
-        }
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "5eadeb7576a88f0e8c535aeb60e44fbc81c41dcb728e32018fea9676ff6837e5",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "5eadeb7576a88f0e8c535aeb60e44fbc81c41dcb728e32018fea9676ff6837e5"
       },
-      "opponent": {
-        "evaluator": "full TypeScript policy and value",
-        "simulations": 64,
-        "tacticalProof": false,
-        "exactEndgame": false
-      },
-      "sameAsWebRuntime": false,
-      "interpretation": "Offline search-system result; not a measured win rate for browser difficulty modes."
-    },
-    "evidence": "plans/artifacts/r20-release-evaluation.json"
-  },
-  "historical_generation22_evaluation": {
-    "sha256": "8c0995ac8d95e92c1386a6c70bb3bdc81756d228a6a90db2c3a805e632bcb3b4",
-    "externalSuite": {
-      "format": "external-arena-v1",
-      "pairs": 128,
-      "openingClusters": 115,
-      "seed": 2026102931,
-      "timeMs": 140,
-      "protocol": "native TypeScript/ONNX opponent matches; same paired openings and seat swap across all models; host-timed 140 ms per search",
-      "comparison": "paired score delta: candidate minus generation20 checkpoint; bootstrap over ordered two-ply opening clusters",
-      "opponents": {
-        "alpha-beta": {
-          "bWDL": [
-            134,
-            76,
-            46
-          ],
-          "bScorePercent": 67.19,
-          "shippedWDL": [
-            135,
-            74,
-            47
-          ],
-          "shippedScorePercent": 67.19,
-          "bMinusShippedPercentagePoints": 0.54,
-          "pairedOpeningCluster95Percent": [
-            -5.54,
-            6.74
-          ]
+      "openingSchedule": "independent",
+      "modelMeasuredWork": {
+        "scoredMoves": 4700,
+        "simulations": {
+          "count": 4700,
+          "min": 0,
+          "median": 304,
+          "p95": 384,
+          "max": 384,
+          "mean": 285.86382978723407
         },
-        "learned-puct": {
-          "bWDL": [
-            246,
-            10,
-            0
-          ],
-          "bScorePercent": 98.05,
-          "shippedWDL": [
-            221,
-            33,
-            2
-          ],
-          "shippedScorePercent": 92.77,
-          "bMinusShippedPercentagePoints": 4.57,
-          "pairedOpeningCluster95Percent": [
-            1.85,
-            7.39
-          ]
+        "elapsedMs": {
+          "count": 4700,
+          "min": 0,
+          "median": 220.5,
+          "p95": 221.2999999988824,
+          "max": 222.09999999962747,
+          "mean": 165.02682978723317
         },
-        "utttai": {
-          "bWDL": [
-            33,
-            107,
-            116
-          ],
-          "bScorePercent": 33.79,
-          "shippedWDL": [
-            51,
-            79,
-            126
-          ],
-          "shippedScorePercent": 35.35,
-          "bMinusShippedPercentagePoints": -2.28,
-          "pairedOpeningCluster95Percent": [
-            -8.8,
-            4.02
-          ]
+        "modelMoves": 4218,
+        "verifiedEndgameMoves": 482,
+        "simulationCapHits": 1388
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 4678,
+        "simulations": {
+          "count": 4678,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 345.3986746472852
         },
-        "codingame": {
-          "bWDL": [
-            252,
-            3,
-            1
-          ],
-          "bScorePercent": 99.02,
-          "shippedWDL": [
-            251,
-            3,
-            2
-          ],
-          "shippedScorePercent": 98.63,
-          "bMinusShippedPercentagePoints": 0.22,
-          "pairedOpeningCluster95Percent": [
-            -1.52,
-            1.96
-          ]
-        }
-      },
-      "limitations": "140 ms results are host-timed native matches, not a browser benchmark. No external comparison showed a supported regression; learned-PUCT improved significantly, while alpha-beta, uttt.ai, and CodinGame intervals include parity."
-    },
-    "fixedWorkAgainstGeneration20": {
-      "protocol": "native CPU ONNX PUCT; tactical proof and bounded exact endgame; seat-swapped pairs; deadlines disabled",
-      "primarySimulations": 256,
-      "guardrailSimulations": 64,
-      "seed": 2026102921,
-      "pairs": 1024,
-      "openingClusters": 545,
-      "puct256": {
-        "wins": 761,
-        "draws": 693,
-        "losses": 594,
-        "scorePercent": 54.08,
-        "openingCluster95Percent": [
-          51.42,
-          56.72
-        ],
-        "sourceCluster95Percent": [
-          52.39,
-          55.79
-        ]
-      },
-      "puct64": {
-        "wins": 816,
-        "draws": 575,
-        "losses": 657,
-        "scorePercent": 53.88,
-        "openingCluster95Percent": [
-          51.1,
-          56.63
-        ],
-        "sourceCluster95Percent": [
-          52.05,
-          55.71
-        ]
+        "elapsedMs": {
+          "count": 4678,
+          "min": 0,
+          "median": 114.59999999962747,
+          "p95": 204.09999999962747,
+          "max": 221.7000000011176,
+          "mean": 105.53249251815105
+        },
+        "modelMoves": 4209,
+        "verifiedEndgameMoves": 469,
+        "simulationCapHits": 4189
       }
     },
-    "fixedWorkAgainstGeneration21": {
-      "protocol": "native CPU ONNX PUCT; tactical proof and bounded exact endgame; seat-swapped pairs; deadlines disabled",
-      "opponentSha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
-      "seed": 2026102933,
-      "pairs": 512,
-      "games": 1024,
-      "openingPlyCount": 2,
-      "openingClusters": 353,
-      "puct256": {
-        "wins": 365,
-        "draws": 383,
-        "losses": 276,
-        "scorePercent": 54.3457,
-        "pairedConfidence95Percent": {
-          "lower": 51.9118,
-          "upper": 56.7796
-        },
-        "openingClusterBootstrapConfidence95Percent": {
-          "lower": 51.0784,
-          "upper": 57.5787
-        }
+    "hard_vs_utttai_quick_1000": {
+      "arena": "official",
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
       },
-      "puct64": {
-        "wins": 403,
-        "draws": 288,
-        "losses": 333,
-        "scorePercent": 53.418,
-        "pairedConfidence95Percent": {
-          "lower": 50.8503,
-          "upper": 55.9857
-        },
-        "openingClusterBootstrapConfidence95Percent": {
-          "lower": 49.9012,
-          "upper": 56.8406
-        }
+      "seed": 2026112893,
+      "pairs": 50,
+      "games": 100,
+      "wins": 6,
+      "draws": 66,
+      "losses": 28,
+      "score": 0.39,
+      "uncertainty": {
+        "method": "Observed score across the complete fixed published tournament suite",
+        "distinctOpenings": 50,
+        "interval95": null
       },
-      "limitations": "Fresh seeded two-ply schedule with 353 unique opening clusters; repeated clusters bootstrapped together. This is a native fixed-work comparison, not a strict held-out training-data test or browser benchmark."
-    }
-  },
-  "historical_generation21_evaluation": {
-    "sha256": "0e565a6a4a856068388c0a4b7f5b1bcc2192a9694f51a2e9a97783ea1d8cb921",
-    "training": {
-      "experiment": "focused-512-fixed",
-      "note": "Selected candidate for independent confirmation; raw training data and run provenance remain private."
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 1000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "5eadeb7576a88f0e8c535aeb60e44fbc81c41dcb728e32018fea9676ff6837e5",
+        "modelDistSha256": "8b45fe946c156c4fb34e3e24a32aad49a26b323c0c4899558da95d37caf669bc",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingSchedule": "published",
+      "openingSuite": "published",
+      "openingSuiteSha256": "feb92e42ff53472bd8a4a04f4e7d31254c1d87cbdb7ab9f40d110932d001acbe",
+      "modelMeasuredWork": {
+        "scoredMoves": 2412,
+        "verifiedEndgameMoves": 315,
+        "modelMoves": 2097,
+        "simulations": {
+          "min": 0,
+          "mean": 269.3619402985075,
+          "max": 384,
+          "median": 292,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0,
+          "mean": 167.61144278608194,
+          "max": 270.1000000014901,
+          "median": 220.59999999962747,
+          "p95": 221.40000000037253
+        }
+      }
     },
-    "evaluation": {
-      "nativeVsR20": {
-        "seed": 2026105002,
-        "pairs": 1024,
-        "games": 2048,
-        "wins": 684,
-        "draws": 865,
-        "losses": 499,
-        "scorePercent": 54.516,
-        "pairedConfidence95Percent": {
-          "lower": 52.929,
-          "upper": 56.104
-        }
+    "release_build_hard_vs_gen69": {
+      "arena": "browser",
+      "opponent": {
+        "label": "Gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
       },
-      "productionBrowserVsR20": {
-        "seed": 2026105003,
-        "pairs": 1024,
-        "games": 2048,
-        "wins": 647,
-        "draws": 1002,
-        "losses": 399,
-        "scorePercent": 56.0546875,
-        "pairedConfidence95Percent": {
-          "lower": 54.5575426,
-          "upper": 57.5518324
-        },
-        "openingClusters": 558,
-        "openingClusterNormalConfidence95Percent": {
-          "lower": 54.1108799,
-          "upper": 57.9984951
-        },
-        "openingClusterBootstrapConfidence95Percent": {
-          "lower": 54.1142303,
-          "upper": 57.9891839
-        },
-        "runtime": "Headless Chromium 156; production Hard settings: 4096 simulations, 140 ms, tactical proof."
+      "seed": 2026112899,
+      "pairs": 64,
+      "games": 128,
+      "wins": 43,
+      "draws": 67,
+      "losses": 18,
+      "score": 0.59765625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.53125,
+          0.6615441176470587
+        ]
       },
-      "offlineFixedHeuristic": {
-        "games": 4864,
-        "wins": 4851,
-        "draws": 13,
-        "losses": 0,
-        "scorePercent": 99.8668,
-        "target100PercentMet": false
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
       },
-      "externalOpponents": {
-        "seed": 2026105204,
-        "pairedOpeningsPerOpponent": 512,
-        "scoreDeltaVsR20PercentagePoints": {
-          "Rust alpha-beta": {
-            "estimate": -1.953,
-            "confidence95": [
-              -5.36,
-              1.45
-            ]
-          },
-          "Rust learned PUCT": {
-            "estimate": -1.855,
-            "confidence95": [
-              -3.826,
-              0.115
-            ]
-          },
-          "uttt.ai": {
-            "estimate": -1.807,
-            "confidence95": [
-              -4.952,
-              1.339
-            ]
-          },
-          "CodinGame": {
-            "estimate": -0.781,
-            "confidence95": [
-              -1.888,
-              0.326
-            ]
-          }
+      "openingSchedule": "independent",
+      "modelMeasuredWork": {
+        "scoredMoves": 3149,
+        "simulations": {
+          "count": 3149,
+          "min": 0,
+          "median": 99,
+          "p95": 384,
+          "max": 384,
+          "mean": 113.85741505239758
         },
-        "interpretation": "No statistically supported regression; significant gains against these opponents were not established."
+        "elapsedMs": {
+          "count": 3149,
+          "min": 0.10000002384185791,
+          "median": 221.70000004768372,
+          "p95": 223.70000004768372,
+          "max": 234.79999995231628,
+          "mean": 186.59695141405936
+        },
+        "modelMoves": 2795,
+        "verifiedEndgameMoves": 354,
+        "simulationCapHits": 180
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 3136,
+        "simulations": {
+          "count": 3136,
+          "min": 0,
+          "median": 211,
+          "p95": 384,
+          "max": 384,
+          "mean": 211.85395408163265
+        },
+        "elapsedMs": {
+          "count": 3136,
+          "min": 0.09999996423721313,
+          "median": 221.10000002384186,
+          "p95": 222.60000002384186,
+          "max": 397.5,
+          "mean": 184.0403061224984
+        },
+        "modelMoves": 2794,
+        "verifiedEndgameMoves": 342,
+        "simulationCapHits": 279
+      }
+    },
+    "release_build_hard_on_original_client": {
+      "arena": "browser",
+      "opponent": {
+        "label": "Gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
+      },
+      "seed": 2026112901,
+      "pairs": 96,
+      "games": 192,
+      "wins": 85,
+      "draws": 87,
+      "losses": 20,
+      "score": 0.6692708333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 92,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.6223404255319149,
+          0.7164948453608248
+        ]
+      },
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingSchedule": "independent",
+      "modelMeasuredWork": {
+        "scoredMoves": 4758,
+        "simulations": {
+          "count": 4758,
+          "min": 0,
+          "median": 310,
+          "p95": 384,
+          "max": 384,
+          "mean": 289.08469945355193
+        },
+        "elapsedMs": {
+          "count": 4758,
+          "min": 0,
+          "median": 220.39999999850988,
+          "p95": 221.19999999925494,
+          "max": 224.60000000149012,
+          "mean": 164.00653635981692
+        },
+        "modelMoves": 4272,
+        "verifiedEndgameMoves": 486,
+        "simulationCapHits": 1489
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 4728,
+        "simulations": {
+          "count": 4728,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 346.8020304568528
+        },
+        "elapsedMs": {
+          "count": 4728,
+          "min": 0.09999999776482582,
+          "median": 113.90000000223517,
+          "p95": 200,
+          "max": 216.80000000074506,
+          "mean": 104.6492808798908
+        },
+        "modelMoves": 4271,
+        "verifiedEndgameMoves": 457,
+        "simulationCapHits": 4270
       }
     }
   }
