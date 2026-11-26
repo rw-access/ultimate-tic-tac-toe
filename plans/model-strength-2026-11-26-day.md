@@ -17,7 +17,13 @@ Morning screens use independently seeded, seat-swapped openings. Native screens 
 
 Offline finalists play their own released predecessor at 256 visits, with the same engine on both sides. Confirm a screened candidate on fresh paired openings and require a 95% lower score bound above 50% before promotion. New downloads must fit the actual prior model’s byte count. Repeated matches involving a shared-weight teacher are identified as such.
 
-The afternoon strategy, incumbent digest and new confirmation seeds will be recorded after the morning results.
+The afternoon compares each challenger with the exact file in the morning release. The web incumbent is Gen102, SHA-256 `9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f`. Its upper limits are 1,476,740 bytes, 384 simulations and 220 ms of tree search.
+
+The afternoon strategy uses games against the original engine to identify mistakes by each size class. Controlled comparisons test where deeper training searches help, whether the student learns to choose between playable local boards, and whether refitting scales in the released quantized graph improves play.
+
+One finalist per size class advances from development games against its morning predecessor. The browser finalist must score above 50% on both development clients. Candidates rank by the lower of those two scores, with combined game score as the tiebreaker. Each offline class ranks candidates that score above 50% on their first 64-pair, 256-visit screen. Tied scores use the higher lower confidence bound. The 25 MB, 50 MB and 75 MB downloads share a finalist. Each selected file is fixed by SHA-256 before its confirmation begins.
+
+Browser confirmation uses 256 opening pairs on seed `26316201` and 128 pairs on seed `26316202` for the second client. Promotion requires a primary 95% lower bound above 50%, a score above 50% against Gen102 on the second client, and a matched check against the original 1,000-visit Quick engine. A Quick decline exceeding three percentage points requires a separately documented investigation. Offline confirmation uses 192 pairs at 256 visits per side on seed `26316204` and a 95% lower bound above 50%. All games award half a point for a draw.
 
 The first 1,200-update compact challenger scored 18 wins, 41 draws and 5 losses against Gen101 in the 64-game, 256-visit screen. Before seeing any result on seed `26315213`, its dense export (`cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba`) was selected for a separate 128-pair equal-visit test of the learned weights. The browser finalist is selected separately because actual Hard play also depends on inference time.
 

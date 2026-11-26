@@ -1,6 +1,7 @@
 // Bounded exact W/D/L classification for every legal action of a late UTTT root.
 // Input batches: count, followed by [forced, own0, opp0, ..., own8, opp8].
 // Output per root: visited nodes and 81 action classes, or '?' when incomplete.
+// With --value, report only the best attainable W/D/L from the side to move.
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -135,7 +136,7 @@ class Solver {
 
 public:
     explicit Solver(uint64_t cap) : limit(cap) {}
-    Answer solve(const Position& root) {
+    Answer solve(const Position& root, bool value_only) {
         nodes = 0;
         if (++root_id == 0) {
             std::fill(table.begin(), table.end(), Entry{});
@@ -152,8 +153,12 @@ public:
                 ++n;
             }
         }
-        std::string classes(81, '.');
         try {
+            if (value_only) {
+                const int value = search(root, -2, 2);
+                return {nodes, std::string(1, "LDW"[1 + value])};
+            }
+            std::string classes(81, '.');
             for (Mask bs = boards(root); bs;) {
                 const int b = pop_low(bs);
                 for (Mask cs = spaces(root, b); cs;) {
@@ -163,10 +168,10 @@ public:
                     classes[9*b+c] = "LDW"[1 - search(child(root, b, c), -2, 2)];
                 }
             }
+            return {nodes, classes};
         } catch (const Budget&) {
             return {nodes, "?"};
         }
-        return {nodes, classes};
     }
 };
 
@@ -194,7 +199,9 @@ Position read_root() {
 
 int main(int argc, char** argv) {
     try {
-        if (argc != 3) throw std::runtime_error("usage: exact-targets nodes-per-root threads");
+        const bool value_only = argc == 4 && std::string(argv[3]) == "--value";
+        if (argc != 3 && !value_only)
+            throw std::runtime_error("usage: exact-targets nodes-per-root threads [--value]");
         const uint64_t cap = std::stoull(argv[1]);
         const int threads = std::stoi(argv[2]);
         if (!cap || threads < 1 || threads > 64) throw std::runtime_error("invalid limits");
@@ -215,7 +222,7 @@ int main(int argc, char** argv) {
             std::atomic<size_t> next{0};
             auto work = [&](int thread) {
                 size_t i;
-                while ((i = next.fetch_add(1)) < count) answers[i] = solvers[thread].solve(roots[i]);
+                while ((i = next.fetch_add(1)) < count) answers[i] = solvers[thread].solve(roots[i], value_only);
             };
             std::vector<std::thread> pool;
             for (int i = 1; i < threads && i < static_cast<int>(count); ++i) pool.emplace_back(work, i);

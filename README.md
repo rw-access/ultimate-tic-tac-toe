@@ -86,6 +86,8 @@ Against the original uttt.ai Quick engine at 1,000 visits, Gen102 scored **38.0%
 
 Gen102 received 1,200 training updates starting from Gen101. Training used searched positions, proved outcomes and moves where the student and its teacher disagreed. The decoder computes the policy only for legal moves. Five game phases have separately fitted policy and value scales. [Model metadata](public/models/metadata.json) · [Upstream model and data](https://github.com/arnowaczynski/utttai) · [Apache-2.0 license](public/models/utttai-Apache-2.0.txt)
 
+The afternoon checkpoint compared each candidate with the model that shipped that morning. In fresh matches against their predecessors, the 512 KB model scored 56.5% over 384 games and the 5 MB model scored 53.8% over 384 games. [Afternoon results and training report](plans/model-strength-2026-11-26-afternoon.md)
+
 TypeScript generates games and plays both seats using the browser rules and native ONNX inference. Python trains on the resulting positions and exports the models. Offline weights for the other six size classes are separate downloads. [Training commands](training/README.md) · [Model downloads](https://github.com/rw-access/ultimate-tic-tac-toe/releases/latest)
 
 Run the Python checks after installing the training dependencies:

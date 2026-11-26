@@ -422,6 +422,8 @@ export async function createHardBrowserCandidate(distPath: string, modelPath: st
     await requestMove(agent, createGame(), 'hard');
     assertNoPageErrors([agent]);
     return {
+      browser,
+      baseUrl: server.baseUrl,
       evidence: {
         modelSha256, workerSha256: assets['assets/' + workerAsset],
         distSha256: createHash('sha256').update(JSON.stringify(assets)).digest('hex'),

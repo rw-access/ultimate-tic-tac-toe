@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from training.exact_targets import classify, eligible, proved_targets
+from training.exact_targets import classify, eligible, position_values, proved_targets
 
 
 class ExactTargetTests(unittest.TestCase):
@@ -78,6 +78,15 @@ class ExactTargetTests(unittest.TestCase):
             one = self.run_solver(batch, 100000, 1)
             np.testing.assert_array_equal(one[1], result)
             self.assertEqual(one[2], nodes)
+            with subprocess.Popen([str(self.solver), "100000", "2", "--value"], text=True,
+                                  stdin=subprocess.PIPE, stdout=subprocess.PIPE) as worker:
+                solved, values, _ = position_values(worker, batch)
+                worker.stdin.close()
+                self.assertEqual(worker.wait(), 0)
+            ranks = np.select([result == ord("W"), result == ord("D"), result == ord("L")],
+                              [1, 0, -1], default=-2)
+            np.testing.assert_array_equal(solved, np.arange(len(batch)))
+            np.testing.assert_array_equal(values, ranks.max(axis=1))
         x = states[states[:, 162:243].sum(1) > 1][:12]
         self.assertGreater(len(x), 0)
         keep, _, nodes = self.run_solver(x, 1, 2)

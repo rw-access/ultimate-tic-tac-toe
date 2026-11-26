@@ -554,6 +554,22 @@ def objective(logits, value, x, p, v, teacher, teacher_v, chosen, better, gain, 
     return ce.mean(), F.mse_loss(value.float().flatten(), target_v), rank_loss * margin
 
 
+def board_choice_loss(logits, legal, target, exact, best_cell=False):
+    """Compare playable boards by their total probability or their strongest cell."""
+    board_legal = legal.reshape(-1, 9, 9)
+    active = (board_legal.any(2).sum(1) > 1) & ~exact
+    cells = logits.float().masked_fill(~legal, -1e9).reshape(-1, 9, 9)
+    move_target = normalize(target.float()).reshape(-1, 9, 9)
+    if best_cell:
+        log_boards = cells.amax(2).log_softmax(1)
+        board_target = normalize(move_target.amax(2))
+    else:
+        log_boards = cells.logsumexp(2).log_softmax(1)
+        board_target = move_target.sum(2)
+    per_position = -(board_target * log_boards).sum(1)
+    return (per_position * active).sum() / active.sum().clamp_min(1)
+
+
 @torch.inference_mode()
 def validation(model, pools):
     result = {}
@@ -646,6 +662,9 @@ def fit(args, device):
                 "stepCodeFraction":args.step_code_fraction, "totalCodeFraction":args.total_code_fraction}
     if args.policy_head_only:
         settings.update(policyHeadOnly=True, inputValueFingerprint=original_value)
+    if args.board_choice_weight:
+        settings["boardChoiceWeight"] = args.board_choice_weight
+        settings["boardChoiceTarget"] = args.board_choice_target
     initial_metrics = validation(student, pools)
     emit({"initialDiagnostics": initial_metrics, "trainingRows": sum(len(p[3]) for p in pools),
           "heldOutRows": sum(len(p[5]) for p in pools), "sampleCounts": sizes.tolist(),
@@ -678,6 +697,9 @@ def fit(args, device):
         ce, mse, rank = objective(logits, value, x, p, d["v"][:, None], ref, d["teacher_v"][:, None],
                                   chosen, better, d["gain"], d["mix"], d["exact"], args.margin)
         loss = ce + args.value_weight * mse + rank
+        if args.board_choice_weight:
+            loss = loss + args.board_choice_weight * board_choice_loss(
+                logits, x[:, 162:243] > 0, p, d["exact"], args.board_choice_target == "best-cell")
         if anchor is not None:
             # Protect the starting policy on all legal moves while the curated
             # Q targets change the relative preference of supported actions.
@@ -768,6 +790,10 @@ def main():
     f.add_argument("--anchor", type=float, default=0, help="Mixture weight for frozen initial-model policy KL and value MSE")
     f.add_argument("--teacher-scale", type=float, default=1.0)
     f.add_argument("--margin", type=float, default=.25)
+    f.add_argument("--board-choice-weight", type=float, default=0.,
+                   help="Weight of the auxiliary policy loss across playable boards in non-proof positions")
+    f.add_argument("--board-choice-target", choices=("mass", "best-cell"), default="mass",
+                   help="Compare the total search policy or the strongest individual move on each local board")
     f.add_argument("--lr", type=float, default=8e-5)
     f.add_argument("--value-weight", type=float, default=.9)
     f.add_argument("--biases", action="store_true")
@@ -795,10 +821,10 @@ def main():
     if args.batch_size <= 0:
         parser.error("A positive batch size is required")
     if args.command == "fit" and (not all(math.isfinite(n) for n in (args.lr, args.value_weight,
-            args.teacher_scale, args.margin, args.hard_fraction, args.assignment_lr, args.anchor)) or
+            args.teacher_scale, args.margin, args.hard_fraction, args.assignment_lr, args.anchor, args.board_choice_weight)) or
             not args.name.replace("-", "").isalnum() or min(args.at) <= 0 or
             min(args.lr, args.value_weight, args.max_bytes) <= 0 or not 0 <= args.hard_fraction <= 1 or
-            not 0 <= args.teacher_scale <= 2 or not 0 <= args.anchor < 1 or args.margin < 0 or args.recode_every < 0 or args.assignment_lr <= 0 or
+            not 0 <= args.teacher_scale <= 2 or not 0 <= args.anchor < 1 or args.margin < 0 or args.board_choice_weight < 0 or args.recode_every < 0 or args.assignment_lr <= 0 or
             not 0 <= args.proof_error_fraction <= 1 or not 0 < args.step_code_fraction <= 1 or not 0 < args.total_code_fraction <= 1 or
             (args.orbit_seed is not None and not 0 <= args.orbit_seed < 2**32)):
         parser.error("Invalid training settings")

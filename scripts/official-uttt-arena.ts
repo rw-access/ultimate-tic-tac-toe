@@ -47,7 +47,7 @@ class InputTensor {
   constructor(_type: string, data: Float32Array) { this.data = data; }
 }
 
-async function loadOfficial(upstream: string) {
+export async function verifiedOfficialBundle(upstream: string) {
   const { build } = await import('esbuild');
   const source = resolve(upstream, 'website/src');
   const result = await build({
@@ -64,9 +64,13 @@ async function loadOfficial(upstream: string) {
       });
     } }],
   });
+  return result.outputFiles[0].text;
+}
+
+async function loadOfficial(upstream: string) {
   // Each game's lexical RNG is independent of batching and interleaving. The website's
   // download/timer UI is unused. Its unmodified simulate() receives a local inference session.
-  const load = new Function('module', 'require', 'gameRandom', 'navigator', result.outputFiles[0].text);
+  const load = new Function('module', 'require', 'gameRandom', 'navigator', await verifiedOfficialBundle(upstream));
   return (gameRandom: () => number) => {
     const module = { exports: {} as any };
     load(module, (name: string) => {
@@ -144,7 +148,7 @@ function opening(seed: number) {
 
 // All 93 digits are significant, including subboard outcomes, next player,
 // forced subboard and global result. Distinct histories can reach the same state.
-function projectStateDigits(state: GameState) {
+export function projectStateDigits(state: GameState) {
   const digit = (mark: 'X' | 'O' | 'draw' | null) => mark === null ? 0 : mark === 'X' ? 1 : mark === 'O' ? 2 : 3;
   return [...state.boards.flat().map(digit), ...state.results.map(digit), digit(state.turn),
     state.forced ?? 9, digit(state.winner)].join('');

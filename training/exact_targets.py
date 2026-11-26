@@ -33,14 +33,38 @@ def root_rows(states):
     return np.column_stack([states[:, 270:].argmax(1), masks])
 
 
-def classify(worker, states):
+def send_roots(worker, states):
     rows = root_rows(states)
     lines = [str(len(rows)), *(" ".join(map(str, row)) for row in rows)]
     worker.stdin.write("\n".join(lines) + "\n")
     worker.stdin.flush()
+
+
+def position_values(worker, states):
+    """Read only proved side-to-move values from a solver launched with --value."""
+    send_roots(worker, states)
+    values, selected = [], []
+    nodes = 0
+    for index in range(len(states)):
+        line = worker.stdout.readline()
+        if not line:
+            raise RuntimeError(f"Endgame worker stopped with exit code {worker.poll()}")
+        count, token = line.split()
+        nodes += int(count)
+        if token == "?":
+            continue
+        if token not in ("L", "D", "W"):
+            raise ValueError("Expected a single proved position value")
+        selected.append(index)
+        values.append({"L": -1, "D": 0, "W": 1}[token])
+    return np.asarray(selected, dtype=int), np.asarray(values, dtype=np.int8), nodes
+
+
+def classify(worker, states):
+    send_roots(worker, states)
     total_nodes = 0
     solved, classes = [], []
-    for index in range(len(rows)):
+    for index in range(len(states)):
         line = worker.stdout.readline()
         if not line:
             raise RuntimeError(f"Endgame worker stopped with exit code {worker.poll()}")

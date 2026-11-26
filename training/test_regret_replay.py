@@ -4,10 +4,41 @@ import numpy as np
 import torch
 
 from training.refine_packed import Codebook
-from training.regret_replay import AdaptiveBook, child_scores, excluded_rows, objective, orbit_holdout, ranking_evidence, stored_affines, stratified_hardness, validate_alternative_manifest
+from training.regret_replay import AdaptiveBook, board_choice_loss, child_scores, excluded_rows, objective, orbit_holdout, ranking_evidence, stored_affines, stratified_hardness, validate_alternative_manifest
 
 
 class RegretTest(unittest.TestCase):
+    def test_board_target_compares_total_legal_mass_and_skips_forced_and_exact(self):
+        logits = torch.zeros(3, 81, requires_grad=True)
+        legal = torch.zeros(3, 81, dtype=torch.bool)
+        legal[0, [0, 1, 10]] = True
+        legal[1, [2, 3]] = True
+        legal[2, [0, 9]] = True
+        target = torch.zeros_like(logits)
+        target[0, 0], target[1, 2], target[2, 9] = 1, 1, 1
+        exact = torch.tensor([False, False, True])
+        loss = board_choice_loss(logits, legal, target, exact)
+        self.assertAlmostEqual(loss.item(), -np.log(2 / 3), places=6)
+        loss.backward()
+        self.assertLess(logits.grad[0, 1].item(), 0)
+        self.assertGreater(logits.grad[0, 10].item(), 0)
+        self.assertEqual(logits.grad[~legal].abs().sum().item(), 0)
+        self.assertEqual(logits.grad[1:].abs().sum().item(), 0)
+        self.assertEqual(board_choice_loss(logits[1:], legal[1:], target[1:], exact[1:]).item(), 0)
+
+    def test_best_cell_board_target_prefers_the_highest_individual_move(self):
+        legal = torch.zeros(1, 81, dtype=torch.bool)
+        legal[0, [0, 1, 9]] = True
+        target = torch.zeros(1, 81)
+        target[0, [0, 1, 9]] = torch.tensor([.3, .3, .4])
+        logits = torch.zeros_like(target, requires_grad=True)
+        loss = board_choice_loss(logits, legal, target, torch.tensor([False]), best_cell=True)
+        loss.backward()
+        self.assertAlmostEqual(loss.item(), np.log(2), places=6)
+        self.assertLess(logits.grad[0, 9].item(), 0)
+        self.assertGreater(logits.grad[0, :2].sum().item(), 0)
+        self.assertEqual(logits.grad[~legal].abs().sum().item(), 0)
+
     def test_agreement_or_prior_support_and_terminal_proof(self):
         target = np.array([[.8,.15,.05],[.75,.20,.05],[.1,.75,.15],[.9,.1,0.]])
         choices = np.array([[0,1,0],[0,1,0],[0,2,1],[1,0,0]])
