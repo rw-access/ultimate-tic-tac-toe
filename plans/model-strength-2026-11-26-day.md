@@ -1,0 +1,54 @@
+# November 26 model training rounds
+
+The first checkpoint is 10:30 a.m. Mountain and the second is 3:00 p.m. Mountain. The web incumbent is Gen101 (`599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825`, 1,480,935 bytes). Its policy/value worker allows up to 384 simulations and 220 ms of tree search, plus the existing bounded endgame solver. Training starts from the five verified downloads representing the seven size classes in the [preceding release](https://github.com/rw-access/ultimate-tic-tac-toe/releases/tag/models-2026-11-26).
+
+## Morning experiment
+
+- Train compact challengers on model disagreement and the value of alternatives at a searched position. Reuse the source archive’s per-action values and visit counts. Compare with a uniform-training control.
+- Give the 512 KB model explicit supervision on the relative values of legal moves. Train a full teacher using search-informed improvements to its policy and value estimates, then test its compressed exports.
+- Profile the released ONNX graph through single-thread Chromium. Test which parts of the policy computation can be limited to legal moves. Check all legal logits and state values against the dense graph, including unrestricted boards and batched inputs.
+- Generate new self-play with both the incumbent browser model and its teacher. Use deeper training-only searches on a sample of those positions. Keep evaluation-game trajectories separate from training.
+
+## Promotion matches
+
+Training simulations can be deeper than published gameplay. The web search budget and maximum download are set by the incumbent. Fixed-visit games measure playing strength with equal search work. Real browser matches measure the combined effect of the weights and their inference cost.
+
+Morning screens use independently seeded, seat-swapped openings. Native screens use seed `26315101`, and browser screens use `26315103`. Freeze one primary browser finalist with its digest before feeding it the fresh confirmation seeds. Use 128 or more opening pairs on the primary machine (seed `26315201`) and at least 64 pairs on a second machine (seed `26315202`). The primary promotion condition is a 95% opening-cluster bootstrap interval entirely above 50%. Require a positive score on the second machine and examine the interval there. Run the original uttt.ai Quick engine at 1,000 visits against the actual Hard browser on the full 50-position published suite in both colors. Publish the observed W/D/L for that fixed suite and compare it with the incumbent. A regression exceeding three score points on that suite calls for further investigation before shipping.
+
+Offline finalists play their own released predecessor at 256 visits, with the same engine on both sides. Confirm a screened candidate on fresh paired openings and require a 95% lower score bound above 50% before promotion. New downloads must fit the actual prior model’s byte count. Repeated matches involving a shared-weight teacher are identified as such.
+
+The afternoon strategy, incumbent digest and new confirmation seeds will be recorded after the morning results.
+
+The first 1,200-update compact challenger scored 18 wins, 41 draws and 5 losses against Gen101 in the 64-game, 256-visit screen. Before seeing any result on seed `26315213`, its dense export (`cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba`) was selected for a separate 128-pair equal-visit test of the learned weights. The browser finalist is selected separately because actual Hard play also depends on inference time.
+
+## Training data and controls
+
+The public archive contains some of the published tournament opening positions. Datasets used for promotion-eligible challengers exclude matches to all eight rotations and reflections of the 50 published starts. An early uniform control and two exploratory full teachers used unfiltered data and were kept for diagnostics. The incumbent inherited its earlier training history. The tournament score describes performance on that fixed suite. Independently generated two-ply matches provide a separate comparison.
+
+The action-value pilot retained 179,998 roots and 176,605 alternative children. The extended set added 1,019,973 roots and 1,000,972 children from a disjoint sample. Action values in the public labels belong to the parent player. Child training reverses the sign and shrinks noisy, lightly visited estimates toward the incumbent teacher.
+
+A separate proof run started from 11,000 positions with 15–23 playable squares, beyond the browser solver's 14-square threshold. It established the outcome of every legal move at 7,771 roots. It also independently proved 11,121 child positions and checked every child value against its parent's move outcome. The solver visited 1,091,834,769 nodes.
+
+The training-only rotation ensemble shares the original teacher's weights and performs four evaluations per leaf. Its move probabilities are aligned to the original board before averaging. The 2,048 positions selected for deeper search averaged 0.226 in supported action-value regret, compared with 0.024 in the sampled pool. Additional labels come from the original published Stage 2 search on these training positions. None of these offline search budgets change Hard play.
+
+All 64 two-ply starts in the first Tiny development match occurred in the public archive. Two occurred in that challenger's newly sampled training roots, or ten with symmetries included. These are opening positions. Evaluation game outcomes are separate. To check how the compact learned weights generalize to different starts, the A-1200 branch also plays a separately seeded, six-ply, 96-pair fixed-work match after its primary equal-visit test.
+
+The A-1200 fast export was selected for a matched Quick measurement before the browser finalist was chosen. Finalist selection uses internal head-to-head games. The Quick score is reserved for checking external performance.
+
+The morning browser shortlist comprises A-1200 with the legal-cell decoder alone and the same weights with phase-dependent output calibration. The two-gate INT8 variant scored 49.2% against the plain version on the second client. The later 4,200-step learner scored 44.8% against the decoder with Gen101 weights there. The phase variant plays the plain learner on the second client and the Gen101-weight decoder on the primary client. If the two screens point in different directions, use a direct primary-client comparison before freezing the finalist. Reserve newer proof and action-value learners for the second training round.
+
+The morning finalist will play 256 opening pairs on the primary client and 128 on the second client. A historical comparison against Gen69 and a browser comparison against the original Strong engine at 10,000 visits will provide context. Strong uses 16 newly generated opening pairs, with the same openings and search tie seeds for the incumbent and finalist.
+
+At 7:45 a.m. Mountain, the morning browser finalist was frozen as SHA-256 `9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f` (1,476,740 bytes). It is A-1200 with the legal-cell decoder and phase calibration. It scored 57.8% against the decoder with Gen101 weights on the primary client (15 wins, 44 draws, 5 losses) and 51.6% against A-1200 without calibration on the second (15 wins, 36 draws, 13 losses). The plain learned weights independently scored 55.5% against Gen101 at equal 256 visits over 256 games (55 wins, 174 draws, 27 losses, paired 95% interval 52.0–58.8%). The finalist has separate confirmation seeds and the matched published Quick seed `26315110`.
+
+One additional offline teacher uses the reverse-KL policy improvement described by Grill and colleagues. The fitted target mixes the optimized distribution with the empirical search policy. All action values are shrunk toward the search root value according to the visits supporting that action. The underlying regularized objective is described in [Monte-Carlo Tree Search as Regularized Policy Optimization](https://proceedings.mlr.press/v119/grill20a.html).
+
+The secondary browser confirmation finished at 8:29 a.m. The finalist scored 94 wins, 133 draws and 29 losses against Gen101, or 62.7% with a paired 95% interval of 58.7–66.5%. On the matched published Quick suite it scored 38.0% (8/60/32), versus 35.0% for Gen101 (4/62/34). Its score improved on 16 opening pairs, tied on 22 and fell on 12. A direct 192-game test of ranked training against a matched uniform-training control scored 48.4% (31/124/37, paired interval 44.3–52.7%). The equal-work gain against Gen101 establishes an improvement in the learned weights. These control games leave the contribution of ranking and hard-example sampling uncertain.
+
+Two alternative compact branches use the same legal-cell decoder and the exact phase coefficients frozen for the morning finalist. Both fit in 1,476,740 bytes. The first reassigns a small fraction of the quantized weights after further training. The second averages the centroids of the confirmed 1,200-step model and a learner trained on alternative moves. Their 96-game screens on the secondary client use seed `26316113` against the morning finalist. The next round’s promotion games will use separate seeds and the actual released predecessor.
+
+The morning web decision uses the Gen101 model that shipped overnight. The frozen Gen102 graph scored 140 wins, 306 draws and 66 losses against it on the primary browser and 94 wins, 133 draws and 29 losses on the secondary browser. Gen69 is a separate historical reference. The afternoon promotion opponent will be the exact Gen102 artifact if the morning release completes.
+
+For the four distinct offline incumbents, a single candidate per incumbent was frozen before fresh games on seed `26315204`. Each plays 192 opening pairs, or 384 games at 256 visits on each side. The 512 KB choice adjusts the phase calibration, the 5 MB choice packs a blend of full teachers at six bits, and the 20 MB and full-weight candidates use that blend at their respective precisions. The 25 MB, 50 MB and 75 MB classes currently share one full-weight artifact and therefore one comparison.
+
+A separate network comparison uses two fixed move-selection rules. Greedy policy play picks the highest-scoring legal action at the current position. One-ply play examines every legal successor, uses the exact result for a terminal successor and otherwise negates that network’s value for the opponent to move. Neither match uses MCTS. Both use every one of the 720 legal ordered two-move starts, followed by a separate 256-pair sample of different six-move opening families. Each opening is played from both seats. This study also compares move choices on independently solved positions and measures forward-pass latency for the original uttt.ai network, the released full teacher and Gen102.

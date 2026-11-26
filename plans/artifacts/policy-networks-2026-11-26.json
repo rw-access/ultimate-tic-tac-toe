@@ -1,0 +1,1219 @@
+{
+  "format": "uttt-policy-study-v1",
+  "models": {
+    "student": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+    "teacher": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+    "original": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+  },
+  "originalWebsiteSha256": "81161d2e262c9904dbb9a14961a2fcd043009fab4fd4f76b41451587f89c60d2",
+  "websiteAndDynamicGraph": {
+    "sameNodes": 59,
+    "sameInitializers": 48,
+    "batchOnly": true,
+    "verifiedBothSeats": true
+  },
+  "matchups": [
+    {
+      "mode": "policy",
+      "openingPlies": 2,
+      "openingSuite": "all legal ordered starts",
+      "pairs": 720,
+      "games": 1440,
+      "seed": 26316756,
+      "wins": 316,
+      "draws": 724,
+      "losses": 400,
+      "score": 0.4708333333333333,
+      "bySeat": {
+        "X": {
+          "wins": 203,
+          "draws": 361,
+          "losses": 156,
+          "score": 0.5326388888888889
+        },
+        "O": {
+          "wins": 113,
+          "draws": 363,
+          "losses": 244,
+          "score": 0.40902777777777777
+        }
+      },
+      "evaluatedPositions": [
+        35914,
+        35977
+      ],
+      "networks": [
+        "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "student",
+      "rawSha256": "b47764f3dd4e6cb6ec423ec755edab7503afada6ea416f0190419747b4ab3f51"
+    },
+    {
+      "mode": "policy",
+      "openingPlies": 2,
+      "openingSuite": "all legal ordered starts",
+      "pairs": 720,
+      "games": 1440,
+      "seed": 26316756,
+      "wins": 357,
+      "draws": 740,
+      "losses": 343,
+      "score": 0.5048611111111111,
+      "bySeat": {
+        "X": {
+          "wins": 228,
+          "draws": 352,
+          "losses": 140,
+          "score": 0.5611111111111111
+        },
+        "O": {
+          "wins": 129,
+          "draws": 388,
+          "losses": 203,
+          "score": 0.4486111111111111
+        }
+      },
+      "evaluatedPositions": [
+        36241,
+        36232
+      ],
+      "networks": [
+        "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "teacher",
+      "rawSha256": "598f81f2adb9ea9d03dd2204c64abb5b423ce2a882e2abf97a71f3271a03ede3"
+    },
+    {
+      "mode": "policy",
+      "openingPlies": 6,
+      "openingSuite": "distinct D4 families",
+      "pairs": 256,
+      "games": 512,
+      "seed": 26316756,
+      "wins": 121,
+      "draws": 258,
+      "losses": 133,
+      "score": 0.48828125,
+      "bySeat": {
+        "X": {
+          "wins": 77,
+          "draws": 118,
+          "losses": 61,
+          "score": 0.53125
+        },
+        "O": {
+          "wins": 44,
+          "draws": 140,
+          "losses": 72,
+          "score": 0.4453125
+        }
+      },
+      "evaluatedPositions": [
+        11797,
+        11806
+      ],
+      "networks": [
+        "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "student",
+      "rawSha256": "9427ba34f1004b7327c1aec4b82aeccfb29e89a09a2da642a130ab20c8b9ab6d",
+      "openingBootstrap95": [
+        0.4599609375,
+        0.515625
+      ]
+    },
+    {
+      "mode": "policy",
+      "openingPlies": 6,
+      "openingSuite": "distinct D4 families",
+      "pairs": 256,
+      "games": 512,
+      "seed": 26316756,
+      "wins": 132,
+      "draws": 269,
+      "losses": 111,
+      "score": 0.5205078125,
+      "bySeat": {
+        "X": {
+          "wins": 76,
+          "draws": 127,
+          "losses": 53,
+          "score": 0.544921875
+        },
+        "O": {
+          "wins": 56,
+          "draws": 142,
+          "losses": 58,
+          "score": 0.49609375
+        }
+      },
+      "evaluatedPositions": [
+        11983,
+        11980
+      ],
+      "networks": [
+        "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "teacher",
+      "rawSha256": "aad41f02e5eae7b9cbaea5f9b2d313756d984c7059bbf6af703c152381d50ab4",
+      "openingBootstrap95": [
+        0.4931640625,
+        0.548828125
+      ]
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 2,
+      "openingSuite": "all legal ordered starts",
+      "pairs": 720,
+      "games": 1440,
+      "seed": 26316756,
+      "wins": 466,
+      "draws": 297,
+      "losses": 677,
+      "score": 0.4267361111111111,
+      "bySeat": {
+        "X": {
+          "wins": 246,
+          "draws": 148,
+          "losses": 326,
+          "score": 0.4444444444444444
+        },
+        "O": {
+          "wins": 220,
+          "draws": 149,
+          "losses": 351,
+          "score": 0.40902777777777777
+        }
+      },
+      "evaluatedPositions": [
+        237848,
+        236421
+      ],
+      "networks": [
+        "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "student",
+      "rawSha256": "d7079e3d333f684a8ead271f7b4cdab1d4b22a0faf1e837580dcbf4be0cd831e"
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 2,
+      "openingSuite": "all legal ordered starts",
+      "pairs": 720,
+      "games": 1440,
+      "seed": 26316756,
+      "wins": 584,
+      "draws": 296,
+      "losses": 560,
+      "score": 0.5083333333333333,
+      "bySeat": {
+        "X": {
+          "wins": 309,
+          "draws": 134,
+          "losses": 277,
+          "score": 0.5222222222222223
+        },
+        "O": {
+          "wins": 275,
+          "draws": 162,
+          "losses": 283,
+          "score": 0.49444444444444446
+        }
+      },
+      "evaluatedPositions": [
+        239853,
+        236215
+      ],
+      "networks": [
+        "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "teacher",
+      "rawSha256": "348c629d98fbe881180b30df1c778ee02f0875936f5ea0cec1fc6cac0edcf71b"
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 6,
+      "openingSuite": "distinct D4 families",
+      "pairs": 256,
+      "games": 512,
+      "seed": 26316756,
+      "wins": 144,
+      "draws": 110,
+      "losses": 258,
+      "score": 0.388671875,
+      "bySeat": {
+        "X": {
+          "wins": 82,
+          "draws": 59,
+          "losses": 115,
+          "score": 0.435546875
+        },
+        "O": {
+          "wins": 62,
+          "draws": 51,
+          "losses": 143,
+          "score": 0.341796875
+        }
+      },
+      "evaluatedPositions": [
+        75851,
+        77413
+      ],
+      "networks": [
+        "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "student",
+      "rawSha256": "bfe6bcf1c59ce38fd9e0fbb97a28f9a1cf77380eef340d59d619e0d0c1999845",
+      "openingBootstrap95": [
+        0.349609375,
+        0.427734375
+      ]
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 6,
+      "openingSuite": "distinct D4 families",
+      "pairs": 256,
+      "games": 512,
+      "seed": 26316756,
+      "wins": 198,
+      "draws": 116,
+      "losses": 198,
+      "score": 0.5,
+      "bySeat": {
+        "X": {
+          "wins": 109,
+          "draws": 56,
+          "losses": 91,
+          "score": 0.53515625
+        },
+        "O": {
+          "wins": 89,
+          "draws": 60,
+          "losses": 107,
+          "score": 0.46484375
+        }
+      },
+      "evaluatedPositions": [
+        76435,
+        76250
+      ],
+      "networks": [
+        "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+        "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      ],
+      "candidate": "teacher",
+      "rawSha256": "1634a4d4e2d97274405ba78aa1370ba1fb64fb8de4048f0a553dbbde5b63b22f",
+      "openingBootstrap95": [
+        0.462890625,
+        0.537109375
+      ]
+    }
+  ],
+  "pairedScoresAgainstSameOriginal": [
+    {
+      "mode": "policy",
+      "openingPlies": 2,
+      "teacherMinusStudentScoreAgainstOriginal": 0.034027777777777775,
+      "better": 280,
+      "equal": 212,
+      "worse": 228
+    },
+    {
+      "mode": "policy",
+      "openingPlies": 6,
+      "teacherMinusStudentScoreAgainstOriginal": 0.0322265625,
+      "better": 96,
+      "equal": 77,
+      "worse": 83,
+      "pairedInterval95": [
+        -0.0078125,
+        0.07229003906249787
+      ]
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 2,
+      "teacherMinusStudentScoreAgainstOriginal": 0.08159722222222222,
+      "better": 336,
+      "equal": 167,
+      "worse": 217
+    },
+    {
+      "mode": "one-ply",
+      "openingPlies": 6,
+      "teacherMinusStudentScoreAgainstOriginal": 0.111328125,
+      "better": 123,
+      "equal": 57,
+      "worse": 76,
+      "pairedInterval95": [
+        0.0556640625,
+        0.1669921875
+      ]
+    }
+  ],
+  "latency": {
+    "format": "uttt-counterbalanced-forward-pass-v1",
+    "onnxRuntimeVersion": "1.30.0",
+    "states": 60,
+    "stateDigest": "fac06ec97abab38c49b025debbdac367f1d9e263176e0a216993e9a8fc725b6f",
+    "models": [
+      {
+        "name": "student-both",
+        "model": "student",
+        "heads": "both",
+        "bytes": 1476740,
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      {
+        "name": "student-policy",
+        "model": "student",
+        "heads": "policy",
+        "bytes": 1342643,
+        "sha256": "be448c9e1fd9a2d1f2c7f84e2eb9d48a227e3f3338dfbbf2ae829acdcb6b9d9c"
+      },
+      {
+        "name": "teacher-both",
+        "model": "teacher",
+        "heads": "both",
+        "bytes": 19989590,
+        "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288"
+      },
+      {
+        "name": "teacher-policy",
+        "model": "teacher",
+        "heads": "policy",
+        "bytes": 19177533,
+        "sha256": "39bbb5359b3962a6bb7ede536a3ca9dc93e32beb10c170f1937ec46ac5349c82"
+      },
+      {
+        "name": "original-both",
+        "model": "original",
+        "heads": "both",
+        "bytes": 19983650,
+        "sha256": "81161d2e262c9904dbb9a14961a2fcd043009fab4fd4f76b41451587f89c60d2"
+      },
+      {
+        "name": "original-policy",
+        "model": "original",
+        "heads": "policy",
+        "bytes": 19171700,
+        "sha256": "7fdbcc2977d447ac0342ab64bcba95b7a1a435e65f55508ea4cfc20aa4f7e6ae"
+      }
+    ],
+    "wasm": {
+      "rounds": 12,
+      "samplesPerRound": 36,
+      "policyMaxError": {
+        "student": 0,
+        "teacher": 0,
+        "original": 0
+      },
+      "statistics": {
+        "student-both": {
+          "samples": 432,
+          "medianMs": 0.6299999998882413,
+          "p90Ms": 0.8600000010803341,
+          "meanMs": 0.7351388889063081,
+          "medianBlockMeanMs": 0.6181250000113829,
+          "blockMeansMs": [
+            0.6075000000289745,
+            0.7356944444796277,
+            1.4805555555762515,
+            0.8634722222470574,
+            0.9527777777467337,
+            0.5930555555452075,
+            0.5208333333333334,
+            0.5734722222098045,
+            0.56930555558453,
+            0.7384722222470574,
+            0.5723611110717886,
+            0.6287499999937912
+          ]
+        },
+        "student-policy": {
+          "samples": 432,
+          "medianMs": 0.5649999994784594,
+          "p90Ms": 0.8200000002980232,
+          "meanMs": 0.6182754629558919,
+          "medianBlockMeanMs": 0.5770833333178113,
+          "blockMeansMs": [
+            0.532638888909585,
+            0.6531944444610013,
+            1.0194444444754884,
+            0.5718055555286506,
+            0.6694444444340965,
+            0.48986111110490227,
+            0.44291666662320495,
+            0.500277777771569,
+            0.4983333333188461,
+            0.5927777777736386,
+            0.8805555555865996,
+            0.5823611111069719
+          ]
+        },
+        "teacher-both": {
+          "samples": 432,
+          "medianMs": 4.432499999180436,
+          "p90Ms": 5.024500000290573,
+          "meanMs": 4.5203356481528045,
+          "medianBlockMeanMs": 4.491805555557625,
+          "blockMeansMs": [
+            4.4141666666708055,
+            4.51361111111732,
+            4.60458333329815,
+            4.771250000016557,
+            5.066250000045532,
+            4.341805555547277,
+            4.1143055555617645,
+            4.153888888864054,
+            4.6345833333519595,
+            4.46999999999793,
+            4.789444444442375,
+            4.4219444444816975
+          ]
+        },
+        "teacher-policy": {
+          "samples": 432,
+          "medianMs": 4.285000000149012,
+          "p90Ms": 6.5400000009685755,
+          "meanMs": 5.09451388891062,
+          "medianBlockMeanMs": 4.36138888890855,
+          "blockMeansMs": [
+            3.891111111113181,
+            4.302777777736385,
+            4.383055555582461,
+            4.33972222223464,
+            4.441805555536929,
+            4.891805555567974,
+            12.55013888888061,
+            3.944583333356099,
+            4.258611111125599,
+            5.003611111082137,
+            4.935694444458932,
+            4.242361111100763
+          ]
+        },
+        "original-both": {
+          "samples": 432,
+          "medianMs": 4.605000000447035,
+          "p90Ms": 6.779499999433756,
+          "meanMs": 5.082245370334324,
+          "medianBlockMeanMs": 4.67388888890855,
+          "blockMeansMs": [
+            6.439999999995861,
+            4.597500000045532,
+            6.033333333312637,
+            5.481388888890958,
+            4.966388888864054,
+            6.695694444442375,
+            4.469027777823309,
+            4.417638888893028,
+            4.5172222221994565,
+            4.436805555545208,
+            4.211111111100763,
+            4.750277777771569
+          ]
+        },
+        "original-policy": {
+          "samples": 432,
+          "medianMs": 4.380000000819564,
+          "p90Ms": 5.240000000037253,
+          "meanMs": 4.571990740778683,
+          "medianBlockMeanMs": 4.41506944444134,
+          "blockMeansMs": [
+            5.621666666689432,
+            4.400833333325055,
+            4.46999999999793,
+            4.84250000000207,
+            4.6027777778088215,
+            4.335555555557625,
+            5.227638888845427,
+            4.324999999979304,
+            4.117916666643901,
+            4.429305555557625,
+            4.144861111106972,
+            4.374722222228431
+          ]
+        }
+      }
+    },
+    "native": {
+      "rounds": 12,
+      "samplesPerRound": 36,
+      "policyMaxError": {
+        "student": 0,
+        "teacher": 0,
+        "original": 0
+      },
+      "statistics": {
+        "student-both": {
+          "samples": 432,
+          "medianMs": 0.317986000000019,
+          "p90Ms": 0.3543543999991016,
+          "meanMs": 0.3135125462963052,
+          "medianBlockMeanMs": 0.3293621805555631,
+          "blockMeansMs": [
+            0.35140933333332214,
+            0.27305944444444524,
+            0.3316059722222538,
+            0.3171736944444395,
+            0.35537574999999477,
+            0.34121069444447333,
+            0.347856833333329,
+            0.3271183888888724,
+            0.32589572222221047,
+            0.33690702777777104,
+            0.24595169444445572,
+            0.22845411111115432
+          ]
+        },
+        "student-policy": {
+          "samples": 432,
+          "medianMs": 0.283257500000218,
+          "p90Ms": 0.3436337000010099,
+          "meanMs": 0.29071597453697806,
+          "medianBlockMeanMs": 0.2975514166666926,
+          "blockMeansMs": [
+            0.34094763888889346,
+            0.28732091666668363,
+            0.28607936111110477,
+            0.30010900000004564,
+            0.3002966944444678,
+            0.3096475277777447,
+            0.3158085000000028,
+            0.2863867222222325,
+            0.2741110000000238,
+            0.29499383333333956,
+            0.30563813888885405,
+            0.20762611111114085
+          ]
+        },
+        "teacher-both": {
+          "samples": 432,
+          "medianMs": 0.5600985000000946,
+          "p90Ms": 0.7486405000006928,
+          "meanMs": 0.5892827546296876,
+          "medianBlockMeanMs": 0.5905612222222266,
+          "blockMeansMs": [
+            0.7390400833333438,
+            0.6132373888888955,
+            0.5722207500000169,
+            0.532685694444404,
+            0.6342745555555465,
+            0.5909575000000081,
+            0.622018944444436,
+            0.5764155555555893,
+            0.5901649444444451,
+            0.552308805555539,
+            0.5997802222222567,
+            0.4721933333333052
+          ]
+        },
+        "teacher-policy": {
+          "samples": 432,
+          "medianMs": 0.5261180000006789,
+          "p90Ms": 0.6566322999986371,
+          "meanMs": 0.5330441365740205,
+          "medianBlockMeanMs": 0.5553306250000232,
+          "blockMeansMs": [
+            0.6126426111111161,
+            0.6068522499999744,
+            0.5449451111110951,
+            0.5600233611111334,
+            0.5719196111110958,
+            0.5666029722222246,
+            0.5998341388888851,
+            0.5313271944444549,
+            0.550637888888913,
+            0.41451202777777024,
+            0.41520072222222854,
+            0.4425912499999767
+          ]
+        },
+        "original-both": {
+          "samples": 432,
+          "medianMs": 0.533860000000459,
+          "p90Ms": 0.6460562000005668,
+          "meanMs": 0.5368068078703977,
+          "medianBlockMeanMs": 0.563198069444449,
+          "blockMeansMs": [
+            0.571209444444422,
+            0.626996972222211,
+            0.5405408333333273,
+            0.5653897500000211,
+            0.6247705277778045,
+            0.5881829444444217,
+            0.5878589722222185,
+            0.43911880555555804,
+            0.5610063888888767,
+            0.4440451388888707,
+            0.45076649999999874,
+            0.46121349999996003
+          ]
+        },
+        "original-policy": {
+          "samples": 432,
+          "medianMs": 0.5066730000007738,
+          "p90Ms": 0.6422913000000338,
+          "meanMs": 0.5238431898148048,
+          "medianBlockMeanMs": 0.536482013888897,
+          "blockMeansMs": [
+            0.5334164444444064,
+            0.5259992777777774,
+            0.5482418888888989,
+            0.5342417777777781,
+            0.5720597222222447,
+            0.55908433333338,
+            0.5773916944444863,
+            0.5423609166666918,
+            0.5387222500000158,
+            0.5241440555555528,
+            0.42514988888893235,
+            0.4275952499999928
+          ]
+        }
+      }
+    }
+  },
+  "moveLatency": {
+    "format": "uttt-greedy-and-one-ply-move-latency-v1",
+    "states": 60,
+    "stateDigest": "fac06ec97abab38c49b025debbdac367f1d9e263176e0a216993e9a8fc725b6f",
+    "trials": {
+      "results": {
+        "student-policy": {
+          "samples": 180,
+          "medianMs": 0.6699999999254942,
+          "p90Ms": 0.956000000052154,
+          "meanMs": 0.7017222221940755,
+          "verifiedPythonMoves": 60,
+          "medianEvaluations": 1
+        },
+        "student-one-ply": {
+          "samples": 180,
+          "medianMs": 4.122499999590218,
+          "p90Ms": 6.1204999992623925,
+          "meanMs": 4.15369444442913,
+          "verifiedPythonMoves": 60,
+          "medianEvaluations": 6
+        },
+        "teacher-policy": {
+          "samples": 180,
+          "medianMs": 4.472500000149012,
+          "p90Ms": 5.036500000208616,
+          "meanMs": 4.5669444444692795,
+          "verifiedPythonMoves": 60,
+          "medianEvaluations": 1
+        },
+        "teacher-one-ply": {
+          "samples": 180,
+          "medianMs": 27.33500000089407,
+          "p90Ms": 37.560500000044705,
+          "meanMs": 26.454750000054222,
+          "verifiedPythonMoves": 59,
+          "medianEvaluations": 6
+        },
+        "original-policy": {
+          "samples": 180,
+          "medianMs": 4.259999999776483,
+          "p90Ms": 6.941999999620021,
+          "meanMs": 5.1834722222242915,
+          "verifiedPythonMoves": 60,
+          "medianEvaluations": 1
+        },
+        "original-one-ply": {
+          "samples": 180,
+          "medianMs": 29.16000000014901,
+          "p90Ms": 44.007500001043084,
+          "meanMs": 30.829083333371415,
+          "verifiedPythonMoves": 59,
+          "medianEvaluations": 6
+        }
+      },
+      "legalCounts": [
+        9,
+        3,
+        6,
+        4,
+        3,
+        4,
+        5,
+        9,
+        7,
+        7,
+        9,
+        4,
+        6,
+        8,
+        9,
+        2,
+        9,
+        8,
+        8,
+        3,
+        7,
+        4,
+        5,
+        4,
+        4,
+        6,
+        4,
+        4,
+        7,
+        7,
+        8,
+        5,
+        7,
+        7,
+        6,
+        8,
+        7,
+        7,
+        3,
+        6,
+        6,
+        9,
+        6,
+        4,
+        3,
+        8,
+        5,
+        8,
+        4,
+        6,
+        6,
+        6,
+        5,
+        7,
+        4,
+        6,
+        2,
+        7,
+        3,
+        8
+      ],
+      "rounds": 6,
+      "perRound": 30
+    },
+    "models": {
+      "student": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+      "teacher": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "original": "81161d2e262c9904dbb9a14961a2fcd043009fab4fd4f76b41451587f89c60d2"
+    }
+  },
+  "choiceQuality": {
+    "format": "uttt-policy-choice-panels-v1",
+    "seed": 26316789,
+    "models": {
+      "student": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+      "teacher": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "original": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+    },
+    "deep": {
+      "visits": 3072,
+      "rows": 4096,
+      "sha256": "0cbb0a26004005649a02fd9f676c3c82dc92eaef78587ac623d338b496411077",
+      "scores": {
+        "policy": {
+          "student": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 2834,
+              "meanChosen": 0.5692753594614945,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 793,
+              "better": 217,
+              "worse": 575,
+              "same": 3304
+            }
+          },
+          "teacher": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 3092,
+              "meanChosen": 0.5939994670404591,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 355,
+              "better": 143,
+              "worse": 211,
+              "same": 3742
+            }
+          },
+          "original": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 3153,
+              "meanChosen": 0.5949091711016363,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 4096
+            }
+          }
+        },
+        "one-ply": {
+          "student": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 2283,
+              "meanChosen": 0.49869272274910453,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 1201,
+              "better": 487,
+              "worse": 714,
+              "same": 2895
+            }
+          },
+          "teacher": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 2468,
+              "meanChosen": 0.5219440367042494,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 553,
+              "better": 283,
+              "worse": 269,
+              "same": 3544
+            }
+          },
+          "original": {
+            "all": {
+              "rows": 4096,
+              "bestCount": 2469,
+              "meanChosen": 0.5256360376048111,
+              "meanBest": 0.6858042919142787,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 4096
+            }
+          }
+        }
+      }
+    },
+    "exact": {
+      "solverSha256": "a03911042ee1f36bb014620ac995f25df2a90f618fe652a95c9096708d7b6091",
+      "nodesPerRoot": 300000,
+      "nodes": 21189527,
+      "attempted": 2048,
+      "attemptedByHorizon": [
+        1024,
+        1024
+      ],
+      "solved": 2048,
+      "meaningful": 817,
+      "positionsDigest": "daddedfafd243f080f47729b6fff9266fc3b723145cfee8b444deea1b15405bb",
+      "sourceSplits": [
+        "9b726ce64a07966acb93bb6b051c6c9f6f5f7baf63467c1dd0c35d0d280291e9",
+        "c2d8867a3035e9e958387b224809af1cd20c0a0b4bcc249a3c2ee5912552ee96"
+      ],
+      "scores": {
+        "policy": {
+          "student": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1976,
+              "meanChosen": -0.03955078125,
+              "meanBest": -0.001953125,
+              "differentChoice": 542,
+              "better": 14,
+              "worse": 20,
+              "same": 2014
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 745,
+              "meanChosen": 0.19461444308445533,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 108,
+              "better": 14,
+              "worse": 20,
+              "same": 783
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 301,
+              "meanChosen": 0.19169329073482427,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 42,
+              "better": 2,
+              "worse": 6,
+              "same": 305
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 444,
+              "meanChosen": 0.19642857142857142,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 66,
+              "better": 12,
+              "worse": 14,
+              "same": 478
+            }
+          },
+          "teacher": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1987,
+              "meanChosen": -0.0341796875,
+              "meanBest": -0.001953125,
+              "differentChoice": 279,
+              "better": 11,
+              "worse": 6,
+              "same": 2031
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 756,
+              "meanChosen": 0.20807833537331702,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 52,
+              "better": 11,
+              "worse": 6,
+              "same": 800
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 307,
+              "meanChosen": 0.2108626198083067,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 22,
+              "better": 3,
+              "worse": 1,
+              "same": 309
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 449,
+              "meanChosen": 0.20634920634920634,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 30,
+              "better": 8,
+              "worse": 5,
+              "same": 491
+            }
+          },
+          "original": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1982,
+              "meanChosen": -0.0380859375,
+              "meanBest": -0.001953125,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 2048
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 751,
+              "meanChosen": 0.19828641370869032,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 817
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 305,
+              "meanChosen": 0.20447284345047922,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 313
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 446,
+              "meanChosen": 0.19444444444444445,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 504
+            }
+          }
+        },
+        "one-ply": {
+          "student": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1961,
+              "meanChosen": -0.04736328125,
+              "meanBest": -0.001953125,
+              "differentChoice": 680,
+              "better": 18,
+              "worse": 38,
+              "same": 1992
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 730,
+              "meanChosen": 0.17503059975520197,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 170,
+              "better": 18,
+              "worse": 38,
+              "same": 761
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 298,
+              "meanChosen": 0.17891373801916932,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 64,
+              "better": 4,
+              "worse": 7,
+              "same": 302
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 432,
+              "meanChosen": 0.17261904761904762,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 106,
+              "better": 14,
+              "worse": 31,
+              "same": 459
+            }
+          },
+          "teacher": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1982,
+              "meanChosen": -0.0361328125,
+              "meanBest": -0.001953125,
+              "differentChoice": 339,
+              "better": 9,
+              "worse": 9,
+              "same": 2030
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 751,
+              "meanChosen": 0.20318237454100369,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 58,
+              "better": 9,
+              "worse": 9,
+              "same": 799
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 299,
+              "meanChosen": 0.1853035143769968,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 32,
+              "better": 2,
+              "worse": 4,
+              "same": 307
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 452,
+              "meanChosen": 0.21428571428571427,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 26,
+              "better": 7,
+              "worse": 5,
+              "same": 492
+            }
+          },
+          "original": {
+            "all": {
+              "rows": 2048,
+              "bestCount": 1982,
+              "meanChosen": -0.03662109375,
+              "meanBest": -0.001953125,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 2048
+            },
+            "meaningful": {
+              "rows": 817,
+              "bestCount": 751,
+              "meanChosen": 0.20195838433292534,
+              "meanBest": 0.28886168910648713,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 817
+            },
+            "inside": {
+              "rows": 313,
+              "bestCount": 301,
+              "meanChosen": 0.18849840255591055,
+              "meanBest": 0.23003194888178913,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 313
+            },
+            "outside": {
+              "rows": 504,
+              "bestCount": 450,
+              "meanChosen": 0.21031746031746032,
+              "meanBest": 0.3253968253968254,
+              "differentChoice": 0,
+              "better": 0,
+              "worse": 0,
+              "same": 504
+            }
+          }
+        }
+      }
+    },
+    "positionBundleSha256": "3e7c513e6298cd994e2d1a8ec6967e47146d34ba4e994ea3ea42d09dc76d5eef"
+  },
+  "browserMoveParity": {
+    "format": "uttt-browser-choice-parity-v1",
+    "states": 60,
+    "stateDigest": "fac06ec97abab38c49b025debbdac367f1d9e263176e0a216993e9a8fc725b6f",
+    "trials": {
+      "results": {
+        "student-policy": [],
+        "student-one-ply": [],
+        "teacher-policy": [],
+        "teacher-one-ply": [
+          {
+            "index": 27,
+            "picked": 24,
+            "expected": 21,
+            "browserPickedValue": -0.9999997615814209,
+            "browserNativeChoiceValue": -1,
+            "margin": 2.384185791015625e-07
+          }
+        ],
+        "original-policy": [],
+        "original-one-ply": [
+          {
+            "index": 27,
+            "picked": 25,
+            "expected": 24,
+            "browserPickedValue": -0.9999996423721313,
+            "browserNativeChoiceValue": -0.9999998211860657,
+            "margin": 1.7881393432617188e-07
+          }
+        ]
+      }
+    },
+    "models": {
+      "student": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+      "teacher": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "original": "81161d2e262c9904dbb9a14961a2fcd043009fab4fd4f76b41451587f89c60d2"
+    }
+  }
+}

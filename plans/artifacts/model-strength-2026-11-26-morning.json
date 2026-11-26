@@ -1,0 +1,2325 @@
+{
+  "format": "uttt-checkpoint-evidence-v1",
+  "checkpoint": "morning",
+  "candidateSha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f",
+  "incumbentSha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825",
+  "workerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+  "matchRoles": {
+    "primary": 0,
+    "secondary": 1,
+    "quick": 2,
+    "baselineQuick": 3,
+    "strong": 4,
+    "baselineStrong": 5,
+    "equalOriginal": 6,
+    "baselineEqualOriginal": 7,
+    "historic": 8,
+    "historicPrimary": 9,
+    "historicSecondary": 10,
+    "weights": 11,
+    "curriculum": 12,
+    "sixply": 13,
+    "decoder1": 14,
+    "decoder2": 15,
+    "timedPlain": 16,
+    "learned": 17,
+    "phase": 18,
+    "phaseDirect": 19,
+    "gate": 20,
+    "plainQuick": 21,
+    "tiny_ranked2400_native": 22,
+    "r2_tiny_int8_scales_broad_5400_screen": 23,
+    "tiny6000_cpu": 24,
+    "clean_q_extended_five_native": 25,
+    "clean_q_extended_half_native": 26,
+    "clean_q_extended_native": 27,
+    "qTinyScreen": 28,
+    "qTinyConfirm": 29,
+    "qFiveScreen": 30,
+    "qFiveConfirm": 31,
+    "qHalfScreen": 32,
+    "qHalfConfirm": 33,
+    "qFullScreen": 34,
+    "qFullConfirm": 35,
+    "r1_offline_phase_five_native": 36,
+    "r1_offline_phase_full_native": 37
+  },
+  "matches": [
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315201,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 256,
+      "games": 512,
+      "wins": 140,
+      "draws": 306,
+      "losses": 66,
+      "score": 0.572265625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 228,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5440613026819924,
+          0.600187265917603
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 12733,
+        "simulations": {
+          "count": 12733,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 333.7354904578654
+        },
+        "elapsedMs": {
+          "count": 12733,
+          "min": 0.09999999962747097,
+          "median": 135.80000000074506,
+          "p95": 220.79999999981374,
+          "max": 227.69999999925494,
+          "mean": 122.57191549516207
+        },
+        "modelMoves": 11269,
+        "verifiedEndgameMoves": 1464,
+        "simulationCapHits": 9818
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 12707,
+        "simulations": {
+          "count": 12707,
+          "min": 0,
+          "median": 272,
+          "p95": 384,
+          "max": 384,
+          "mean": 259.391595183757
+        },
+        "elapsedMs": {
+          "count": 12707,
+          "min": 0,
+          "median": 220.69999999925494,
+          "p95": 221.8999999994412,
+          "max": 229.20000000018626,
+          "mean": 174.36749035964166
+        },
+        "modelMoves": 11269,
+        "verifiedEndgameMoves": 1438,
+        "simulationCapHits": 2660
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Challenger",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "Incumbent",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315202,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 128,
+      "games": 256,
+      "wins": 94,
+      "draws": 133,
+      "losses": 29,
+      "score": 0.626953125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 117,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5865384615384616,
+          0.6653543307086615
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 6386,
+        "simulations": {
+          "count": 6386,
+          "min": 0,
+          "median": 146,
+          "p95": 384,
+          "max": 384,
+          "mean": 152.66442217350453
+        },
+        "elapsedMs": {
+          "count": 6386,
+          "min": 0.19999998807907104,
+          "median": 221.5999999642372,
+          "p95": 227,
+          "max": 405.5999999642372,
+          "mean": 188.22101471962094
+        },
+        "modelMoves": 5707,
+        "verifiedEndgameMoves": 679,
+        "simulationCapHits": 392
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 6349,
+        "simulations": {
+          "count": 6349,
+          "min": 0,
+          "median": 85,
+          "p95": 226,
+          "max": 384,
+          "mean": 95.97574421168687
+        },
+        "elapsedMs": {
+          "count": 6349,
+          "min": 0.19999998807907104,
+          "median": 222.30000001192093,
+          "p95": 229.5,
+          "max": 483,
+          "mean": 193.83879351074216
+        },
+        "modelMoves": 5709,
+        "verifiedEndgameMoves": 640,
+        "simulationCapHits": 283
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315110,
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 1000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "modelDistSha256": "7c1c59ebd416f29cade88fd02fa11176f8dad390727f4154774c36b4034516a4",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingPlies": null,
+      "openingSchedule": "published",
+      "pairOffset": 0,
+      "pairs": 50,
+      "games": 100,
+      "wins": 8,
+      "draws": 60,
+      "losses": 32,
+      "score": 0.38,
+      "uncertainty": {
+        "method": "Observed score across the complete fixed published tournament suite",
+        "distinctOpenings": 50,
+        "interval95": null
+      },
+      "openingSuite": "published",
+      "openingSuiteSha256": "feb92e42ff53472bd8a4a04f4e7d31254c1d87cbdb7ab9f40d110932d001acbe",
+      "openingPositions": 50,
+      "openingPlyDistribution": {
+        "1": 15,
+        "5": 10,
+        "3": 3,
+        "6": 22
+      },
+      "pairSeedSchedule": "independent",
+      "exactMoves": 289,
+      "retainedEndgameMoves": null,
+      "modelMeasuredWork": {
+        "scoredMoves": 2390,
+        "verifiedEndgameMoves": 289,
+        "modelMoves": 2101,
+        "simulations": {
+          "min": 0,
+          "mean": 329.60083682008366,
+          "max": 384,
+          "median": 384,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0.09999999962747097,
+          "mean": 123.4153138075324,
+          "max": 225.70000000018626,
+          "median": 137.20000000018626,
+          "p95": 220.90000000037253
+        }
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315110,
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 1000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "modelDistSha256": "7c1c59ebd416f29cade88fd02fa11176f8dad390727f4154774c36b4034516a4",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingPlies": null,
+      "openingSchedule": "published",
+      "pairOffset": 0,
+      "pairs": 50,
+      "games": 100,
+      "wins": 4,
+      "draws": 62,
+      "losses": 34,
+      "score": 0.35,
+      "uncertainty": {
+        "method": "Observed score across the complete fixed published tournament suite",
+        "distinctOpenings": 50,
+        "interval95": null
+      },
+      "openingSuite": "published",
+      "openingSuiteSha256": "feb92e42ff53472bd8a4a04f4e7d31254c1d87cbdb7ab9f40d110932d001acbe",
+      "openingPositions": 50,
+      "openingPlyDistribution": {
+        "1": 15,
+        "5": 10,
+        "3": 3,
+        "6": 22
+      },
+      "pairSeedSchedule": "independent",
+      "exactMoves": 278,
+      "retainedEndgameMoves": null,
+      "modelMeasuredWork": {
+        "scoredMoves": 2380,
+        "verifiedEndgameMoves": 278,
+        "modelMoves": 2102,
+        "simulations": {
+          "min": 0,
+          "mean": 254.30672268907563,
+          "max": 384,
+          "median": 266,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0.09999999962747097,
+          "mean": 174.09542016806452,
+          "max": 272.89999999990687,
+          "median": 220.70000000018626,
+          "p95": 222.29999999981374
+        }
+      },
+      "stage": "Baseline"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315168,
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 10000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "modelDistSha256": "7c1c59ebd416f29cade88fd02fa11176f8dad390727f4154774c36b4034516a4",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 16,
+      "games": 32,
+      "wins": 0,
+      "draws": 10,
+      "losses": 22,
+      "score": 0.15625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 16,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.078125,
+          0.234375
+        ]
+      },
+      "exactMoves": 85,
+      "retainedEndgameMoves": null,
+      "modelMeasuredWork": {
+        "scoredMoves": 793,
+        "verifiedEndgameMoves": 85,
+        "modelMoves": 708,
+        "simulations": {
+          "min": 0,
+          "mean": 335.5485498108449,
+          "max": 384,
+          "median": 384,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0,
+          "mean": 123.05952080704441,
+          "max": 224.59999999962747,
+          "median": 138.09999999962747,
+          "p95": 220.90000000037253
+        }
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315168,
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 10000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "modelDistSha256": "7c1c59ebd416f29cade88fd02fa11176f8dad390727f4154774c36b4034516a4",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 16,
+      "games": 32,
+      "wins": 0,
+      "draws": 14,
+      "losses": 18,
+      "score": 0.21875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 16,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.140625,
+          0.296875
+        ]
+      },
+      "exactMoves": 89,
+      "retainedEndgameMoves": null,
+      "modelMeasuredWork": {
+        "scoredMoves": 814,
+        "verifiedEndgameMoves": 89,
+        "modelMoves": 725,
+        "simulations": {
+          "min": 0,
+          "mean": 249.1044226044226,
+          "max": 384,
+          "median": 253,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0.09999999962747097,
+          "mean": 176.09324324324714,
+          "max": 228.29999999981374,
+          "median": 220.79999999981374,
+          "p95": 223.79999999981374
+        }
+      },
+      "stage": "Baseline"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315240,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "modelHardEndgame": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 47,
+      "draws": 117,
+      "losses": 28,
+      "score": 0.5494791666666666,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 93,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5075757575757576,
+          0.5940935648452929
+        ]
+      },
+      "exactMoves": 0,
+      "retainedEndgameMoves": 0,
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315240,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "modelHardEndgame": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 38,
+      "draws": 118,
+      "losses": 36,
+      "score": 0.5052083333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 93,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4609375,
+          0.5489690721649485
+        ]
+      },
+      "exactMoves": 0,
+      "retainedEndgameMoves": 0,
+      "stage": "Baseline"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "historical-gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
+      },
+      "seed": 26315215,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 89,
+      "draws": 87,
+      "losses": 16,
+      "score": 0.6901041666666666,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 87,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.640298469387755,
+          0.7396907216494846
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 4649,
+        "simulations": {
+          "count": 4649,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 338.8141535814154
+        },
+        "elapsedMs": {
+          "count": 4649,
+          "min": 0,
+          "median": 143.40000000037253,
+          "p95": 220.80000000074506,
+          "max": 225.30000000074506,
+          "mean": 125.49130995912851
+        },
+        "modelMoves": 4204,
+        "verifiedEndgameMoves": 445,
+        "simulationCapHits": 3627
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 4616,
+        "simulations": {
+          "count": 4616,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 340.5491767764298
+        },
+        "elapsedMs": {
+          "count": 4616,
+          "min": 0,
+          "median": 140.90000000037253,
+          "p95": 220.90000000037253,
+          "max": 224.69999999925494,
+          "mean": 127.33297227035709
+        },
+        "modelMoves": 4199,
+        "verifiedEndgameMoves": 417,
+        "simulationCapHits": 3547
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Refined moderate student optimized graph",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "opponent": {
+        "label": "Gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
+      },
+      "seed": 2026112901,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 85,
+      "draws": 87,
+      "losses": 20,
+      "score": 0.6692708333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 92,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.6223404255319149,
+          0.7164948453608248
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 4758,
+        "simulations": {
+          "count": 4758,
+          "min": 0,
+          "median": 310,
+          "p95": 384,
+          "max": 384,
+          "mean": 289.08469945355193
+        },
+        "elapsedMs": {
+          "count": 4758,
+          "min": 0,
+          "median": 220.39999999850988,
+          "p95": 221.19999999925494,
+          "max": 224.60000000149012,
+          "mean": 164.00653635981692
+        },
+        "modelMoves": 4272,
+        "verifiedEndgameMoves": 486,
+        "simulationCapHits": 1489
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 4728,
+        "simulations": {
+          "count": 4728,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 346.8020304568528
+        },
+        "elapsedMs": {
+          "count": 4728,
+          "min": 0.09999999776482582,
+          "median": 113.90000000223517,
+          "p95": 200,
+          "max": 216.80000000074506,
+          "mean": 104.6492808798908
+        },
+        "modelMoves": 4271,
+        "verifiedEndgameMoves": 457,
+        "simulationCapHits": 4270
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Refined moderate student optimized graph",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "opponent": {
+        "label": "Gen69",
+        "sha256": "b6f888ca2a7c987e3366ba2272e01e90f01e7799d74588ed1921c9a2e473485d"
+      },
+      "seed": 2026112899,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 43,
+      "draws": 67,
+      "losses": 18,
+      "score": 0.59765625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.53125,
+          0.6615441176470587
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 3149,
+        "simulations": {
+          "count": 3149,
+          "min": 0,
+          "median": 99,
+          "p95": 384,
+          "max": 384,
+          "mean": 113.85741505239758
+        },
+        "elapsedMs": {
+          "count": 3149,
+          "min": 0.10000002384185791,
+          "median": 221.70000004768372,
+          "p95": 223.70000004768372,
+          "max": 234.79999995231628,
+          "mean": 186.59695141405936
+        },
+        "modelMoves": 2795,
+        "verifiedEndgameMoves": 354,
+        "simulationCapHits": 180
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 3136,
+        "simulations": {
+          "count": 3136,
+          "min": 0,
+          "median": 211,
+          "p95": 384,
+          "max": 384,
+          "mean": 211.85395408163265
+        },
+        "elapsedMs": {
+          "count": 3136,
+          "min": 0.09999996423721313,
+          "median": 221.10000002384186,
+          "p95": 222.60000002384186,
+          "max": 397.5,
+          "mean": 184.0403061224984
+        },
+        "modelMoves": 2794,
+        "verifiedEndgameMoves": 342,
+        "simulationCapHits": 279
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "day-teacher-clean-a-1200",
+        "sha256": "cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba"
+      },
+      "opponent": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315213,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 128,
+      "games": 256,
+      "wins": 55,
+      "draws": 174,
+      "losses": 27,
+      "score": 0.5546875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 120,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5198412698412699,
+          0.5883458646616542
+        ]
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "day-teacher-clean-a-1200",
+        "sha256": "cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba"
+      },
+      "opponent": {
+        "label": "day-teacher-uniform-matched-1200",
+        "sha256": "89307105b175cdf67bd51cede45e17420909753f135dd5de8288f2411bbfb6c7"
+      },
+      "seed": 26315225,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 31,
+      "draws": 124,
+      "losses": 37,
+      "score": 0.484375,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 94,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4427083333333333,
+          0.526595744680851
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "day-teacher-clean-a-1200",
+        "sha256": "cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba"
+      },
+      "opponent": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315214,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 6,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 96,
+      "games": 192,
+      "wins": 30,
+      "draws": 138,
+      "losses": 24,
+      "score": 0.515625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 96,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4817708333333333,
+          0.5494791666666666
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-cell",
+        "sha256": "b6f929d150eb4adf354277dc9a338630cf74750af679dd544ef5e7f76be22cd5"
+      },
+      "opponent": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315103,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 32,
+      "games": 64,
+      "wins": 15,
+      "draws": 40,
+      "losses": 9,
+      "score": 0.546875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 30,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.49193548387096775,
+          0.6015625
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 1614,
+        "simulations": {
+          "count": 1614,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 336.1623296158612
+        },
+        "elapsedMs": {
+          "count": 1614,
+          "min": 0,
+          "median": 137.60000000009313,
+          "p95": 220.60000000009313,
+          "max": 224.89999999990687,
+          "mean": 122.55669144981658
+        },
+        "modelMoves": 1429,
+        "verifiedEndgameMoves": 185,
+        "simulationCapHits": 1288
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 1612,
+        "simulations": {
+          "count": 1612,
+          "min": 0,
+          "median": 277,
+          "p95": 384,
+          "max": 384,
+          "mean": 266.1910669975186
+        },
+        "elapsedMs": {
+          "count": 1612,
+          "min": 0.09999999986030161,
+          "median": 220.69999999995343,
+          "p95": 222.30000000004657,
+          "max": 227.80000000004657,
+          "mean": 172.28244416873667
+        },
+        "modelMoves": 1428,
+        "verifiedEndgameMoves": 184,
+        "simulationCapHits": 380
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Challenger",
+        "sha256": "b6f929d150eb4adf354277dc9a338630cf74750af679dd544ef5e7f76be22cd5"
+      },
+      "opponent": {
+        "label": "Incumbent",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315103,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 32,
+      "games": 64,
+      "wins": 22,
+      "draws": 37,
+      "losses": 5,
+      "score": 0.6328125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 30,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5625,
+          0.7058823529411765
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 1586,
+        "simulations": {
+          "count": 1586,
+          "min": 0,
+          "median": 165,
+          "p95": 384,
+          "max": 384,
+          "mean": 174.38209331651956
+        },
+        "elapsedMs": {
+          "count": 1586,
+          "min": 0.19999998807907104,
+          "median": 221.5,
+          "p95": 224.9000000357628,
+          "max": 350.0999999642372,
+          "mean": 187.49829760321603
+        },
+        "modelMoves": 1420,
+        "verifiedEndgameMoves": 166,
+        "simulationCapHits": 107
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 1578,
+        "simulations": {
+          "count": 1578,
+          "min": 0,
+          "median": 94,
+          "p95": 224,
+          "max": 384,
+          "mean": 106.01837769328263
+        },
+        "elapsedMs": {
+          "count": 1578,
+          "min": 0.19999998807907104,
+          "median": 222.10000002384186,
+          "p95": 226.19999998807907,
+          "max": 340.19999998807907,
+          "mean": 192.75202788308698
+        },
+        "modelMoves": 1419,
+        "verifiedEndgameMoves": 159,
+        "simulationCapHits": 69
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-a1200-cell",
+        "sha256": "49979c22a844639da76b9df4a77b5b58a42f77aff8a5f842ddf3289823422f6e"
+      },
+      "opponent": {
+        "label": "Gen101",
+        "sha256": "599b82e961c908cfcd97134d2dd60db25b5b547f45dc6d755d834ef8eb0b8825"
+      },
+      "seed": 26315133,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 18,
+      "draws": 67,
+      "losses": 11,
+      "score": 0.5364583333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 47,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.48,
+          0.59375
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 2394,
+        "simulations": {
+          "count": 2394,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 333.6386800334169
+        },
+        "elapsedMs": {
+          "count": 2394,
+          "min": 0.09999999962747097,
+          "median": 142.60000000009313,
+          "p95": 220.8000000002794,
+          "max": 226.8000000002794,
+          "mean": 128.27005012530938
+        },
+        "modelMoves": 2119,
+        "verifiedEndgameMoves": 275,
+        "simulationCapHits": 1836
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 2390,
+        "simulations": {
+          "count": 2390,
+          "min": 0,
+          "median": 269,
+          "p95": 384,
+          "max": 384,
+          "mean": 258.5355648535565
+        },
+        "elapsedMs": {
+          "count": 2390,
+          "min": 0.09999999962747097,
+          "median": 220.70000000018626,
+          "p95": 222,
+          "max": 228.39999999990687,
+          "mean": 177.62476987447474
+        },
+        "modelMoves": 2121,
+        "verifiedEndgameMoves": 269,
+        "simulationCapHits": 458
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-a1200-cell",
+        "sha256": "49979c22a844639da76b9df4a77b5b58a42f77aff8a5f842ddf3289823422f6e"
+      },
+      "opponent": {
+        "label": "r1-cell",
+        "sha256": "b6f929d150eb4adf354277dc9a338630cf74750af679dd544ef5e7f76be22cd5"
+      },
+      "seed": 26315103,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 23,
+      "draws": 57,
+      "losses": 16,
+      "score": 0.5364583333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 46,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4803823529411765,
+          0.5918367346938775
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 2461,
+        "simulations": {
+          "count": 2461,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 334.67899227956116
+        },
+        "elapsedMs": {
+          "count": 2461,
+          "min": 0,
+          "median": 141.20000000018626,
+          "p95": 220.89999999990687,
+          "max": 226,
+          "mean": 126.60524177164454
+        },
+        "modelMoves": 2183,
+        "verifiedEndgameMoves": 278,
+        "simulationCapHits": 1887
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 2462,
+        "simulations": {
+          "count": 2462,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 334.036149471974
+        },
+        "elapsedMs": {
+          "count": 2462,
+          "min": 0.09999999962747097,
+          "median": 139.09999999962747,
+          "p95": 220.89999999990687,
+          "max": 227.5,
+          "mean": 125.43176279447773
+        },
+        "modelMoves": 2185,
+        "verifiedEndgameMoves": 277,
+        "simulationCapHits": 1836
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "r1-a1200-cell-phase",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "r1-cell",
+        "sha256": "b6f929d150eb4adf354277dc9a338630cf74750af679dd544ef5e7f76be22cd5"
+      },
+      "seed": 26315103,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 32,
+      "games": 64,
+      "wins": 15,
+      "draws": 44,
+      "losses": 5,
+      "score": 0.578125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 30,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5078125,
+          0.6451612903225806
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 1644,
+        "simulations": {
+          "count": 1644,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 333.09063260340633
+        },
+        "elapsedMs": {
+          "count": 1644,
+          "min": 0.09999999962747097,
+          "median": 136.90000000037253,
+          "p95": 220.8999999994412,
+          "max": 223.79999999981374,
+          "mean": 124.48412408760564
+        },
+        "modelMoves": 1456,
+        "verifiedEndgameMoves": 188,
+        "simulationCapHits": 1246
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 1639,
+        "simulations": {
+          "count": 1639,
+          "min": 0,
+          "median": 384,
+          "p95": 384,
+          "max": 384,
+          "mean": 332.54728492983526
+        },
+        "elapsedMs": {
+          "count": 1639,
+          "min": 0.09999999962747097,
+          "median": 142.20000000018626,
+          "p95": 220.79999999981374,
+          "max": 224.40000000037253,
+          "mean": 125.92385600973944
+        },
+        "modelMoves": 1454,
+        "verifiedEndgameMoves": 185,
+        "simulationCapHits": 1248
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Challenger",
+        "sha256": "9e5348349e6b28f0e35645e73217daf488a57d93eefc6511d12608120cf45b4f"
+      },
+      "opponent": {
+        "label": "Incumbent",
+        "sha256": "49979c22a844639da76b9df4a77b5b58a42f77aff8a5f842ddf3289823422f6e"
+      },
+      "seed": 26315134,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 32,
+      "games": 64,
+      "wins": 15,
+      "draws": 36,
+      "losses": 13,
+      "score": 0.515625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 32,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4296875,
+          0.6015625
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 1604,
+        "simulations": {
+          "count": 1604,
+          "min": 0,
+          "median": 142,
+          "p95": 384,
+          "max": 384,
+          "mean": 148.15586034912718
+        },
+        "elapsedMs": {
+          "count": 1604,
+          "min": 0.20000004768371582,
+          "median": 221.69999998807907,
+          "p95": 231.10000002384186,
+          "max": 436.19999998807907,
+          "mean": 190.06172069847733
+        },
+        "modelMoves": 1432,
+        "verifiedEndgameMoves": 172,
+        "simulationCapHits": 93
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 1603,
+        "simulations": {
+          "count": 1603,
+          "min": 0,
+          "median": 135,
+          "p95": 384,
+          "max": 384,
+          "mean": 139.35433562071117
+        },
+        "elapsedMs": {
+          "count": 1603,
+          "min": 0.19999998807907104,
+          "median": 221.79999995231628,
+          "p95": 232.5,
+          "max": 601.2000000476837,
+          "mean": 191.27841547140835
+        },
+        "modelMoves": 1433,
+        "verifiedEndgameMoves": 170,
+        "simulationCapHits": 85
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "browser",
+      "model": {
+        "label": "Challenger",
+        "sha256": "976857104954ac04ed511f67bf6448a142e176b6a33b80ad44d6a1b727a79972"
+      },
+      "opponent": {
+        "label": "Incumbent",
+        "sha256": "49979c22a844639da76b9df4a77b5b58a42f77aff8a5f842ddf3289823422f6e"
+      },
+      "seed": 26315131,
+      "search": {
+        "modelSimulations": 384,
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "opponentSimulations": 384,
+        "opponentTimeMs": 220,
+        "opponentWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485"
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 32,
+      "games": 64,
+      "wins": 13,
+      "draws": 37,
+      "losses": 14,
+      "score": 0.4921875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 32,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4375,
+          0.546875
+        ]
+      },
+      "modelMeasuredWork": {
+        "scoredMoves": 1595,
+        "simulations": {
+          "count": 1595,
+          "min": 0,
+          "median": 120,
+          "p95": 384,
+          "max": 384,
+          "mean": 127.51034482758621
+        },
+        "elapsedMs": {
+          "count": 1595,
+          "min": 0.20000004768371582,
+          "median": 222,
+          "p95": 238.89999997615814,
+          "max": 529.3999999761581,
+          "mean": 195.05686520438957
+        },
+        "modelMoves": 1436,
+        "verifiedEndgameMoves": 159,
+        "simulationCapHits": 88
+      },
+      "opponentMeasuredWork": {
+        "scoredMoves": 1599,
+        "simulations": {
+          "count": 1599,
+          "min": 0,
+          "median": 109,
+          "p95": 357,
+          "max": 384,
+          "mean": 119.05128205128206
+        },
+        "elapsedMs": {
+          "count": 1599,
+          "min": 0.19999998807907104,
+          "median": 222.0999999642372,
+          "p95": 238,
+          "max": 541.1999999880791,
+          "mean": 194.8085678545962
+        },
+        "modelMoves": 1434,
+        "verifiedEndgameMoves": 165,
+        "simulationCapHits": 77
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "official",
+      "model": {
+        "label": "r1-a1200-cell",
+        "sha256": "49979c22a844639da76b9df4a77b5b58a42f77aff8a5f842ddf3289823422f6e"
+      },
+      "opponent": {
+        "label": "uttt.ai Stage 2 NMCTS",
+        "sha256": "b4f92e809e1eaa2053b202202d3853e1ed10be6d4c6980c2c46339f6e14f70b7"
+      },
+      "seed": 26315110,
+      "search": {
+        "modelSimulations": 384,
+        "opponentSimulations": 1000,
+        "modelHardEndgame": true,
+        "modelEndgameSettings": {
+          "maxEmptySquares": 14,
+          "maxNodes": 16000,
+          "timeMs": 250
+        },
+        "modelBackend": "Chromium production Hard worker",
+        "modelTimeMs": 220,
+        "modelWorkerSha256": "d7805afb32f0d0eea9a1d9bcc356dc36f91c2c35a3976c6aa0edfc0c50bab485",
+        "modelDistSha256": "7c1c59ebd416f29cade88fd02fa11176f8dad390727f4154774c36b4034516a4",
+        "opponentBackend": "Published NMCTS with fixed root visits"
+      },
+      "openingPlies": null,
+      "openingSchedule": "published",
+      "pairOffset": 0,
+      "pairs": 50,
+      "games": 100,
+      "wins": 9,
+      "draws": 59,
+      "losses": 32,
+      "score": 0.385,
+      "uncertainty": {
+        "method": "Observed score across the complete fixed published tournament suite",
+        "distinctOpenings": 50,
+        "interval95": null
+      },
+      "openingSuite": "published",
+      "openingSuiteSha256": "feb92e42ff53472bd8a4a04f4e7d31254c1d87cbdb7ab9f40d110932d001acbe",
+      "openingPositions": 50,
+      "openingPlyDistribution": {
+        "1": 15,
+        "5": 10,
+        "3": 3,
+        "6": 22
+      },
+      "pairSeedSchedule": "independent",
+      "exactMoves": 283,
+      "retainedEndgameMoves": null,
+      "modelMeasuredWork": {
+        "scoredMoves": 2404,
+        "verifiedEndgameMoves": 283,
+        "modelMoves": 2121,
+        "simulations": {
+          "min": 0,
+          "mean": 332.21297836938436,
+          "max": 384,
+          "median": 384,
+          "p95": 384
+        },
+        "elapsedMs": {
+          "min": 0,
+          "mean": 128.44384359401,
+          "max": 227.10000000009313,
+          "median": 143.6999999997206,
+          "p95": 220.89999999990687
+        }
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "day-line-sibling-ranked-extended-2400-int8",
+        "sha256": "3e8471ba5e21967ec557e55b058faf989cd669192d6bfd1f96f3f4d96f6b17db"
+      },
+      "opponent": {
+        "label": "Previous 512 KB",
+        "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec"
+      },
+      "seed": 26315101,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 19,
+      "draws": 53,
+      "losses": 24,
+      "score": 0.4739583333333333,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 47,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4030612244897959,
+          0.546875
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r2-tiny-int8-scales-broad-5400",
+        "sha256": "dcf7b1186c2d5c6bddd7c5e0a79216e69d2e7f2b4110d798a9101194d35d9096"
+      },
+      "opponent": {
+        "label": "Previous 512 KB",
+        "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec"
+      },
+      "seed": 26315152,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 28,
+      "draws": 72,
+      "losses": 28,
+      "score": 0.5,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 62,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4444444444444444,
+          0.5568181818181818
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "day-line-sibling-clean-pilot-6000-int8",
+        "sha256": "f26510af84a0a4e911aa0d1b5b12f5357960221ad4fbf7675503e529dce596c0"
+      },
+      "opponent": {
+        "label": "Previous 512 KB",
+        "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec"
+      },
+      "seed": 26315107,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 28,
+      "draws": 74,
+      "losses": 26,
+      "score": 0.5078125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 57,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.45703125,
+          0.5579710144927537
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-clean-q-extended-five",
+        "sha256": "9471fd0d9d1e9c336f9a2d5ae989880a981074f012653812e53cda7f9d6da0af"
+      },
+      "opponent": {
+        "label": "Previous 5 MB",
+        "sha256": "53fa1153ebf9ee3d127debe8d42d545a0be354266e602bd3e6b2ac8667587ff8"
+      },
+      "seed": 26315101,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 17,
+      "draws": 65,
+      "losses": 14,
+      "score": 0.515625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 47,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4635416666666667,
+          0.5677083333333334
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-clean-q-extended-half",
+        "sha256": "1518a5a0a3358892ba14ed3551be303d61631bcff8b4705253ebb440cd457e52"
+      },
+      "opponent": {
+        "label": "Previous 20 MB",
+        "sha256": "edef8d873d13f1d73354101050373a5458d66a695754a29c4aff842b0c2a3ae1"
+      },
+      "seed": 26315101,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 13,
+      "draws": 71,
+      "losses": 12,
+      "score": 0.5052083333333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 47,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.45408163265306123,
+          0.5572916666666666
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-clean-q-extended",
+        "sha256": "31126d397df681c45cbe3cb92666477f2ee84cd3077e8dac87a0f289a7e598bd"
+      },
+      "opponent": {
+        "label": "Previous full teacher",
+        "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288"
+      },
+      "seed": 26315101,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 48,
+      "games": 96,
+      "wins": 12,
+      "draws": 72,
+      "losses": 12,
+      "score": 0.5,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 47,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4521276595744681,
+          0.5478723404255319
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-offline-phase-tiny",
+        "sha256": "c63baa4f5a8fc19a131f086914ec779e8245348d8dda5018c8f3eec0c7378276"
+      },
+      "opponent": {
+        "label": "Previous 512 KB",
+        "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec"
+      },
+      "seed": 26315141,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 28,
+      "draws": 75,
+      "losses": 25,
+      "score": 0.51171875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.47265625,
+          0.55078125
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-offline-phase-tiny",
+        "sha256": "c63baa4f5a8fc19a131f086914ec779e8245348d8dda5018c8f3eec0c7378276"
+      },
+      "opponent": {
+        "label": "Previous 512 KB",
+        "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec"
+      },
+      "seed": 26315204,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 192,
+      "games": 384,
+      "wins": 83,
+      "draws": 232,
+      "losses": 69,
+      "score": 0.5182291666666666,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 174,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4921875,
+          0.5445554589242708
+        ]
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r2-five-sixbit-mixed",
+        "sha256": "dee82ee6525b6ab8376cffb229b48984c6e99c64a5a92b3f5e035c5d67f483ec"
+      },
+      "opponent": {
+        "label": "Previous 5 MB",
+        "sha256": "53fa1153ebf9ee3d127debe8d42d545a0be354266e602bd3e6b2ac8667587ff8"
+      },
+      "seed": 26315149,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 22,
+      "draws": 96,
+      "losses": 10,
+      "score": 0.546875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 59,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5037878787878788,
+          0.5932835820895522
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r2-five-sixbit-mixed",
+        "sha256": "dee82ee6525b6ab8376cffb229b48984c6e99c64a5a92b3f5e035c5d67f483ec"
+      },
+      "opponent": {
+        "label": "Previous 5 MB",
+        "sha256": "53fa1153ebf9ee3d127debe8d42d545a0be354266e602bd3e6b2ac8667587ff8"
+      },
+      "seed": 26315204,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 192,
+      "games": 384,
+      "wins": 75,
+      "draws": 257,
+      "losses": 52,
+      "score": 0.5299479166666666,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 174,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.5025125628140703,
+          0.5571808510638298
+        ]
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-half-multi-objective",
+        "sha256": "58562242824b32d775e6bb067878ac1aca4cf4916c1e7ddcb3adb0617a06da31"
+      },
+      "opponent": {
+        "label": "Previous 20 MB",
+        "sha256": "edef8d873d13f1d73354101050373a5458d66a695754a29c4aff842b0c2a3ae1"
+      },
+      "seed": 26315155,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 18,
+      "draws": 99,
+      "losses": 11,
+      "score": 0.52734375,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 62,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.48828125,
+          0.5671715825633735
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-half-multi-objective",
+        "sha256": "58562242824b32d775e6bb067878ac1aca4cf4916c1e7ddcb3adb0617a06da31"
+      },
+      "opponent": {
+        "label": "Previous 20 MB",
+        "sha256": "edef8d873d13f1d73354101050373a5458d66a695754a29c4aff842b0c2a3ae1"
+      },
+      "seed": 26315204,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 192,
+      "games": 384,
+      "wins": 71,
+      "draws": 251,
+      "losses": 62,
+      "score": 0.51171875,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 174,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.48717948717948717,
+          0.5357142857142857
+        ]
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-multi-objective-mean",
+        "sha256": "6b91ecc3bdb7eb558e5509c7574179122aff2cff53fc4226242388f6cb7ac592"
+      },
+      "opponent": {
+        "label": "Previous full teacher",
+        "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288"
+      },
+      "seed": 26315141,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 18,
+      "draws": 97,
+      "losses": 13,
+      "score": 0.51953125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.48846153846153845,
+          0.5476190476190477
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-multi-objective-mean",
+        "sha256": "6b91ecc3bdb7eb558e5509c7574179122aff2cff53fc4226242388f6cb7ac592"
+      },
+      "opponent": {
+        "label": "Previous full teacher",
+        "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288"
+      },
+      "seed": 26315204,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 192,
+      "games": 384,
+      "wins": 70,
+      "draws": 251,
+      "losses": 63,
+      "score": 0.5091145833333334,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 174,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4854478005741304,
+          0.5320855614973262
+        ]
+      },
+      "stage": "Confirmation"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-offline-phase-five",
+        "sha256": "1fd8c577557d2a90ef55717ff8f0474774bf3ebc99c94ce4a8a8f2d7aff9e475"
+      },
+      "opponent": {
+        "label": "Previous 5 MB",
+        "sha256": "53fa1153ebf9ee3d127debe8d42d545a0be354266e602bd3e6b2ac8667587ff8"
+      },
+      "seed": 26315141,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 14,
+      "draws": 94,
+      "losses": 20,
+      "score": 0.4765625,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.44841269841269843,
+          0.503968253968254
+        ]
+      },
+      "stage": "Screen"
+    },
+    {
+      "arena": "native",
+      "model": {
+        "label": "r1-offline-phase-full",
+        "sha256": "8f252c85606bb480d1ae79e6d1ef50384bc9b026c57e9c7bed3efd5b66ad5bcb"
+      },
+      "opponent": {
+        "label": "Previous full teacher",
+        "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288"
+      },
+      "seed": 26315141,
+      "search": {
+        "modelSimulations": 256,
+        "opponentSimulations": 256,
+        "challengerValueMode": "model",
+        "championValueMode": "model",
+        "tacticalProof": false
+      },
+      "openingPlies": 2,
+      "openingSchedule": "independent",
+      "pairOffset": 0,
+      "pairs": 64,
+      "games": 128,
+      "wins": 17,
+      "draws": 91,
+      "losses": 20,
+      "score": 0.48828125,
+      "uncertainty": {
+        "method": "percentile bootstrap by ordered opening, both seats together",
+        "distinctOpenings": 63,
+        "replicates": 10000,
+        "seed": 20261126,
+        "interval95": [
+          0.4722222222222222,
+          0.503968253968254
+        ]
+      },
+      "stage": "Screen"
+    }
+  ],
+  "offlineDecisions": {
+    "512 KB": {
+      "decision": "retain",
+      "sha256": "111ecb6e1dbc4e0d39cb104a6727ca8e233f623c93a89c3b06fca56ea7d059ec",
+      "bytes": 477280
+    },
+    "5 MB": {
+      "decision": "promote",
+      "sha256": "dee82ee6525b6ab8376cffb229b48984c6e99c64a5a92b3f5e035c5d67f483ec",
+      "bytes": 4113260
+    },
+    "20 MB": {
+      "decision": "retain",
+      "sha256": "edef8d873d13f1d73354101050373a5458d66a695754a29c4aff842b0c2a3ae1",
+      "bytes": 10014318
+    },
+    "25 MB": {
+      "decision": "retain",
+      "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "bytes": 19989590
+    },
+    "50 MB": {
+      "decision": "retain",
+      "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "bytes": 19989590
+    },
+    "75 MB": {
+      "decision": "retain",
+      "sha256": "a9f7cffe0f38736414faf7758914ad640ef09066e784844d24e9443407753288",
+      "bytes": 19989590
+    }
+  },
+  "trainingReplay": {
+    "referenceSha256": "cee42d0d4d58832a2b3f8c5b12a38dc33c4d9f150cc199ea7bfdf177c4411cba",
+    "replaySha256": "aaf32126d71501f799d115be0072b3807c947fc3115c82db906dbb642e794fa2",
+    "panelSha256": "0cbb0a26004005649a02fd9f676c3c82dc92eaef78587ac623d338b496411077",
+    "bitIdentical": false,
+    "rows": 4096,
+    "sameLegalTop": 4088,
+    "legalLogitRMSE": 0.009213910438120365,
+    "valueRMSE": 0.0016253701178357005,
+    "originalRawSha256": "e57b85a97017ba12f63205b5fe604272e3117f16cb289aee22516f91065d7fa5"
+  },
+  "nativeOriginalWork": {
+    "equalOriginal": {
+      "candidateTurns": 4876,
+      "candidateTacticalMoves": 47,
+      "opponentTurns": 4874
+    },
+    "baselineEqualOriginal": {
+      "candidateTurns": 4913,
+      "candidateTacticalMoves": 38,
+      "opponentTurns": 4920
+    }
+  },
+  "openingFamilySensitivity": {
+    "method": "D4 opening-family bootstrap",
+    "replicates": 20000,
+    "seed": 26315999,
+    "clients": {
+      "primary": {
+        "families": 95,
+        "interval95": [
+          0.5424710424710425,
+          0.6009615384615384
+        ]
+      },
+      "secondary": {
+        "families": 70,
+        "interval95": [
+          0.5881294964028777,
+          0.6647297832980971
+        ]
+      }
+    }
+  },
+  "pairedEqualVisitsAgainstOriginal": {
+    "rawSha256": [
+      "d63a8adf4493f20cf5c633f028cef4155243ff9f816aa57c27ab8b2346fd17ff",
+      "d4a76ebf3613ecdf21222c78547ae9c706497ffaf9ddb4695abc8ad7c6d03de7"
+    ],
+    "seed": 26315240,
+    "pairs": 96,
+    "families": 61,
+    "bootstrapSeed": 26315998,
+    "mean": 0.044270833333333336,
+    "interval95": [
+      -0.01485148514851485,
+      0.10526315789473684
+    ],
+    "better": 34,
+    "same": 38,
+    "worse": 24
+  }
+}
