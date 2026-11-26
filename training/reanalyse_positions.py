@@ -115,9 +115,15 @@ def run(args):
                     worker.stdin.flush()
                     reply = response(worker, 'targets')
                     p, v, visits, edges = targets(reply['targets'], features, args.simulations)
+                    selected = np.asarray([row['move'] for row in reply['targets']])
+                    if (selected.shape != (len(features),) or selected.dtype.kind not in 'iu'
+                            or np.any((selected < 0) | (selected >= 81))
+                            or not features[np.arange(len(features)), 162 + selected].all()):
+                        raise ValueError('Worker selected an illegal or invalid action')
                     name = f'shard-{len(report["shards"]):05d}.npz'
                     path = staging / name
-                    np.savez_compressed(path, x=features, p=p, v=v, visits=visits, edge_visits=edges, source_row=source_rows)
+                    np.savez_compressed(path, x=features, p=p, v=v, visits=visits, edge_visits=edges,
+                                        source_row=source_rows, selected_move=selected.astype(np.uint8))
                     report['shards'].append({'file': name, 'positions': len(features),
                                              'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
                     report['positions'] += len(features)

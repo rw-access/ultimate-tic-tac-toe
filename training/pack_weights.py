@@ -1,6 +1,6 @@
 """Pack frozen ONNX convolution/matrix weights, retaining float32 activations.
 
-Store float16 weights, signed int8 blocks with float32 scales, or 2-bit and
+Store float16 weights, signed 6- or 8-bit blocks with float32 scales, or 2-bit and
 4-bit indices with float16 codebooks. Standard ONNX constant operations materialize the float32
 kernels when the inference session optimizes the graph. The storage cap refers to the serialized, standalone ONNX file.
 """
@@ -22,7 +22,7 @@ def byte_lookup(bits):
 
 
 def layout(size, group_size, bits):
-    factor = 8 // bits
+    factor = 4 if bits == 6 else 8 // bits
     if group_size <= 0 or group_size % factor:
         raise ValueError(f"group size must be a positive multiple of {factor}")
     width = min(group_size, math.ceil(size / factor) * factor)
@@ -140,6 +140,42 @@ def eligible(model):
             and len(tensor.dims) >= 2 and math.prod(tensor.dims) >= 32]
 
 
+def quantize_int6(weight, group_size):
+    """Encode four signed 6-bit values in three bytes, with one scale per block."""
+    weight = np.asarray(weight, dtype=np.float32)
+    if not np.isfinite(weight).all():
+        raise ValueError("Cannot encode nonfinite six-bit weights")
+    groups, width = layout(weight.size, group_size, 6)
+    blocks = np.pad(weight.ravel(), (0, groups * width - weight.size)).reshape(groups, width)
+    codes = np.empty(blocks.shape, dtype=np.int8)
+    scales = np.empty((groups, 1), dtype=np.float32)
+    smallest = np.nextafter(np.float32(0), np.float32(1))
+    for start in range(0, groups, 256):
+        sl = slice(start, start + 256)
+        rows = blocks[sl].astype(np.float64)
+        scale = np.maximum(-rows.min(1, keepdims=True) / 32, rows.max(1, keepdims=True) / 31)
+        scale[scale == 0] = 1
+        best = np.full((len(rows), 1), np.inf)
+        for fraction in (1., .98, .95, .9):
+            step = np.maximum((scale * fraction).astype(np.float32), smallest)
+            q = np.clip(np.rint(rows / step), -32, 31).astype(np.int8)
+            reconstructed = q.astype(np.float32) * step
+            error = np.square(rows - reconstructed).sum(axis=1, keepdims=True)
+            improved = (error < best)[:, 0]
+            codes[sl][improved] = q[improved]
+            scales[sl][improved] = step[improved]
+            best[improved] = error[improved]
+        if not np.isfinite(best).all():
+            raise ValueError("Six-bit reconstruction exceeds float32 range")
+    unsigned = (codes.ravel().astype(np.int16) + 32).astype(np.uint8)
+    high = unsigned.reshape(-1, 2) >> 2
+    high_bytes = high[:, 0] | (high[:, 1] << 4)
+    low = unsigned.reshape(-1, 4) & 3
+    low_bytes = low[:, 0] | (low[:, 1] << 2) | (low[:, 2] << 4) | (low[:, 3] << 6)
+    decoded = (codes.astype(np.float32) * scales).ravel()[:weight.size].reshape(weight.shape)
+    return high_bytes, low_bytes, scales, decoded
+
+
 def make_graph(source, tensors, bits, group_size, arrays=None):
     import onnx
     from onnx import helper, numpy_helper
@@ -168,6 +204,9 @@ def make_graph(source, tensors, bits, group_size, arrays=None):
         return output
 
     lookup = init("lookup", byte_lookup(bits)) if bits in (2, 4) else None
+    if bits == 6:
+        high_lookup = init("high_lookup", byte_lookup(4) * 4 - 32)
+        low_lookup = init("low_lookup", byte_lookup(2))
     flat = begin = None
     for i, tensor in enumerate(tensors):
         name = f"{i}/"
@@ -179,7 +218,24 @@ def make_graph(source, tensors, bits, group_size, arrays=None):
             continue
         n = math.prod(tensor.dims)
         groups, width = layout(n, group_size, bits)
-        if bits == 8:
+        if bits == 6:
+            if arrays is None:
+                high = np.zeros(groups * width // 2, np.uint8)
+                low = np.zeros(groups * width // 4, np.uint8)
+                scales = np.ones((groups, 1), np.float32)
+            else:
+                high, low, scales = arrays[tensor.name]
+            shape = init(name + "groups", np.array([groups, width], np.int64))
+            parts = []
+            for label, data, table in (("high", high, high_lookup), ("low", low, low_lookup)):
+                octets = init(name + label, data)
+                indices = node("Cast", [octets], out + label + "_addresses", to=onnx.TensorProto.INT32)
+                values = node("Gather", [table, indices], out + label + "_codes", axis=0)
+                parts.append(node("Reshape", [values, shape], out + label + "_rows"))
+            signed = node("Add", parts, out + "signed")
+            floats = node("Cast", [signed], out + "f32", to=onnx.TensorProto.FLOAT)
+            values = node("Mul", [floats, init(name + "scale", scales)], out + "values")
+        elif bits == 8:
             if arrays is None:
                 codes = np.zeros((groups, width), np.int8)
                 scales = np.ones((groups, 1), np.float32)
@@ -309,7 +365,7 @@ def evaluate_models(source, candidate, expected, states, batch_size):
 
 
 def verify_int8_reconstruction(source, candidate, tensors, expected):
-    """Run the serialized Cast/Mul/reshape decoder and compare every float32 kernel."""
+    """Run the serialized integer decoder and compare every reconstructed float32 kernel."""
     import onnx
     from onnx import helper, numpy_helper
     import onnxruntime as ort
@@ -360,6 +416,9 @@ def pack(args):
             half = weight.astype(np.float16)
             arrays[tensor.name] = half
             decoded = half.astype(np.float32)
+        elif args.bits == 6:
+            high, low, scales, decoded = quantize_int6(weight, size)
+            arrays[tensor.name] = (high, low, scales)
         elif args.bits == 8:
             codes, scales, decoded = quantize_int8(weight, size)
             arrays[tensor.name] = (codes, scales)
@@ -375,7 +434,7 @@ def pack(args):
     payload = candidate.SerializeToString()
     if args.max_bytes is not None and len(payload) > args.max_bytes:
         raise ValueError(f"Candidate exceeds cap: {len(payload)} bytes")
-    if args.bits == 8:
+    if args.bits in (6, 8):
         verify_int8_reconstruction(source, candidate, tensors, slots)
     states = load_states(args.parity, args.data, args.samples, args.seed)
     drift = evaluate_models(source, candidate, expected, states, args.batch_size)
@@ -386,7 +445,7 @@ def pack(args):
               "relative_weight_rmse": math.sqrt(squared_error / squared_weight) if squared_weight else 0,
               "input_sha256": hashlib.sha256(args.input.read_bytes()).hexdigest(),
               "packed_sha256": hashlib.sha256(payload).hexdigest(), "drift": drift}
-    if args.bits == 8:
+    if args.bits in (6, 8):
         report["exactly_reconstructed_tensors"] = len(tensors)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(dir=args.output.parent, delete=False) as fp:
@@ -405,7 +464,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--bits", type=int, choices=(2, 4, 8, 16), required=True)
+    parser.add_argument("--bits", type=int, choices=(2, 4, 6, 8, 16), required=True)
     parser.add_argument("--max-bytes", type=int)
     parser.add_argument("--group-size", type=int, help="fixed block length (default: smallest fitting the cap)")
     parser.add_argument("--iterations", type=int, default=6)

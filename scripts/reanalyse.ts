@@ -3,11 +3,13 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createModelClient } from './ai.ts';
 import { encodeState, legalMoves, search, type Evaluator } from '../src/ai.ts';
 import { play, restoreGame, type Player } from '../src/game.ts';
 
-function decode(features: Uint8Array) {
+export function decode(features: Uint8Array) {
   if (features.length !== 280 || features.some(value => value > 1)) throw new Error('Expected 280 binary features');
   let own = 0, other = 0;
   for (let i = 0; i < 81; i++) {
@@ -42,7 +44,7 @@ async function analyse(features: Uint8Array, row: number, seed: number, simulati
         throw new Error('Zero-visit result was not a verified immediate win');
       }
       const p = Array<number>(81).fill(0); p[result.move] = 1;
-      return { p, v: 1, visits: 0, edgeVisits: 0 };
+      return { p, v: 1, visits: 0, edgeVisits: 0, move: result.move };
     }
     const root = result.root;
     if (root.visits !== simulations || result.simulations !== simulations) {
@@ -57,7 +59,7 @@ async function analyse(features: Uint8Array, row: number, seed: number, simulati
     if (!edgeVisits || edgeVisits >= root.visits) throw new Error('Invalid root child visits');
     const v = root.valueSum / root.visits;
     if (!Number.isFinite(v) || Math.abs(v) > 1) throw new Error('Invalid root mean value');
-    return { p: p.map(n => n / edgeVisits), v, visits: root.visits, edgeVisits };
+    return { p: p.map(n => n / edgeVisits), v, visits: root.visits, edgeVisits, move: result.move };
   } catch (error) { throw new Error(`Source row ${row}: ${error instanceof Error ? error.message : error}`); }
 }
 
@@ -91,4 +93,6 @@ async function main() {
   } finally { controller.abort(); lines.close(); await client.close(); }
 }
 
-main().catch(error => { console.error(error); process.exitCode = 1; });
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch(error => { console.error(error); process.exitCode = 1; });
+}

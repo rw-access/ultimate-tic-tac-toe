@@ -46,15 +46,24 @@ class FactoredLift(nn.Module):
 
 
 class Stage2Net(nn.Module):
-    """Full teacher, compact float32 student, or moderate model for subsequent packing."""
+    """Full teacher and factorized students for float32 or packed inference."""
 
-    def __init__(self, compact=True, *, moderate=False):
+    @classmethod
+    def for_tier(cls, tier):
+        if tier not in {"stage3_teacher", "stage2_student", "stage2_moderate", "stage2_packed_small"}:
+            raise ValueError(f"Unknown Stage 2 tier {tier}")
+        return cls(compact=tier != "stage3_teacher", moderate=tier == "stage2_moderate",
+                   packed_small=tier == "stage2_packed_small")
+
+    def __init__(self, compact=True, *, moderate=False, packed_small=False):
         super().__init__()
-        if moderate and not compact:
-            raise ValueError("The moderate rank profile applies to a factorized student")
+        if (moderate or packed_small) and (not compact or moderate and packed_small):
+            raise ValueError("Select one factorized student profile")
         self.register_buffer("order", torch.arange(81).reshape(3, 3, 3, 3).transpose(1, 2).reshape(81))
 
         def point(n, m, rank):
+            if packed_small:
+                rank = {24: 40, 32: 48, 40: 64, 48: 64}[rank]
             return FactoredPoint(n, m, rank) if compact and not moderate else nn.Conv2d(n, m, 1)
 
         def lift(n, m, stride, i, o):
@@ -64,7 +73,9 @@ class Stage2Net(nn.Module):
                 # Retain each dense gate and both value paths exactly. The four
                 # transposed kernels account for 4.13M of the original 4.99M weights.
                 i, o = (160, 144) if stride == 1 else (192, 176)
-            return FactoredLift(n, m, stride, i, o, broadcast_offset=moderate and stride == 3)
+            elif packed_small:
+                i, o = (64, 48) if stride == 1 else (56, 40)
+            return FactoredLift(n, m, stride, i, o, broadcast_offset=(moderate or packed_small) and stride == 3)
 
         layers = {
             "stem": nn.Conv2d(4, 128, 3, 3),

@@ -29,6 +29,7 @@ EXPORT_LIMITS = {
     "line_student": MAX_ONNX_MODEL_BYTES,
     "routing_transformer": MAX_ONNX_MODEL_BYTES,
     "stage2_student": MAX_ONNX_MODEL_BYTES,
+    "stage2_packed_small": 4 * 1024 * 1024,  # Float32 training export before packing to the Tiny budget.
     "stage2_moderate": 10 * 1024 * 1024,  # Native float32 model before separate 4-bit packing.
     "board_table": 1_492_760,
     "stage3_teacher": 25 * 1024 * 1024,
@@ -416,9 +417,9 @@ def run_training(args, parser):
     elif args.tier == "board_table":
         from .board_table import BoardTable
         model = BoardTable()
-    elif args.tier in ("stage2_student", "stage2_moderate", "stage3_teacher"):
+    elif args.tier in ("stage2_student", "stage2_moderate", "stage2_packed_small", "stage3_teacher"):
         from .stage2_student import Stage2Net
-        model = Stage2Net(compact=args.tier != "stage3_teacher", moderate=args.tier == "stage2_moderate")
+        model = Stage2Net.for_tier(args.tier)
     else:
         model = build_harnet(args.tier)
     if args.value_only and not isinstance(model, HARNet):

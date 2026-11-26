@@ -24,6 +24,23 @@ class SmallPolicyValue(nn.Module):
 
 
 class RefinePackedTests(unittest.TestCase):
+    def test_small_stage2_profile_fits_the_released_tiny_budget(self):
+        from training.sparse_stage2_graph import SparseDecoder
+        from training.stage2_student import Stage2Net
+
+        model = Stage2Net.for_tier("stage2_packed_small").eval()
+        self.assertTrue(model.layers["upsample"].broadcast_offset)
+        with TemporaryDirectory() as tmp:
+            source = Path(tmp) / "float.onnx"
+            torch.onnx.export(model, (torch.zeros(1, 280),), str(source), input_names=["state"],
+                              output_names=["policy", "value"], dynamo=False, opset_version=14,
+                              dynamic_axes={key: {0: "batch"} for key in ("state", "policy", "value")})
+            graph = onnx.load(source)
+        packed = make_graph(graph, eligible(graph), 4, 512)
+        SparseDecoder(packed).compact()
+        onnx.checker.check_model(packed)
+        self.assertLessEqual(packed.ByteSize(), 477_280)
+
     def test_only_centroids_change_and_the_packed_runtime_still_agrees(self):
         torch.manual_seed(145)
         base = SmallPolicyValue().eval()

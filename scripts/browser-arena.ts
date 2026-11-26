@@ -186,7 +186,7 @@ function assertNoPageErrors(agents: Agent[]): void {
   if (errors.length) throw new Error(`Browser page errors: ${errors.join(' | ')}`);
 }
 
-async function makeAgent(
+export async function makeAgent(
   label: Agent['label'],
   modelPath: string,
   modelSha256: string,
@@ -239,10 +239,13 @@ async function makeAgent(
         return new Promise((resolve, reject) => {
           const id = ++nextId;
           const started = performance.now();
+          // The first Easy probe also fetches WASM and compiles the model.
+          const coldStart = id === 1 && difficulty === 'easy' && state.moves === 0;
+          const responseTimeoutMs = coldStart ? 90_000 : 20_000;
           const timer = window.setTimeout(() => {
             pending.delete(id);
-            reject(new Error(`Worker response timeout for request ${id}`));
-          }, 20_000);
+            reject(new Error(`Worker timed out after ${responseTimeoutMs} ms on ${coldStart ? 'cold start' : difficulty} request ${id}`));
+          }, responseTimeoutMs);
           pending.set(id, { resolve, reject, started, timer });
           try {
             worker.postMessage({ id, action: 'move', state, difficulty, modelUrl });

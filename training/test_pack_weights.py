@@ -7,13 +7,25 @@ import unittest
 
 import numpy as np
 
-from training.pack_weights import byte_lookup, check_float16_range, layout, pack, quantize, quantize_int8
+from training.pack_weights import byte_lookup, check_float16_range, layout, pack, quantize, quantize_int6, quantize_int8
 
 
 class CodebookTests(unittest.TestCase):
     def test_bit_order(self):
         self.assertEqual(byte_lookup(2)[0b11100100].tolist(), [0, 1, 2, 3])
         self.assertEqual(byte_lookup(4)[0xB3].tolist(), [3, 11])
+
+    def test_six_bit_two_stream_round_trip(self):
+        weights = np.r_[np.arange(-32, 32), np.zeros(64), -1.2, .6, 3.].astype(np.float32)
+        high, low, scales, decoded = quantize_int6(weights, 64)
+        upper = byte_lookup(4)[high].ravel()
+        lower = byte_lookup(2)[low].ravel()
+        signed = (upper * 4 + lower - 32).reshape(len(scales), -1)
+        np.testing.assert_array_equal((signed.astype(np.float32) * scales).ravel()[:len(weights)], decoded)
+        np.testing.assert_array_equal(decoded[:128], weights[:128])
+        self.assertEqual(high.nbytes + low.nbytes, signed.size * 3 // 4)
+        with self.assertRaises(ValueError):
+            quantize_int6(np.array([np.nan], dtype=np.float32), 64)
 
     def test_real_tail_constant_and_skewed_groups(self):
         rng = np.random.default_rng(53)
@@ -84,7 +96,7 @@ class NativeGraphTests(unittest.TestCase):
             path = d / "teacher.onnx"
             onnx.save(model, path)
             src_bytes = path.read_bytes()
-            for bits in (2, 4, 8, 16):
+            for bits in (2, 4, 6, 8, 16):
                 dest = d / f"{bits}.onnx"
                 args = argparse.Namespace(input=path, output=dest, bits=bits, max_bytes=len(src_bytes) * (3 if bits == 16 else 2) // 4,
                                           group_size=None if bits == 16 else 80, iterations=3, parity=Path(__file__).with_name("parity.json"),
@@ -95,6 +107,9 @@ class NativeGraphTests(unittest.TestCase):
                 self.assertGreater(report["drift"]["live_positions"], 1)
                 self.assertLess(report["drift"]["graph_dense_max_logit_error"], 1e-5)
                 packed_bytes = dest.read_bytes()
+                if bits == 6:
+                    self.assertEqual(report["exactly_reconstructed_tensors"], len(weights))
+                    self.assertLess(report["relative_weight_rmse"], .04)
                 if bits == 16:
                     graph = onnx.load(dest).graph
                     self.assertEqual([n.op_type for n in graph.node], ["Cast", "Cast", "MatMul", "MatMul", "Tanh"])

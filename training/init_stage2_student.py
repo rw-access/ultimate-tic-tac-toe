@@ -18,7 +18,7 @@ import onnxruntime as ort
 import torch
 from onnx import numpy_helper
 
-from .fit_search_student import export, load_positions
+from .fit_search_student import export, file_hash, load_positions, load_weights
 from .stage2_student import FactoredLift, FactoredPoint, Stage2Net
 from .wrap_utttai import reference_planes
 
@@ -191,8 +191,10 @@ def main():
     parser.add_argument("--source", required=True, type=Path, help="Original public ONNX with four input planes")
     parser.add_argument("--full-output", type=Path, help="Optional fresh .pt for the stage3_teacher tier")
     parser.add_argument("--output", type=Path, help="Fresh .pt for the selected student tier")
-    parser.add_argument("--student-tier", choices=("stage2_student", "stage2_moderate"),
+    parser.add_argument("--student-tier", choices=("stage2_student", "stage2_moderate", "stage2_packed_small"),
                         default="stage2_student", help="Rank profile of the calibrated student")
+    parser.add_argument("--teacher-checkpoint", type=Path,
+                        help="Initialize the student from a fine-tuned full Stage 2 teacher")
     parser.add_argument("--export-onnx", action="store_true",
                         help="Also export and parity-check a native float32 ONNX beside the student .pt")
     parser.add_argument("--data", type=Path, help="NPZ directory for activation calibration")
@@ -223,6 +225,9 @@ def main():
     print(json.dumps({"sourceSha256": SHA256,
                       "fullImportParity": check_parity(teacher, args.source, args.fixtures, args.threads)}),
           flush=True)
+    if args.teacher_checkpoint:
+        load_weights(teacher, args.teacher_checkpoint)
+        print(json.dumps({"teacherCheckpointSha256": file_hash(args.teacher_checkpoint)}), flush=True)
     if args.full_output:
         save_checkpoint(teacher, args.full_output)
     if not args.output:
@@ -230,7 +235,7 @@ def main():
     device = torch.device(args.device)
     rng = np.random.default_rng(args.seed)
     states = load_positions(args.data, args.positions, rng, device)[0]
-    student = Stage2Net(moderate=args.student_tier == "stage2_moderate").eval()
+    student = Stage2Net.for_tier(args.student_tier).eval()
     print(f"Calibrating {args.student_tier}: {sum(p.numel() for p in student.parameters()):,} parameters",
           flush=True)
     moments = covariance_factors(teacher.to(device), student, states, args.batch_size, device)

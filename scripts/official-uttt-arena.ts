@@ -150,6 +150,44 @@ function projectStateDigits(state: GameState) {
     state.forced ?? 9, digit(state.winner)].join('');
 }
 
+/** Independent archive-compatible targets using the pinned published NMCTS and original network. */
+export async function createPublishedSearch(upstream: string, model: string, provider: 'cpu' | 'cuda') {
+  const bytes = await readFile(model);
+  const modelSha256 = sha256(bytes);
+  if (!officialModelHashes.has(modelSha256)) throw new Error('Expected the published Stage 2 weights');
+  const load = await loadOfficial(upstream);
+  const network = await inference(model, bytes, true, provider);
+  return {
+    modelSha256, upstreamCommit, close: network.close,
+    async analyse(state: GameState, visits: number, seed: number) {
+      const { Game, Engine } = load(random(seed));
+      const game = new Game(Uint8Array.from(projectStateDigits(state), digit => Number(digit)));
+      game.verifyState();
+      if (state.winner || game.getLegalIndexes().join() !== legalMoves(state).join()) {
+        throw new Error('Expected a live root with matching legal moves');
+      }
+      const engine = new Engine(game, visits, 2);
+      engine.policyValueNetSession = { async run({ input }: {input: InputTensor}) {
+        const prediction = await network.predict(input.data);
+        return { policy_logits: { data: prediction.policy }, state_value: { data: [prediction.value] } };
+      } };
+      const root = engine.tree.root;
+      for (let i = 0; i < visits; i++) await engine.simulate();
+      const n = Array<number>(81).fill(0), q = Array<number>(81).fill(0);
+      for (const child of root.childNodes) {
+        n[child.action.index] = child.visitCount;
+        q[child.action.index] = -child.stateValueMean;
+      }
+      const edgeVisits = n.reduce((a, b) => a + b, 0);
+      const backed = n.reduce((a, count, move) => a + count * q[move], root.stateValue);
+      if (root.visitCount !== visits || edgeVisits !== visits - 1 || Math.abs(backed/visits - root.stateValueMean) > 1e-6) {
+        throw new Error('Published root visits or sign of the backed-up child value disagrees');
+      }
+      return { n, q, v: root.stateValueMean };
+    },
+  };
+}
+
 export function recoverPublishedOpening(target: string): number[] {
   if (!/^[012]{81}[0123]{9}[12][0-9][0123]$/.test(target)) throw new Error('Invalid published state encoding');
   const plies = [...target.slice(0, 81)].filter(digit => digit !== '0').length;

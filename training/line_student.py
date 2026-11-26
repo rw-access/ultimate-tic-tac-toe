@@ -92,7 +92,7 @@ class LineStudent(nn.Module):
                                (forced_loss + free_loss) * (1 - take_game)), dim=-1)
         return cell, board, lines, routing, available
 
-    def forward(self, state):
+    def representations(self, state):
         cell, board, lines, routing, available = self.encode(state)
         cell = self.cell_mlp(cell)
         board = F.relu(self.board_input(torch.cat((cell.mean(2), cell.amax(2), board), dim=-1)))
@@ -114,6 +114,8 @@ class LineStudent(nn.Module):
 
         action = self.policy_edge(edge) + self.policy_source(board).unsqueeze(2)
         action = F.relu(action + self.policy_destination(board).unsqueeze(1))
-        logits = self.policy_head(action).reshape(-1, 81)
-        value = self.value_head(torch.cat((board.mean(1), board.amax(1)), dim=-1))
-        return logits, value
+        return action, torch.cat((board.mean(1), board.amax(1)), dim=-1), routing, available
+
+    def forward(self, state):
+        action, summary, _, _ = self.representations(state)
+        return self.policy_head(action).reshape(-1, 81), self.value_head(summary)

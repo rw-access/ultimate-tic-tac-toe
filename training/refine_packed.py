@@ -172,7 +172,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--tier", choices=("stage3_teacher", "stage2_moderate", "stage2_student"),
+    parser.add_argument("--tier", choices=("stage3_teacher", "stage2_moderate", "stage2_student", "stage2_packed_small"),
                         required=True)
     parser.add_argument("--base", type=Path, required=True,
                         help="Source .pt for the packed graph, including all frozen biases and offsets")
@@ -206,7 +206,7 @@ def main():
     torch.manual_seed(args.seed)
     packed = onnx.load_model_from_string(payload)
     onnx.checker.check_model(packed)
-    student = Stage2Net(compact=args.tier != "stage3_teacher", moderate=args.tier == "stage2_moderate")
+    student = Stage2Net.for_tier(args.tier)
     load_weights(student, args.base)
     books = bind_codebooks(packed, student)
     fingerprint = layout_hash(packed, books)
